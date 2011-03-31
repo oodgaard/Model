@@ -1,11 +1,11 @@
 <?php
 
 namespace Provider;
-use Model\Entity;
+use Habitat\Entity;
 
 class UserEntity extends Entity
 {
-    public function preConstruct()
+    public function init()
     {
         $this->hasMany('content', '\Provider\ContentEntity');
     }

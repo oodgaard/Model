@@ -1,17 +1,17 @@
 <?php
 
-namespace Model\Cache;
-use Model;
+namespace Habitat\Cache;
+use Habitat;
 
 /**
  * The Memcache driver.
  * 
  * @category Cache
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Memcache implements Model\CacheInterface
+class Memcache implements Habitat\CacheInterface
 {
     /**
      * The default Memcache configuration.
@@ -40,7 +40,7 @@ class Memcache implements Model\CacheInterface
      * 
      * @param array $config The Memcache configuration.
      * 
-     * @return \Model\Cache\Driver\Memcache
+     * @return \Habitat\Cache\Driver\Memcache
      */
     public function __construct(array $config = array())
     {
@@ -94,7 +94,7 @@ class Memcache implements Model\CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\CacheInterface
+     * @return \Habitat\CacheInterface
      */
     public function remove($key)
     {

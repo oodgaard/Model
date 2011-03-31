@@ -1,7 +1,7 @@
 <?php
 
 namespace Provider;
-use Model\Entity;
+use Habitat\Entity;
 
 class CommentEntity extends Entity
 {

@@ -1,14 +1,14 @@
 <?php
 
-namespace Model\Cache;
-use Model\Exception;
-use Model\CacheInterface;
+namespace Habitat\Cache;
+use Habitat\Exception;
+use Habitat\CacheInterface;
 
 /**
  * A cache handler that can use multiple cache sources.
  * 
  * @category Cache
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -26,7 +26,7 @@ class Cascade implements CacheInterface
      * 
      * @param array $config The cascade configuration.
      * 
-     * @return \Model\Cache\Cascade
+     * @return \Habitat\Cache\Cascade
      */
     public function __construct(array $drivers)
     {
@@ -36,7 +36,7 @@ class Cascade implements CacheInterface
         
         foreach ($drivers as $driver) {
             if (!$driver instanceof CacheInterface) {
-                throw new Exception('Specified drivers must derive from "\Model\CacheInterface".');
+                throw new Exception('Specified drivers must derive from "\Habitat\CacheInterface".');
             }
             $this->drivers[] = $driver;
         }

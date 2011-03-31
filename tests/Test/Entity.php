@@ -1,28 +1,47 @@
 <?php
 
-use Model\EntitySet;
+use Habitat\EntitySet;
 use Provider\CommentEntity;
 use Provider\ContentEntity;
 use Provider\UserEntity;
 
+/**
+ * Tests the Entity component.
+ * 
+ * @category Entities
+ * @package  Habitat
+ * @author   Trey Shugart <treshugart@gmail.com>
+ * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
+ */
 class Test_Entity extends Testes_UnitTest_Test
 {
+    /**
+     * Ensures that data is properly imported when passing through the constructor.
+     * 
+     * @return void
+     */
     public function constructorImporting()
     {
-        $entity = new ContentEntity(1);
-        $this->assert($entity->id, 'The id was not set.');
-        
         $entity = new ContentEntity(array('id' => 1, 'name' => 'test'));
         $this->assert($entity->id && $entity->name, 'The id or name was not set.');
     }
     
+    /**
+     * Ensures that constructor events are called upon construction.
+     * 
+     * @return void
+     */
     public function constructorEvents()
     {
         $content = new ContentEntity;
-        $this->assert($content->preConstruct, 'Entity preConstruct was not triggered.');
-        $this->assert($content->postConstruct, 'Entity postConstruct was not triggered.');
+        $this->assert($content->init, 'Entity init() was not triggered.');
     }
     
+    /**
+     * Ensures that relationships are properly handled when getting/setting.
+     * 
+     * @return void
+     */
     public function relationships()
     {
         $entity = new ContentEntity;

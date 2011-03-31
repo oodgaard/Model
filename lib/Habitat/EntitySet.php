@@ -1,12 +1,12 @@
 <?php
 
-namespace Model;
+namespace Habitat;
 
 /**
  * The class that represents a set of entities.
  * 
  * @category Entities
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -17,14 +17,14 @@ class EntitySet implements Accessible
      * 
      * @var string
      */
-    protected $class;
+    private $class;
     
     /**
      * The data containing each entity.
      * 
      * @var array
      */
-    protected $data = array();
+    private $data = array();
     
     /**
      * Constructs a new entity set. Primarily used for has many relations.
@@ -32,7 +32,7 @@ class EntitySet implements Accessible
      * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
      * 
-     * @return \Model\EntitySet
+     * @return \Habitat\EntitySet
      */
     public function __construct($class, $values = array())
     {
@@ -45,13 +45,13 @@ class EntitySet implements Accessible
      * 
      * @param mixed $array The values to import.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function import($array)
     {
         // make sure the item is iterable
         if (!is_array($array) && !is_object($array)) {
-            $array = (array) $array;
+            throw new Exception('Item being imported must be an array or object.');
         }
         
         // now apply the values
@@ -67,7 +67,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $vals The values to automate the setting of.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function export()
     {
@@ -94,7 +94,7 @@ class EntitySet implements Accessible
     public function walk($callback, array &$userdata = array())
     {
         if (!is_callable($callback)) {
-            throw new Exception('The callback specified to \Model\Entity->walk() is not callable.');
+            throw new Exception('The callback specified to \Habitat\Entity->walk() is not callable.');
         }
         
         // just call it without returning
@@ -113,10 +113,15 @@ class EntitySet implements Accessible
      * @param mixed $offset The offset to set.
      * @param mixed $value  The value to set.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function offsetSet($offset, $value)
     {
+        // ensure traversable
+        if (!is_array($value) && !is_object($value)) {
+            throw new Exception('Item being set onto an EntitySet must be an array or object.');
+        }
+        
         // detect offset
         $offset = is_null($offset) ? count($this->data) : $offset;
         
@@ -170,7 +175,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $offset The offset to unset.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function offsetUnset($offset)
     {
@@ -193,7 +198,7 @@ class EntitySet implements Accessible
     /**
      * Returns the current element.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function current()
     {
@@ -213,7 +218,7 @@ class EntitySet implements Accessible
     /**
      * Moves to the next element.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function next()
     {
@@ -224,7 +229,7 @@ class EntitySet implements Accessible
     /**
      * Resets to the first element.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function rewind()
     {

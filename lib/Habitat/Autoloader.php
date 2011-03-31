@@ -1,12 +1,12 @@
 <?php
 
-namespace Model;
+namespace Habitat;
 
 /**
  * The model autoloader.
  * 
  * @category Autoloading
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
@@ -17,7 +17,7 @@ class Autoloader
      * 
      * @var string
      */
-    const NS = 'Model';
+    const NS = 'Habitat';
     
     /**
      * Registers autoloading.

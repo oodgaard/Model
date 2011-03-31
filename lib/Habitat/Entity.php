@@ -1,15 +1,13 @@
 <?php
 
-namespace Model;
-use Model\Entity\BehaviorInterface;
-use Model\Entity\Property\PassThru;
-use Model\Entity\PropertyInterface;
+namespace Habitat;
+use Habitat\Mapper;
 
 /**
  * The main entity class. All model entities should derive from this class.
  * 
  * @category Entities
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -37,14 +35,17 @@ class Entity implements Accessible
     private $blacklist = array();
     
     /**
-     * The name of the id property.
+     * One-to-one entity relationships.
      * 
-     * @var string
+     * @var array
      */
-    private $idPropertyName = 'id';
-    
     private $hasOne = array();
     
+    /**
+     * One-to-many entity relationships.
+     * 
+     * @var array
+     */
     private $hasMany = array();
     
     /**
@@ -52,13 +53,22 @@ class Entity implements Accessible
      * 
      * @param mixed $vals The values to set.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function __construct($values = array())
     {
-        $this->preConstruct();
+        $this->init();
         $this->import($values);
-        $this->postConstruct();
+    }
+
+    /**
+     * Allows the entity to be set up before any data is imported.
+     * 
+     * @return void
+     */
+    public function init()
+    {
+
     }
     
     /**
@@ -128,7 +138,7 @@ class Entity implements Accessible
      * 
      * @param string $name The value to unset.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function __unset($name)
     {
@@ -144,7 +154,7 @@ class Entity implements Accessible
      * @param string $name  The name of the property.
      * @param string $class The class to use.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function hasOne($name, $class)
     {
@@ -165,74 +175,15 @@ class Entity implements Accessible
     }
     
     /**
-     * Sets the id.
-     * 
-     * @param mixed $id The id to set.
-     * 
-     * @return \Model\Entity
-     */
-    public function setId($id)
-    {
-        $this->__set($this->idPropertyName, $id);
-        return $this;
-    }
-    
-    /**
-     * Returns the id.
-     * 
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->__get($this->idPropertyName);
-    }
-    
-    /**
-     * Returns whether the id is set.
-     * 
-     * @return bool
-     */
-    public function hasId()
-    {
-        return $this->__isset($this->idPropertyName);
-    }
-    
-    /**
-     * Removes the id.
-     * 
-     * @return \Model\Entity
-     */
-    public function removeId()
-    {
-        return $this->__unset($this->idPropertyName);
-    }
-    
-    /**
-     * Sets the name of the id property.
-     * 
-     * @param string $name The name of the property.
-     * 
-     * @return \Model\Entity
-     */
-    public function setIdPropertyName($name)
-    {
-        $this->idPropertyName = $name;
-        return $this;
-    }
-    
-    /**
      * Whitelists a property or properties.
      * 
      * @param mixed $properties A property or array of properties to whitelist.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function whitelist($properties)
     {
         foreach ((array) $properties as $property) {
-            if ($property === $this->idPropertyName) {
-                throw new Exception('Cannot set id property accessibility.');
-            }
             $this->whitelist[$property] = $property;
         }
         return $this;
@@ -243,14 +194,11 @@ class Entity implements Accessible
      * 
      * @param mixed $properties A property or array of properties to blacklist.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function blacklist($properties)
     {
         foreach ((array) $properties as $property) {
-            if ($property === $this->idPropertyName) {
-                throw new Exception('Cannot set id property accessibility.');
-            }
             $this->blacklist[$property] = $property;
         }
         return $this;
@@ -261,17 +209,18 @@ class Entity implements Accessible
      * 
      * @param mixed $array The array to import.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function import($array)
     {
-        if (is_array($array) || is_object($array)) {
-            foreach ($array as $k => $v) {
-                $this->__set($k, $v);
-            }
-        } else {
-            $this->__set($this->idPropertyName, $array);
+        if (!is_array($array) && !is_object($array)) {
+            throw new Exception('Item being imported must be an array or object.');
         }
+        
+        foreach ($array as $k => $v) {
+            $this->__set($k, $v);
+        }
+        
         return $this;
     }
     
@@ -298,7 +247,7 @@ class Entity implements Accessible
      * @param string $name  The property to set.
      * @param mixed  $value The value to set.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function offsetSet($name, $value)
     {
@@ -334,7 +283,7 @@ class Entity implements Accessible
      * 
      * @param string $name The property to unset.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function offsetUnset($name)
     {
@@ -364,7 +313,7 @@ class Entity implements Accessible
     /**
      * Moves to the next item in the iteration.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function next()
     {
@@ -375,7 +324,7 @@ class Entity implements Accessible
     /**
      * Resets the iteration.
      * 
-     * @return \Model\Entity
+     * @return \Habitat\Entity
      */
     public function rewind()
     {
@@ -423,106 +372,6 @@ class Entity implements Accessible
     public function unserialize($data)
     {
         $this->import(unserialize($data));
-    }
-    
-    /**
-     * Pre-construct event.
-     * 
-     * @return void
-     */
-    public function preConstruct()
-    {
-        
-    }
-    
-    /**
-     * Post-construct event.
-     * 
-     * @return void
-     */
-    public function postConstruct()
-    {
-        
-    }
-    
-    /**
-     * Pre-insert event.
-     * 
-     * @return void
-     */
-    public function preInsert()
-    {
-        
-    }
-    
-    /**
-     * Pre-insert event.
-     * 
-     * @return void
-     */
-    public function postInsert()
-    {
-        
-    }
-    
-    /**
-     * Pre-update event.
-     * 
-     * @return void
-     */
-    public function preUpdate()
-    {
-        
-    }
-    
-    /**
-     * Post-update event.
-     * 
-     * @return void
-     */
-    public function postUpdate()
-    {
-        
-    }
-    
-    /**
-     * Pre-save event.
-     * 
-     * @return void
-     */
-    public function preSave()
-    {
-        
-    }
-    
-    /**
-     * Post-save event.
-     * 
-     * @return void
-     */
-    public function postSave()
-    {
-        
-    }
-    
-    /**
-     * Pre-remove event.
-     * 
-     * @return void
-     */
-    public function preRemove()
-    {
-        
-    }
-    
-    /**
-     * Post-remove event.
-     * 
-     * @return void
-     */
-    public function postRemove()
-    {
-        
     }
     
     /**

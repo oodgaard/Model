@@ -1,12 +1,12 @@
 <?php
 
-namespace Model;
+namespace Habitat;
 
 /**
  * The cache driver interface.
  * 
  * @category Cache
- * @package  Model
+ * @package  Habitat
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -28,7 +28,7 @@ interface CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return \Model\CacheInterface
+     * @return \Habitat\CacheInterface
      */
     public function set($key, $value, $lifetime = null);
     
@@ -46,7 +46,7 @@ interface CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\CacheInterface
+     * @return \Habitat\CacheInterface
      */
     public function remove($key);
 }

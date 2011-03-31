@@ -4,148 +4,84 @@ use Provider\ContentEntity;
 use Provider\ContentRepository;
 use Provider\UserEntity;
 use Provider\UserRepository;
-use Model\Cache\Php as Cache;
+use Habitat\Cache\Php as Cache;
 
+/**
+ * Tests the Repository component.
+ * 
+ * @category Repositories
+ * @package  Habitat
+ * @author   Trey Shugart <treshugart@gmail.com>
+ * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
+ */
 class Test_Repository extends Testes_UnitTest_Test
 {
-    public function wrongMethodCallCatching()
-    {
-        $repo = new ContentRepository;
-        try {
-            $repo->someUndefinedMethod();
-            $this->assert(false, 'Undefined method not caught.');
-        } catch (\Exception $e) {
-            
-        }
-    }
-    
+    /**
+     * Ensures that the proper insert method is called.
+     * 
+     * @return void
+     */
     public function inserting()
     {
-        $repo = new ContentRepository;
-        try {
-            $entity = $repo->insert(new ContentEntity(array(
-                'name' => 'Trey Shugart'
-            )));
-        } catch (\Exception $e) {
-            $this->assert(false, 'Id was not returned by insert method.');
-        }
+        $repo   = new ContentRepository;
+        $entity = new ContentEntity(array(
+            'name' => 'Trey Shugart'
+        ));
         
-        if (!$entity->preSave) {
-            $this->assert(false, 'Entity preSave event was not triggered.');
-        }
-        
-        if (!$entity->postSave) {
-            $this->assert(false, 'Entity postSave event was not triggered.');
-        }
-        
-        if (!$entity->preInsert) {
-            $this->assert(false, 'Entity preInsert event was not triggered.');
-        }
-        
-        if (!$entity->postInsert) {
-            $this->assert(false, 'Entity postInsert event was not triggered.');
-        }
+        // save once and test if it has an id
+        $repo->save($entity);
+        $this->assert($repo->findById($entity->id) instanceof ContentEntity, 'Id was not returned by insert method.');
     }
     
+    /**
+     * Ensures that the proper update method is called.
+     * 
+     * @return void
+     */
     public function updating()
     {
-        $repo = new ContentRepository;
-        
-        try {
-            $entity = $repo->update(new ContentEntity(array(
-                'name' => 'Trey Shugart'
-            )));
-            $this->assert(false, 'Id requirement was not enforced when updating.');
-        } catch (\Exception $e) {
-            
-        }
-        
-        try {
-            $entity = $repo->insert(new ContentEntity(array(
-                'id'   => 1,
-                'name' => 'Trey Shugart'
-            )));
-            $entity = $repo->update($entity);
-        } catch (\Exception $e) {
-            $this->assert(false, 'Updating failed even though id was passed.');
-        }
-        
-        if (!$entity->preSave) {
-            $this->assert(false, 'Entity preSave event was not triggered.');
-        }
-        
-        if (!$entity->postSave) {
-            $this->assert(false, 'Entity postSave event was not triggered.');
-        }
-        
-        if (!$entity->preUpdate) {
-            $this->assert(false, 'Entity preUpdate event was not triggered.');
-        }
-        
-        if (!$entity->postUpdate) {
-            $this->assert(false, 'Entity postUpdate event was not triggered.');
-        }
-    }
-    
-    public function saving()
-    {
-        $repo = new ContentRepository;
-        
-        $entity = $repo->save(new ContentEntity(array(
+        $repo   = new ContentRepository;
+        $entity = new ContentEntity(array(
             'name' => 'Trey Shugart'
-        )));
+        ));
         
-        if (!$entity->preSave) {
-            $this->assert(false, 'Entity preSave event was not triggered.');
-        }
+        // save it for the first time
+        $repo->save($entity);
         
-        if (!$entity->postSave) {
-            $this->assert(false, 'Entity postSave event was not triggered.');
-        }
+        // modify it to see if it saves
+        $entity->wasSaved = true;
         
-        if (!$entity->preInsert) {
-            $this->assert(false, 'Entity preInsert event was not triggered.');
-        }
-        
-        if (!$entity->postInsert) {
-            $this->assert(false, 'Entity postInsert event was not triggered.');
-        }
-        
-        $entity = $repo->save(new ContentEntity($entity));
-        
-        if (!$entity->preUpdate) {
-            $this->assert(false, 'Entity preUpdate event was not triggered.');
-        }
-        
-        if (!$entity->postUpdate) {
-            $this->assert(false, 'Entity postUpdate event was not triggered.');
-        }
+        // save it again and test to see if the "wasSaved" property was saved
+        $repo->save($entity);
+        $this->assert($repo->findById($entity->id)->wasSaved, 'The entity was not updated.');
     }
     
+    /**
+     * Ensures that the proper remove method is called.
+     * 
+     * @return void
+     */
     public function removing()
     {
         $repo   = new ContentRepository;
-        $entity = new ContentEntity(1);
+        $entity = new ContentEntity(array('name' => 'test'));
         
-        if (!$entity->getId()) {
-            $this->assert(false, 'Entity id was not set on constructor.');
+        $repo->save($entity);
+        if (!$repo->findById($entity->id)) {
+            $this->assert(false, 'Cannot remove if item cannot be saved.');
         }
         
-        $entity = $repo->remove($entity);
-        
-        if ($entity->getid()) {
-            $this->assert(false, 'Entity id was not unset when removed.');
-        }
-        
-        if (!$entity->preRemove) {
-            $this->assert(false, 'Entity preRemove event was not triggered.');
-        }
-        
-        if (!$entity->postRemove) {
-            $this->assert(false, 'Entity postRemove event was not triggered.');
+        $repo->remove($entity);
+        if ($repo->findById(1)) {
+            $this->assert(false, 'Item was not removed');
         }
     }
     
+    /**
+     * Ensures that caching can be automatically handled by using cache methods inside of repository methods.
+     * 
+     * @return void
+     */
     public function caching()
     {
         $repo = new ContentRepository(new Cache);
