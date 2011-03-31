@@ -79,37 +79,6 @@ And you can even pass any traversable item:
         new stdClass,
     );
 
-### Proxies
-
-    <?php
-
-    namespace Entity;
-    use Habitat\Entity;
-
-    class Content extends Entity
-    {
-        public function init()
-        {
-            $this->hasOne('user', '\Entity\Content\User');
-            $this->hasMany('modifications', '\Entity\Content\Modification');
-            
-            $this->proxy('name', function($entity) {
-                return $this->firstame . ' ' . $this->lastname;
-            });
-            
-            $this->proxy('modifications', function($entity) {
-                $repo = new \Repository\Modification;
-                return $repo->findByContentId($entity->id);
-            });
-        }
-    }
-    
-    $repo    = new \Repository\Content;
-    $content = $repo->findById('asdfsaoijdfasdiofj');
-    foreach ($content->modifications as $mod) {
-        
-    }
-
 Authoring Repositories
 ----------------------
 
