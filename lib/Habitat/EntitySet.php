@@ -107,6 +107,69 @@ class EntitySet implements Accessible
     }
     
     /**
+     * Aggregates an array of values for the specified field.
+     * 
+     * @param string $field The field to aggregate values for.
+     * 
+     * @return array
+     */
+    public function aggregate($field)
+    {
+        $values = array();
+        foreach ($this as $item) {
+            $values[] = $item->__get($field);
+        }
+        return $values;
+    }
+    
+    /**
+     * Finds item matching the specified criteria and returns an EntitySet of them.
+     * 
+     * @param array $query  An array of name/value pairs of fields to match.
+     * @param int   $limit  The limit of items to find.
+     * @param int   $offset The offset to start looking at.
+     * 
+     * @return \Habitat\EntitySet
+     */
+    public function find(array $query, $limit = 0, $offset = 0)
+    {
+        if (!is_array($query)) {
+            $query = array($query => $value);
+        }
+        
+        $items = new static($this->class);
+        foreach ($this as $key => $item) {
+            if ($offset && $offset > $key) {
+                continue;
+            }
+            
+            if ($limit && $limit === count($items)) {
+                break;
+            }
+            
+            foreach ($query as $name => $value) {
+                if (!preg_match('/' . str_replace('/', '\/', $value) . '/', $item->__get($name))) {
+                    continue;
+                }
+                $items[] = $item;
+            }
+        }
+        return $items;
+    }
+    
+    /**
+     * Returns the first matched item.
+     * 
+     * @param array $query An array of name/value pairs of fields to match.
+     * 
+     * @return \Habitat\Entity
+     */
+    public function findOne(array $query)
+    {
+        return $this->find($query, 1)->offsetGet(0);
+    }
+    
+    /**
      * Adds or sets an entity in the set. The value is set directly. Only in offsetGet() is the
      * entity instantiated and the value passed to it and then re-set.
      * 

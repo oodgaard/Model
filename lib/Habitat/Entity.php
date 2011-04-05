@@ -49,6 +49,13 @@ class Entity implements Accessible
     private $hasMany = array();
     
     /**
+     * Proxies attached to the entity.
+     * 
+     * @var array
+     */
+    private $proxies = array();
+    
+    /**
      * Constructs a new entity and sets any passed values.
      * 
      * @param mixed $vals The values to set.
@@ -171,6 +178,23 @@ class Entity implements Accessible
     public function hasMany($name, $class)
     {
         $this->hasMany[$name] = $class;
+        return $this;
+    }
+    
+    /**
+     * Attaches a proxy callback to the specified property.
+     * 
+     * @param string $name     The property name.
+     * @param mixed  $callback The callback to call.
+     * 
+     * @
+     */
+    public function proxy($name, $repository, $method, array $args = array())
+    {
+        if (!is_callable($callback)) {
+            throw new Exception('The specified proxy is not callable.');
+        }
+        $this->proxies[$name] = $callback;
         return $this;
     }
     
