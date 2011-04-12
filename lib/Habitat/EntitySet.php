@@ -79,31 +79,24 @@ class EntitySet implements Accessible
     }
     
     /**
-     * Executes the specified callback on each item and places the return value
-     * in an array and returns it.
-     * 
-     * The first argument to the callback is the entity being walked on and the
-     * second is any passed in userdata (or an empty array) that is passed by 
-     * reference. This allows it to be modified and returned.
+     * Executes the specified callback on each item and places the return value in an array and returns it. If $userdata
+     * is passed, it is used in lieu of passing the entity as the first argument just in case a different order of
+     * of parameters need to be passed in.
      * 
      * @param mixed $callback A callable callback.
      * @param array $userdata Any userdata to pass to the callback.
      * 
      * @return mixed
      */
-    public function walk($callback, array &$userdata = array())
+    public function walk($callback, array $userdata = array())
     {
         if (!is_callable($callback)) {
-            throw new Exception('The callback specified to \Habitat\Entity->walk() is not callable.');
+            throw new Exception('The callback specified to \Model\Entity->walk() is not callable.');
         }
-        
-        // just call it without returning
-        foreach ($this->data as $k => $v) {
-            call_user_func($callback, $v, $userdata);
+        foreach ($this as $entity) {
+            call_user_func($callback, $userdata ? $userdata : $entity);
         }
-        
-        // return the userdata
-        return $userdata;
+        return $this;
     }
     
     /**
