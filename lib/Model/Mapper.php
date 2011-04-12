@@ -1,12 +1,12 @@
 <?php
 
-namespace Habitat;
+namespace Model;
 
 /**
  * The main model exception class.
  * 
  * @category Exceptions
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -24,7 +24,7 @@ class Mapper implements \IteratorAggregate
      * 
      * @param mixed $data The input data.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     public function __construct($data = array())
     {
@@ -47,7 +47,7 @@ class Mapper implements \IteratorAggregate
      * 
      * @param mixed $data The input data.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     public function fill($data)
     {
@@ -63,7 +63,7 @@ class Mapper implements \IteratorAggregate
     /**
      * Clears the data in the mapper.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     public function clear()
     {
@@ -77,7 +77,7 @@ class Mapper implements \IteratorAggregate
      * @param string $from The input key.
      * @param mixed  $tos  The output key or array of keys.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     public function map($from, $tos)
     {
@@ -149,7 +149,7 @@ class Mapper implements \IteratorAggregate
      * @param mixed  $value The the value to map.
      * @param array  &$to   The array that we are mapping to.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     private function setMappedValue($map, $value, array &$to = array())
     {
@@ -180,7 +180,7 @@ class Mapper implements \IteratorAggregate
      * @param mixed  $value The value to modify it with.
      * @param array  &$to   The array being modified.
      * 
-     * @return \Habitat\Mapper;
+     * @return \Model\Mapper;
      */
     private function modifyArray($key, $value, array &$to)
     {
@@ -195,7 +195,7 @@ class Mapper implements \IteratorAggregate
      * @param mixed &$key The key to modify.
      * @param array $to   The array we are mapping to so we can gather information about it.
      * 
-     * @return \Habitat\Mapper
+     * @return \Model\Mapper
      */
     private function modifyKey(&$key, array $to)
     {

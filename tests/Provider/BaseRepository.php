@@ -1,8 +1,8 @@
 <?php
 
 namespace Provider;
-use Habitat\Entity;
-use Habitat\Repository;
+use Model\Entity;
+use Model\Repository;
 
 abstract class BaseRepository extends Repository
 {

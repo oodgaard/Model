@@ -1,12 +1,12 @@
 <?php
 
-namespace Habitat;
+namespace Model;
 
 /**
  * Basic accessible interface defining common interfaces.
  * 
  * @category Accessibility
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -17,14 +17,14 @@ interface Accessible extends \ArrayAccess, \Countable, \Iterator, \Serializable
       * 
       * @param mixed $array The values to import.
       * 
-      * @return \Habitat\Entity
+      * @return \Model\Entity
       */
     public function import($array);
     
     /**
      * Fills the entity with the specified values.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function export();
 }

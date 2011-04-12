@@ -4,13 +4,13 @@ use Provider\ContentEntity;
 use Provider\ContentRepository;
 use Provider\UserEntity;
 use Provider\UserRepository;
-use Habitat\Cache\Php as Cache;
+use Model\Cache\Php as Cache;
 
 /**
  * Tests the Repository component.
  * 
  * @category Repositories
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */

@@ -1,7 +1,7 @@
 <?php
 
 namespace Provider;
-use Habitat\Repository;
+use Model\Repository;
 
 class UserRepository extends BaseRepository
 {

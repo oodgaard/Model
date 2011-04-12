@@ -1,7 +1,7 @@
 <?php
 
 namespace Provider;
-use Habitat\Entity;
+use Model\Entity;
 
 class ContentEntity extends Entity
 {

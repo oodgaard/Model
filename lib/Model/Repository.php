@@ -1,12 +1,12 @@
 <?php
 
-namespace Habitat;
+namespace Model;
 
 /**
  * The main repository interface. All model repositorys must implement this.
  * 
  * @category Repositories
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -15,16 +15,16 @@ abstract class Repository
     /**
      * The cache driver to use, if any.
      * 
-     * @var \Habitat\CacheInterface|null
+     * @var \Model\CacheInterface|null
      */
     private $cache;
     
     /**
      * Constructs a new repository with the specified cache driver.
      * 
-     * @param \Habitat\CacheInterface $cache The cache drive to use, if any.
+     * @param \Model\CacheInterface $cache The cache drive to use, if any.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     public function __construct(CacheInterface $cache = null)
     {
@@ -37,7 +37,7 @@ abstract class Repository
      * @param mixed $item The item to store.
      * @param mixed $time The time to store the item for.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     protected function persist($item, $time = null)
     {
@@ -57,7 +57,7 @@ abstract class Repository
     /**
      * Expires the item for the current repository method.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     protected function expire()
     {
@@ -72,7 +72,7 @@ abstract class Repository
      * @param mixed  $item   The item to cache.
      * @param mixed  $time   The time to cache the item for.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     protected function persistFor($method, array $args, $item, $time = null)
     {
@@ -88,7 +88,7 @@ abstract class Repository
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     protected function retrieveFor($method, array $args)
     {
@@ -104,7 +104,7 @@ abstract class Repository
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Habitat\Repository
+     * @return \Model\Repository
      */
     protected function expireFor($method, array $args)
     {

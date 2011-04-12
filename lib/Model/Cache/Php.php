@@ -1,17 +1,17 @@
 <?php
 
-namespace Habitat\Cache;
-use Habitat;
+namespace Model\Cache;
+use Model;
 
 /**
  * A cache driver that only caches items in memory for a single execution.
  * 
  * @category Cache
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Php implements Habitat\CacheInterface
+class Php implements Model\CacheInterface
 {
     /**
      * The static cache.

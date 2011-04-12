@@ -1,6 +1,6 @@
 <?php
 
-use Habitat\EntitySet;
+use Model\EntitySet;
 use Provider\CommentEntity;
 use Provider\ContentEntity;
 use Provider\UserEntity;
@@ -9,7 +9,7 @@ use Provider\UserEntity;
  * Tests the Entity component.
  * 
  * @category Entities
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */

@@ -1,13 +1,13 @@
 <?php
 
-namespace Habitat;
-use Habitat\Mapper;
+namespace Model;
+use Model\Mapper;
 
 /**
  * The main entity class. All model entities should derive from this class.
  * 
  * @category Entities
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -60,7 +60,7 @@ class Entity implements Accessible
      * 
      * @param mixed $vals The values to set.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function __construct($values = array())
     {
@@ -145,7 +145,7 @@ class Entity implements Accessible
      * 
      * @param string $name The value to unset.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function __unset($name)
     {
@@ -161,7 +161,7 @@ class Entity implements Accessible
      * @param string $name  The name of the property.
      * @param string $class The class to use.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function hasOne($name, $class)
     {
@@ -203,7 +203,7 @@ class Entity implements Accessible
      * 
      * @param mixed $properties A property or array of properties to whitelist.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function whitelist($properties)
     {
@@ -218,7 +218,7 @@ class Entity implements Accessible
      * 
      * @param mixed $properties A property or array of properties to blacklist.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function blacklist($properties)
     {
@@ -233,7 +233,7 @@ class Entity implements Accessible
      * 
      * @param mixed $array The array to import.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function import($array)
     {
@@ -271,7 +271,7 @@ class Entity implements Accessible
      * @param string $name  The property to set.
      * @param mixed  $value The value to set.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function offsetSet($name, $value)
     {
@@ -307,7 +307,7 @@ class Entity implements Accessible
      * 
      * @param string $name The property to unset.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function offsetUnset($name)
     {
@@ -337,7 +337,7 @@ class Entity implements Accessible
     /**
      * Moves to the next item in the iteration.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function next()
     {
@@ -348,7 +348,7 @@ class Entity implements Accessible
     /**
      * Resets the iteration.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function rewind()
     {

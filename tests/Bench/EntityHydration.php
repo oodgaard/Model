@@ -1,6 +1,6 @@
 <?php
 
-use Habitat\EntitySet;
+use Model\EntitySet;
 use Provider\ContentEntity;
 
 class Bench_EntityHydration extends Testes_Benchmark_Test

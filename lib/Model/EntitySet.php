@@ -1,12 +1,12 @@
 <?php
 
-namespace Habitat;
+namespace Model;
 
 /**
  * The class that represents a set of entities.
  * 
  * @category Entities
- * @package  Habitat
+ * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
@@ -32,7 +32,7 @@ class EntitySet implements Accessible
      * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
      * 
-     * @return \Habitat\EntitySet
+     * @return \Model\EntitySet
      */
     public function __construct($class, $values = array())
     {
@@ -45,7 +45,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $array The values to import.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function import($array)
     {
@@ -67,7 +67,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $vals The values to automate the setting of.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function export()
     {
@@ -122,7 +122,7 @@ class EntitySet implements Accessible
      * @param int   $limit  The limit of items to find.
      * @param int   $offset The offset to start looking at.
      * 
-     * @return \Habitat\EntitySet
+     * @return \Model\EntitySet
      */
     public function find(array $query, $limit = 0, $offset = 0)
     {
@@ -155,7 +155,7 @@ class EntitySet implements Accessible
      * 
      * @param array $query An array of name/value pairs of fields to match.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function findOne(array $query)
     {
@@ -169,7 +169,7 @@ class EntitySet implements Accessible
      * @param mixed $offset The offset to set.
      * @param mixed $value  The value to set.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function offsetSet($offset, $value)
     {
@@ -231,7 +231,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $offset The offset to unset.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function offsetUnset($offset)
     {
@@ -254,7 +254,7 @@ class EntitySet implements Accessible
     /**
      * Returns the current element.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function current()
     {
@@ -274,7 +274,7 @@ class EntitySet implements Accessible
     /**
      * Moves to the next element.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function next()
     {
@@ -285,7 +285,7 @@ class EntitySet implements Accessible
     /**
      * Resets to the first element.
      * 
-     * @return \Habitat\Entity
+     * @return \Model\Entity
      */
     public function rewind()
     {

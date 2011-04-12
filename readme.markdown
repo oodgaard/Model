@@ -3,7 +3,7 @@ Introduction
 
 ### What
 
-Habitat is a simple, lightweight and easy-to-use Domain Driven Entity framework.
+Model is a simple, lightweight and easy-to-use Domain Driven Entity framework.
 
 ### Why
 
@@ -22,7 +22,7 @@ To create an entity, all you really have to do is extend the base entity class:
     <?php
     
     namespace Entity;
-    use Habitat\Entity;
+    use Model\Entity;
     
     class Content extends Entity
     {
@@ -36,7 +36,7 @@ You can also map relationships to other entities:
     <?php
 
     namespace Entity;
-    use Habitat\Entity;
+    use Model\Entity;
 
     class Content extends Entity
     {
@@ -58,7 +58,7 @@ By adding relationships, you ensure that if the specified property is set or acc
     // instance of \Entity\Content\User
     $user = $entity->user;
     
-    // instance of \Habitat\EntitySet containing instances of \Entity\Content\Modification
+    // instance of \Model\EntitySet containing instances of \Entity\Content\Modification
     $modifications = $entity->modifications;
 
 This means that if you set an array to one of these properties, it will ensure that an instance of the specified relationship is instantiated and filled with the specified array data.
@@ -87,14 +87,14 @@ Authoring repositories is fairly straight forward:
     <?php
     
     namespace Repository;
-    use Habitat\Repository;
+    use Model\Repository;
     
     class Content extends Repository
     {
         
     }
 
-You are free to define your own base class for abstracted functionality and your own method definitions. By extending the base `\Habitat\Repository`, you have access to caching methods which make caching easier than managing your own drivers. However, if you use MongoDB, you may not have to cache at all.
+You are free to define your own base class for abstracted functionality and your own method definitions. By extending the base `\Model\Repository`, you have access to caching methods which make caching easier than managing your own drivers. However, if you use MongoDB, you may not have to cache at all.
 
 Easing the Mapping of Data
 --------------------------
@@ -104,7 +104,7 @@ When given the open-ended structure of defining your own storage implementations
     <?php
     
     use Entity\Content;
-    use Habitat\Mapper;
+    use Model\Mapper;
     
     // set up the entity
     $content = new Content;
@@ -154,7 +154,7 @@ You probably wouldn't want to manually specify your mapping in your repositories
     <?php
     
     namespace Map;
-    use Habitat\Mapper;
+    use Model\Mapper;
     
     class Content extends Mapper
     {
