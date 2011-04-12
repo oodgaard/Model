@@ -41,6 +41,49 @@ class EntitySet implements Accessible
     }
     
     /**
+     * Returns the class being used for this set instance.
+     * 
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->class;
+    }
+    
+    /**
+     * Returns whether or not the set represents the specified class.
+     * 
+     * @param string $class The class name to check against.
+     * 
+     * @return bool
+     */
+    public function isRepresenting($class)
+    {
+        if (is_object($class)) {
+            $class = get_class($class);
+        }
+        return $this->class === $class;
+    }
+    
+    /**
+     * Checks to see if the set represents the specified class. If not, then an exception is thrown.
+     * 
+     * @throws \Model\Exception If the set does not represent the specified class.
+     * 
+     * @param string $class The class to check.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function mustRepresent($class)
+    {
+        if (!$this->isRepresenting($class)) {
+            $class = is_object($class) ? get_class($class) : $class;
+            throw new Exception('The entity set is representing "' . $this->class . '" not "' . $class . '".');
+        }
+        return $this;
+    }
+    
+    /**
      * Fills values from an array.
      * 
      * @param mixed $array The values to import.
@@ -159,7 +202,11 @@ class EntitySet implements Accessible
      */
     public function findOne(array $query)
     {
-        return $this->find($query, 1)->offsetGet(0);
+        $found = $this->find($query, 1);
+        if ($found->count()) {
+            return $found->offsetGet(0);
+        }
+        return false;
     }
     
     /**

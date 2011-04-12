@@ -13,27 +13,27 @@ namespace Model;
 class Mapper implements \IteratorAggregate
 {
     /**
-     * The input data.
+     * The internal mapping to convert the input data to.
      * 
      * @var array
      */
-    private $data = array();
+    private $map = array();
     
     /**
-     * Constructs a new mapper and passes in the data to be mapped.
+     * Intializes a new mapper. Any mapping passed in here is passed off to the map method.
      * 
-     * @param mixed $data The input data.
+     * @param array $map The mapping to pass to the map method.
      * 
      * @return \Model\Mapper
      */
-    public function __construct($data = array())
+    public function __construct(array $map = array())
     {
-        $this->fill($data);
+        $this->map($map);
         $this->init();
     }
     
     /**
-     * Initialization hook for extending classes.
+     * Initializes the mapper. Good for mapper extensions for setting up an initial mapping.
      * 
      * @return void
      */
@@ -43,47 +43,25 @@ class Mapper implements \IteratorAggregate
     }
     
     /**
-     * Fills the mapper with data to map.
-     * 
-     * @param mixed $data The input data.
-     * 
-     * @return \Model\Mapper
-     */
-    public function fill($data)
-    {
-        if (!is_array($data) && !is_object($data)) {
-            throw new Exception('The passed data must be traversable.');
-        }
-        
-        foreach ($data as $name => $value) {
-            $this->data[$name] = $value;
-        }
-    }
-    
-    /**
-     * Clears the data in the mapper.
-     * 
-     * @return \Model\Mapper
-     */
-    public function clear()
-    {
-        $this->data = array();
-        return $this;
-    }
-    
-    /**
      * Maps an input key to an output key. Dot notation is used to denote hierarchy.
      * 
      * @param string $from The input key.
-     * @param mixed  $tos  The output key or array of keys.
+     * @param mixed  $to   The output key or array of keys.
      * 
      * @return \Model\Mapper
      */
-    public function map($from, $tos)
+    public function map($from, $to = null)
     {
-        foreach ((array) $tos as $to) {
-            $this->map[] = array('from' => $from, 'to' => $to);
+        if (!is_array($from)) {
+            $from = array($from => $to);
         }
+        
+        foreach ($from as $mapFrom => $mapTo) {
+            foreach ((array) $mapTo as $subMapTo) {
+                $this->map[] = array('from' => $mapFrom, 'to' => $subMapTo);
+            }
+        }
+        
         return $this;
     }
     
@@ -94,15 +72,19 @@ class Mapper implements \IteratorAggregate
      */
     public function convert()
     {
-        $array = array();
-        foreach ($this->map as $map) {
-            $this->setMappedValue(
-                $map['to'],
-                $this->getMappedValue($map['from'], $this->data),
-                $array
-            );
+        $before = array();
+        $after  = array();
+        foreach (func_get_args() as $arg) {
+            if (!is_array($arg)) {
+                continue;
+            }
+            $before = array_merge($before, $arg);
         }
-        return $array;
+        
+        foreach ($this->map as $map) {
+            $this->setMappedValue($map['to'], $this->getMappedValue($map['from'], $before), $after);
+        }
+        return $after;
     }
     
     /**

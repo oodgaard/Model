@@ -19,20 +19,22 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function oneToOne()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'key1' => 'value1',
             'key2' => 'value2'
-        ));
+        );
+
+        $mapper = new Mapper;
         $mapper->map('key1', 'my-new-key1');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(isset($output['my-new-key1']) && $output['my-new-key1'] === 'value1', 'The value for "key1" was not set.');
         $this->assert(!isset($output['key1']), 'The value for "key1" was passed through.');
         $this->assert(!isset($output['key2']), 'The value for "key2" was passed through.');
         
         $mapper->map('key2', 'my-new-key2');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(isset($output['my-new-key2']) && $output['my-new-key2'] === 'value2', 'The value for "key2" was not set.');
     }
     
@@ -43,12 +45,14 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function oneToTwo()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'key1' => 'value1'
-        ));
+        );
+
+        $mapper = new Mapper;
         $mapper->map('key1', 'ns1.key1');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(
             isset($output['ns1'])
             && isset($output['ns1']['key1'])
@@ -64,12 +68,14 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function oneToThree()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'key1' => 'value1'
-        ));
+        );
+
+        $mapper = new Mapper;
         $mapper->map('key1', 'ns1.subns1.key1');
 
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(
             isset($output['ns1'])
             && isset($output['ns1']['subns1'])
@@ -88,14 +94,16 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function manyToMany()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'ns1' => array(
                 'key1' => 'value1'
             )
-        ));
+        );
+
+        $mapper = new Mapper;
         $mapper->map('ns1.key1', 'ns2.key2');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(
             isset($output['ns2'])
             && isset($output['ns2']['key2'])
@@ -111,14 +119,16 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function testNumericKeys()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'ns1' => array(
                 'key1' => 'value1'
             )
-        ));
+        );
+        
+        $mapper = new Mapper;
         $mapper->map('ns1.key1', 'ns2.1.key2');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(
             isset($output['ns2'])
             && isset($output['ns2'][1])
@@ -135,14 +145,16 @@ class Test_Mapper extends Testes_UnitTest_Test
      */
     public function autoIncrementingKeys()
     {
-        $mapper = new Mapper(array(
+        $data = array(
             'key1' => 'value1',
             'key2' => 'value2'
-        ));
+        );
+        
+        $mapper = new Mapper;
         $mapper->map('key1', '$.key1');
         $mapper->map('key2', '$.key2');
         
-        $output = $mapper->convert();
+        $output = $mapper->convert($data);
         $this->assert(
             isset($output[0])
             && isset($output[0]['key1'])
