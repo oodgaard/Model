@@ -54,7 +54,7 @@ abstract class BaseRepository extends Repository
     public function remove(Entity $entity)
     {
         // expire the cache
-        $this->expireFor('findById', array($entity->id));
+        $this->expireFor(get_class($this), 'findById', array($entity->id));
         
         // then remove the item from the storage property
         unset($this->entities[$entity->id]);
@@ -69,7 +69,7 @@ abstract class BaseRepository extends Repository
         $this->entities[$entity->id] = $entity;
         
         // store in cache for the specified method
-        $this->persistFor('findById', array($entity->id), $entity);
+        $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
     }
     
     private function update(Entity $entity)
@@ -84,6 +84,6 @@ abstract class BaseRepository extends Repository
         $this->entities[$entity->id] = $entity;
         
         // update the cache
-        $this->persistFor('findById', array($entity->id), $entity);
+        $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
     }
 }

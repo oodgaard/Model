@@ -41,7 +41,7 @@ abstract class Repository
      */
     protected function persist($item, $time = null)
     {
-        return $this->persistFor($this->getLastMethod(), $this->getLastArgs(), $item, $time);
+        return $this->persistFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs(), $item, $time);
     }
     
     /**
@@ -51,7 +51,7 @@ abstract class Repository
      */
     protected function retrieve()
     {
-        return $this->retrieveFor($this->getLastMethod(), $this->getLastArgs());
+        return $this->retrieveFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
     
     /**
@@ -61,7 +61,7 @@ abstract class Repository
      */
     protected function expire()
     {
-        return $this->expireFor($this->getLastMethod(), $this->getLastArgs());
+        return $this->expireFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
     
     /**
@@ -74,10 +74,10 @@ abstract class Repository
      * 
      * @return \Model\Repository
      */
-    protected function persistFor($method, array $args, $item, $time = null)
+    protected function persistFor($class, $method, array $args, $item, $time = null)
     {
         if ($this->cache) {
-            $this->cache->set($this->generateCacheKey($method, $args), $item, $time);
+            $this->cache->set($this->generateCacheKey($class, $method, $args), $item, $time);
         }
         return $this;
     }
@@ -90,10 +90,10 @@ abstract class Repository
      * 
      * @return \Model\Repository
      */
-    protected function retrieveFor($method, array $args)
+    protected function retrieveFor($class, $method, array $args)
     {
         if ($this->cache) {
-            return $this->cache->get($this->generateCacheKey($method, $args));
+            return $this->cache->get($this->generateCacheKey($class, $method, $args));
         }
         return false;
     }
@@ -106,10 +106,10 @@ abstract class Repository
      * 
      * @return \Model\Repository
      */
-    protected function expireFor($method, array $args)
+    protected function expireFor($class, $method, array $args)
     {
         if ($this->cache) {
-            $this->cache->remove($this->generateCacheKey($method, $args));
+            $this->cache->remove($this->generateCacheKey($class, $method, $args));
         }
         return $this;
     }
@@ -122,9 +122,21 @@ abstract class Repository
      * 
      * @return string
      */
-    private function generateCacheKey($method, array $args)
+    private function generateCacheKey($class, $method, array $args)
     {
-        return md5(get_class($this) . $method . serialize($args));
+        return md5($class . $method . serialize($args));
+    }
+    
+    /**
+     * Returns the last repository class that was called. This class is designed to be called from the "persist()",
+     * "retrieve()" or "expire()" methods.
+     * 
+     * @return string
+     */
+    private function getLastClass()
+    {
+        $callstack = debug_backtrace();
+        return $callstack[count($callstack) - 3]['class'];
     }
     
     /**
