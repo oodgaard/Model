@@ -54,4 +54,17 @@ class Test_Entity extends Testes_UnitTest_Test
             $this->assert(false, 'Entity could not be added to set.');
         }
     }
+    
+    /**
+     * Tests proxy functionality.
+     * 
+     * @return void
+     */
+    public function testProxy()
+    {
+        $user = new UserEntity;
+        $this->assert(count($user->content) === 2, 'There must be 2 content items returned.');
+        $this->assert($user->content instanceof EntitySet, 'The content items must be an entity set.');
+        $this->assert($user->isLastAdmin === true, 'The user must be the last administrator.');
+    }
 }

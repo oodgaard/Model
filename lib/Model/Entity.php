@@ -88,6 +88,7 @@ class Entity implements Accessible
      */
     public function __set($name, $value)
     {
+        // if we can access the property check relationships or just set the straight value.
         if ($this->canAccessProperty($name)) {
             if (isset($this->hasOne[$name]) && !$value instanceof Entity) {
                 $class = $this->hasOne[$name];
@@ -114,10 +115,19 @@ class Entity implements Accessible
             return null;
         }
         
-        if (isset($this->data[$name])) {
+        // if value exists, just return it
+        if (array_key_exists($name, $this->data)) {
             return $this->data[$name];
         }
         
+        // proxies
+        if (isset($this->proxies[$name])) {
+            $proxy = $this->proxies[$name];
+            $this->__set($name, $proxy($this));
+            return $this->data[$name];
+        }
+        
+        // relationships
         if (isset($this->hasOne[$name])) {
             $class = $this->hasOne[$name];
             $this->data[$name] = new $class;
@@ -127,6 +137,7 @@ class Entity implements Accessible
             return $this->data[$name];
         }
         
+        // default value
         return null;
     }
     
@@ -187,9 +198,9 @@ class Entity implements Accessible
      * @param string $name     The property name.
      * @param mixed  $callback The callback to call.
      * 
-     * @
+     * @return \Model\Entity
      */
-    public function proxy($name, $repository, $method, array $args = array())
+    public function proxy($name, $callback)
     {
         if (!is_callable($callback)) {
             throw new Exception('The specified proxy is not callable.');
@@ -237,14 +248,11 @@ class Entity implements Accessible
      */
     public function import($array)
     {
-        if (!is_array($array) && !is_object($array)) {
-            throw new Exception('Item being imported must be an array or object.');
+        if (is_array($array) || is_object($array)) {
+            foreach ($array as $k => $v) {
+                $this->__set($k, $v);
+            }
         }
-        
-        foreach ($array as $k => $v) {
-            $this->__set($k, $v);
-        }
-        
         return $this;
     }
     

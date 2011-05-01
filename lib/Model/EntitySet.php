@@ -92,16 +92,11 @@ class EntitySet implements Accessible
      */
     public function import($array)
     {
-        // make sure the item is iterable
-        if (!is_array($array) && !is_object($array)) {
-            throw new Exception('Item being imported must be an array or object.');
+        if (is_array($array) || is_object($array)) {
+            foreach ($array as $k => $v) {
+                $this->offsetSet($k, $v);
+            }
         }
-        
-        // now apply the values
-        foreach ($array as $k => $v) {
-            $this->offsetSet($k, $v);
-        }
-        
         return $this;
     }
     
@@ -220,18 +215,10 @@ class EntitySet implements Accessible
      */
     public function offsetSet($offset, $value)
     {
-        // ensure traversable
-        if (!is_array($value) && !is_object($value)) {
-            throw new Exception('Item being set onto an EntitySet must be an array or object.');
+        if (is_array($value) || is_object($value)) {
+            $offset = is_null($offset) ? count($this->data) : $offset;
+            $this->data[$offset] = $value;
         }
-        
-        // detect offset
-        $offset = is_null($offset) ? count($this->data) : $offset;
-        
-        // apply to data
-        $this->data[$offset] = $value;
-        
-        // chain
         return $this;
     }
     
