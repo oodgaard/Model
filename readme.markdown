@@ -134,10 +134,10 @@ Or you can just manage local data:
     }
 
 Good things about proxies:
-- Autoloading means if you don't use the data, then you won't load the data.
-- You can manage your own caching which means you may not have to make that extra query.
-- If you load using a repository method, then you can just use that to manage the cache.
-- Using a closure allows for greater flexibility if necessary.
+* Autoloading means if you don't use the data, then you won't load the data.
+* You can manage your own caching which means you may not have to make that extra query.
+* If you load using a repository method, then you can just use that to manage the cache.
+* Using a closure allows for greater flexibility if necessary.
 
 Of course, if you are neurotic about running more than one query for data you can always just load it all at once and map it to the object from your query result or however you want to do it in your repository.
 
