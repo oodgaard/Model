@@ -12,7 +12,7 @@ Because you want your models to be defined by your business requirements not dat
 Theory of Abstraction
 ---------------------
 
-Because you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without being funnelled into a specific way of doing it such as frameworks like Doctrine impose on you. I am not saying Doctrine is bad, but even with Doctrine 2, they still haven't fully forgotten the Active Record design pattern which completely negates a domain driven approach which it is attempting to facilitate.
+Because you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved.
 
 Authoring Entities
 ------------------
