@@ -28,8 +28,8 @@ class Mapper implements \IteratorAggregate
      */
     public function __construct(array $map = array())
     {
-        $this->map($map);
         $this->init();
+        $this->map($map);
     }
     
     /**
