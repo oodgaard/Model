@@ -79,6 +79,68 @@ And you can even pass any traversable item:
         new stdClass,
     );
 
+Autoloading Data: Proxies
+-------------------------
+
+Instead of always having to manually load external data or relationships onto an entity, you can specify a proxy callback to load the data for you.
+
+    namespace Entity;
+    use Repository\Content as ContentRepository;
+    use Repository\User as UserRepository;
+
+    class Content
+    {
+        public function init()
+        {
+            // set up the proxy
+            $this->proxy('user', function(Content $content) {
+                $repo = new UserRepository;
+                return $repo->findById($content->idUser);
+            });
+
+            // and if you are loading a relation you can ensure an entity is created
+            $this->hasOne('user', '\Entity\Content\User');
+
+            // you can even load arbitrary data
+            $this->proxy('views', function(Content $content) {
+                $repo = new ContentRepository;
+                return $repo->getNumberOfViews($content->id);
+            });
+        }
+    }
+
+Now when we get a content item, we can autoload the user:
+
+    use Repository\Content as ContentRepository;
+
+    $content = new ContentRepository;
+    $content = $content->getById(1);
+
+    isset($content->user); // false
+    $content->user->id; // 1 (or some other value)
+
+Or you can just manage local data:
+
+    namespace Entity;
+
+    class User
+    {
+        public function init()
+        {
+            $this->proxy('name', function(User $user) {
+                return $user->firstName . ' ' . $user->lastName;
+            });
+        }
+    }
+
+Good things about proxies:
+- Autoloading means if you don't use the data, then you won't load the data.
+- You can manage your own caching which means you may not have to make that extra query.
+- If you load using a repository method, then you can just use that to manage the cache.
+- Using a closure allows for greater flexibility if necessary.
+
+Of course, if you are neurotic about running more than one query for data you can always just load it all at once and map it to the object from your query result or however you want to do it in your repository.
+
 Authoring Repositories
 ----------------------
 
