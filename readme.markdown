@@ -12,7 +12,7 @@ Because you want your models to be defined by your business requirements not dat
 Theory of Abstraction
 ---------------------
 
-Because you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend.
+Since you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend.
 
 Authoring Entities
 ------------------
