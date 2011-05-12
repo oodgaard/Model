@@ -12,7 +12,25 @@ Because you want your models to be defined by your business requirements not dat
 Theory of Abstraction
 ---------------------
 
-Because you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved.
+Because you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a business perspective not how it will be stored in the backend.
+
+You may have chat system that has 2 top level objects: conversations and users. In this system you have friends and coming from a domain perspective, you don't have relational objects, you would access the relation on the object itself. In this example, users would have friends, but there is no UserHasFriend object to link the two. You may have a friend object that relates to a user:
+
+    $user->friends[0]->name;
+    $user->friends[0]->isOnline;
+
+And the user object that is that user's friend may very well be a separate user instance from the top level user object:
+
+    $user; // instanceof \Entity\User
+    $user->friends[0]; // instanceof \Entity\User\Friend
+
+It's the same with a conversation's user or users:
+
+    $conversation; // instanceof \Entity\Conversation
+    $conversation->user; // instanceof \Entity\Conversation\User
+    $conversation->users[0]; // instanceof \Entity\Conversation\User
+
+Even though there are different user instances for different purposes, the general information may derive from the same table in the database which is populated by a repository, but the business requires that different properties are set and even that certain edge-case information be populated for different types of user objects.
 
 Authoring Entities
 ------------------
