@@ -120,7 +120,7 @@ When given the open-ended structure of defining your own storage implementations
     $content->user->name = 'Me Meeson';
     
     // split the data up
-    $mapper = new Mapper($content->export());
+    $mapper = new Mapper;
     $mapper->map('title', 'content.title');
     $mapper->map('created', 'content.created');
     $mapper->map('updated', 'content.updated');
@@ -129,7 +129,7 @@ When given the open-ended structure of defining your own storage implementations
 
 Now, calling:
 
-    $mapper->convert();
+    $mapper->convert($content->export());
 
 Would return:
 
@@ -179,5 +179,11 @@ This way you can map your data by just using an instance of the `\Map\Content` c
     
     // ...
     
-    $mapper = new ContentMap($content->export());
-    $mapped = $mapper->convert();
+    $mapper = new ContentMap();
+    $mapped = $mapper->convert($content->export());
+
+You can also pass more than one array to `convert()`:
+
+    $mapped = $mapper->convert($content->export(), array('title' => 'My Overridden Title'));
+
+Array's are merged as if using `array_merge()` and then converted.
