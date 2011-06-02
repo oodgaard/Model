@@ -49,11 +49,18 @@ class Entity implements Accessible
     private $hasMany = array();
     
     /**
-     * Proxies attached to the entity.
+     * Mapped setters.
      * 
      * @var array
      */
-    private $proxies = array();
+    private $setters = array();
+    
+    /**
+     * Mapped getters.
+     * 
+     * @var array
+     */
+    private $getters = array();
     
     /**
      * Constructs a new entity and sets any passed values.
@@ -81,22 +88,19 @@ class Entity implements Accessible
     /**
      * Easy property setting.
      * 
-     * @param string $name The property name.
+     * @param string $name  The property name.
      * @param mixed  $value The property value.
      * 
      * @return void
      */
     public function __set($name, $value)
     {
-        // if we can access the property check relationships or just set the straight value.
         if ($this->canAccessProperty($name)) {
-            if (isset($this->hasOne[$name]) && !$value instanceof Entity) {
-                $class = $this->hasOne[$name];
-                $this->data[$name] = new $class($value);
-            } elseif (isset($this->hasMany[$name]) && !$value instanceof EntitySet) {
-                $this->data[$name] = new EntitySet($this->hasMany[$name], $value);
+            if (isset($this->setters[$name])) {
+                $setter = $this->setters[$name];
+                $this->$setter($value);
             } else {
-                $this->data[$name] = $value;
+                $this->set($name, $value);
             }
         }
         return $this;
@@ -115,30 +119,12 @@ class Entity implements Accessible
             return null;
         }
         
-        // if value exists, just return it
-        if (array_key_exists($name, $this->data)) {
-            return $this->data[$name];
+        if (isset($this->getters[$name])) {
+            $getter = $this->getters[$name];
+            return $this->$getter();
         }
         
-        // proxies
-        if (isset($this->proxies[$name])) {
-            $proxy = $this->proxies[$name];
-            $this->__set($name, $proxy($this));
-            return $this->data[$name];
-        }
-        
-        // relationships
-        if (isset($this->hasOne[$name])) {
-            $class = $this->hasOne[$name];
-            $this->data[$name] = new $class;
-            return $this->data[$name];
-        } elseif (isset($this->hasMany[$name])) {
-            $this->data[$name] = new EntitySet($this->hasMany[$name]);
-            return $this->data[$name];
-        }
-        
-        // default value
-        return null;
+        return $this->get($name);
     }
     
     /**
@@ -167,6 +153,34 @@ class Entity implements Accessible
     }
     
     /**
+     * Maps the specified property to a setter method.
+     * 
+     * @param string $name   The name of the property.
+     * @param string $method The name of the method.
+     * 
+     * @return Entity
+     */
+    public function mapSetter($name, $method)
+    {
+        $this->setters[$name] = $method;
+        return $this;
+    }
+    
+    /**
+     * Maps the specified property to a getter method.
+     * 
+     * @param string $name   The name of the property.
+     * @param string $method The name of the method.
+     * 
+     * @return Entity
+     */
+    public function mapGetter($name, $method)
+    {
+        $this->getters[$name] = $method;
+        return $this;
+    }
+    
+    /**
      * Adds a has-one relationship to the entity.
      * 
      * @param string $name  The name of the property.
@@ -189,23 +203,6 @@ class Entity implements Accessible
     public function hasMany($name, $class)
     {
         $this->hasMany[$name] = $class;
-        return $this;
-    }
-    
-    /**
-     * Attaches a proxy callback to the specified property.
-     * 
-     * @param string $name     The property name.
-     * @param mixed  $callback The callback to call.
-     * 
-     * @return \Model\Entity
-     */
-    public function proxy($name, $callback)
-    {
-        if (!is_callable($callback)) {
-            throw new Exception('The specified proxy is not callable.');
-        }
-        $this->proxies[$name] = $callback;
         return $this;
     }
     
@@ -404,6 +401,54 @@ class Entity implements Accessible
     public function unserialize($data)
     {
         $this->import(unserialize($data));
+    }
+    
+    /**
+     * Allows an item to be set directly into the data array without any filtering.
+     * 
+     * @param string $name  The name of the property.
+     * @param mixed  $value The value of the property.
+     * 
+     * @return Entity
+     */
+    protected function set($name, $value)
+    {
+        if (isset($this->hasOne[$name]) && !$value instanceof Entity) {
+            $class = $this->hasOne[$name];
+            $this->data[$name] = new $class($value);
+        } elseif (isset($this->hasMany[$name]) && !$value instanceof EntitySet) {
+            $this->data[$name] = new EntitySet($this->hasMany[$name], $value);
+        } else {
+            $this->data[$name] = $value;
+        }
+        return $this;
+    }
+    
+    /**
+     * Allows an item's value to be retrieved directly without any filtering.
+     * 
+     * @param string $name The name of the property.
+     * 
+     * @return mixed
+     */
+    protected function get($name)
+    {
+        // if value exists, just return it
+        if (array_key_exists($name, $this->data)) {
+            return $this->data[$name];
+        }
+        
+        // relationships
+        if (isset($this->hasOne[$name])) {
+            $class = $this->hasOne[$name];
+            $this->data[$name] = new $class;
+            return $this->data[$name];
+        } elseif (isset($this->hasMany[$name])) {
+            $this->data[$name] = new EntitySet($this->hasMany[$name]);
+            return $this->data[$name];
+        }
+        
+        return null;
     }
     
     /**

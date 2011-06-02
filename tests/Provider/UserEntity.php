@@ -7,14 +7,19 @@ class UserEntity extends Entity
 {
     public function init()
     {
-        $this->hasMany('content', '\Provider\ContentEntity');
-        $this->proxy('content', function(UserEntity $user) {
-            $repo = new UserRepository;
-            return $repo->getContent($user);
-        });
-        $this->proxy('isLastAdmin', function(UserEntity $user) {
-            $repo = new UserRepository;
-            return $repo->isLastAdministrator($user);
-        });
+        $this->mapGetter('content', 'getContent');
+        $this->mapGetter('isLastAdmin', 'isLastAdmin');
+    }
+    
+    public function getContent()
+    {
+        $repo = new UserRepository;
+        return $repo->getContent($this);
+    }
+    
+    public function isLastAdmin()
+    {
+        $repo = new UserRepository;
+        return $repo->isLastAdministrator($this);
     }
 }

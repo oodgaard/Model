@@ -60,7 +60,7 @@ class Test_Entity extends Testes_UnitTest_Test
      * 
      * @return void
      */
-    public function testProxy()
+    public function testMappedGetters()
     {
         $user = new UserEntity;
         $this->assert(count($user->content) === 2, 'There must be 2 content items returned.');
