@@ -92,11 +92,16 @@ class EntitySet implements Accessible
      */
     public function import($array)
     {
-        if (is_array($array) || is_object($array)) {
-            foreach ($array as $k => $v) {
-                $this->offsetSet($k, $v);
-            }
+        // make sure the item is iterable
+        if (!is_array($array) && !is_object($array)) {
+            throw new Exception('Item being imported must be an array or object.');
         }
+        
+        // now apply the values
+        foreach ($array as $k => $v) {
+            $this->offsetSet($k, $v);
+        }
+        
         return $this;
     }
     
@@ -154,21 +159,182 @@ class EntitySet implements Accessible
     }
     
     /**
-     * Finds item matching the specified criteria and returns an EntitySet of them.
+     * Moves the item at the specified $currentIndex to the $newIndex and shifts any elements at the $newIndex forward.
+     * 
+     * @param int $currentIndex The current index.
+     * @param int $newIndex     The new index.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function moveTo($currentIndex, $newIndex)
+    {
+        if ($item = $this->offsetGet($currentIndex)) {
+            $item = clone $item;
+            $this->offsetUnset($currentIndex);
+            $this->push($newIndex, $item);
+        }
+        return $this;
+    }
+    
+    /**
+     * Inserts an item at the specified offset.
+     * 
+     * @param mixed $item The item to insert.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function push($index, $item)
+    {
+        $start      = array_slice($this->data, 0, $index);
+        $end        = array_slice($this->data, $index);
+        $this->data = array_merge($start, array($item), $end);
+        return $this;
+    }
+    
+    /**
+     * Pulls an item from the current collection and returns it.
+     * 
+     * @param int $index The item to pull out of the current set and return.
+     * 
+     * @return \Model\Entity
+     */
+    public function pull($index)
+    {
+        if ($item = $this->offsetGet($index)) {
+            $this->offsetUnset($index);
+            return $item;
+        }
+        return null;
+    }
+    
+    /**
+     * Prepends an item.
+     * 
+     * @param mixed $item The item to prepend.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function prepend($item)
+    {
+        return $this->push(0, $item);
+    }
+    
+    /**
+     * Appends an item.
+     * 
+     * @param mixed $item The item to append.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function append($item)
+    {
+        return $this->push($this->count(), $item);
+    }
+    
+    /**
+     * Reduces the array down to the items that match the specified array of keys. If the specified keys are empty
+     * 
+     * @param array $keys The keys to reduce the array down to.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function reduce($keys)
+    {
+        // find items that exist
+        $found = array();
+        foreach ((array) $keys as $key) {
+            if (isset($this->data[$key])) {
+                $found[$key] = $key;
+            }
+        }
+        
+        // if nothing is found, clear all items and return
+        if (!$found) {
+            return $this->clear();
+        }
+        
+        // remove all non-existing items
+        foreach ($this->data as $key => $value) {
+            if (!isset($found[$key])) {
+                unset($this->data[$key]);
+            }
+        }
+        
+        // re-index
+        $this->data = array_values($this->data);
+        return $this;
+    }
+    
+    /**
+     * Empties the current set.
+     * 
+     * @return \Model\EntitySet
+     */
+    public function clear()
+    {
+        $this->data = array();
+        return $this;
+    }
+    
+    /**
+     * Finds items matching the specified criteria and returns a new set of them.
      * 
      * @param array $query  An array of name/value pairs of fields to match.
      * @param int   $limit  The limit of items to find.
      * @param int   $offset The offset to start looking at.
      * 
-     * @return \Model\EntitySet
+     * @return array
+     */
+    public function findOne(array $query)
+    {
+        $clone = clone $this;
+        $key   = $clone->findKey($query);
+        if ($key !== false) {
+            return $clone->reduce($key)->offsetGet(0);
+        }
+        return false;
+    }
+    
+    /**
+     * Returns the first matched entity.
+     * 
+     * @param array $query An array of name/value pairs of fields to match.
+     * 
+     * @return \Model\Entity
      */
     public function find(array $query, $limit = 0, $offset = 0)
     {
-        if (!is_array($query)) {
-            $query = array($query => $value);
+        $clone = clone $this;
+        return $clone->reduce($clone->findKeys($query, $limit, $offset));
+    }
+    
+    /**
+     * Returns the first matched item.
+     * 
+     * @param array $query An array of name/value pairs of fields to match.
+     * 
+     * @return \Model\Entity
+     */
+    public function findKey(array $query)
+    {
+        if ($found = $this->findKeys($query, 1)) {
+            return $found[0];
         }
-        
-        $items = new static($this->class);
+        return false;
+    }
+    
+    /**
+     * Finds items matching the specified criteria and returns an array of their indexes.
+     * 
+     * @param array $query  An array of name/value pairs of fields to match.
+     * @param int   $limit  The limit of items to find.
+     * @param int   $offset The offset to start looking at.
+     * 
+     * @return array
+     */
+    public function findKeys(array $query, $limit = 0, $offset = 0)
+    {
+        $items = array();
         foreach ($this as $key => $item) {
             if ($offset && $offset > $key) {
                 continue;
@@ -182,26 +348,37 @@ class EntitySet implements Accessible
                 if (!preg_match('/' . str_replace('/', '\/', $value) . '/', $item->__get($name))) {
                     continue;
                 }
-                $items[] = $item;
+                $items[] = $key;
             }
         }
         return $items;
     }
     
     /**
-     * Returns the first matched item.
-     * 
-     * @param array $query An array of name/value pairs of fields to match.
+     * Returns the first element without setting the pointer to it.
      * 
      * @return \Model\Entity
      */
-    public function findOne(array $query)
+    public function first()
     {
-        $found = $this->find($query, 1);
-        if ($found->count()) {
-            return $found->offsetGet(0);
+        if ($this->offsetExists(0)) {
+            return $this->offsetGet(0);
         }
-        return false;
+        return null;
+    }
+    
+    /**
+     * Returns the first element without setting the pointer to it.
+     * 
+     * @return \Model\Entity
+     */
+    public function last()
+    {
+        $lastIndex = $this->count() - 1;
+        if ($this->offsetExists($lastIndex)) {
+            return $this->offsetGet($lastIndex);
+        }
+        return null;
     }
     
     /**
@@ -215,10 +392,18 @@ class EntitySet implements Accessible
      */
     public function offsetSet($offset, $value)
     {
-        if (is_array($value) || is_object($value)) {
-            $offset = is_null($offset) ? count($this->data) : $offset;
-            $this->data[$offset] = $value;
+        // ensure traversable
+        if (!is_array($value) && !is_object($value)) {
+            throw new Exception('Item being set onto an EntitySet must be an array or object.');
         }
+        
+        // detect offset
+        $offset = is_null($offset) ? count($this->data) : $offset;
+        
+        // apply to data
+        $this->data[$offset] = $value;
+        
+        // chain
         return $this;
     }
     
@@ -271,6 +456,7 @@ class EntitySet implements Accessible
     {
         if ($this->offsetExists($offset)) {
             unset($this->data[$offset]);
+            $this->data = array_values($this->data);
         }
         return $this;
     }

@@ -80,9 +80,28 @@ class Mapper implements \IteratorAggregate
             }
             $before = array_merge($before, $arg);
         }
-        
         foreach ($this->map as $map) {
             $this->setMappedValue($map['to'], $this->getMappedValue($map['from'], $before), $after);
+        }
+        return $after;
+    }
+    
+    /**
+     * Does a deep convert on multi-dimensional arrays for one or more sets of data. The same as nesting multiple calls
+     * to convert() in a loop and building a converted array.
+     * 
+     * @return array
+     */
+    public function convertArray()
+    {
+        $after = array();
+        foreach (func_get_args() as $array) {
+            if (!is_array($array)) {
+                continue;
+            }
+            foreach ($array as $before) {
+                $after[] = $this->convert($before);
+            }
         }
         return $after;
     }
