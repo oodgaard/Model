@@ -63,6 +63,13 @@ class Entity implements Accessible
     private $getters = array();
     
     /**
+     * Mapped autoloaders.
+     * 
+     * @var array
+     */
+    private $autoloaders = array();
+    
+    /**
      * Constructs a new entity and sets any passed values.
      * 
      * @param mixed $vals The values to set.
@@ -117,6 +124,12 @@ class Entity implements Accessible
     {
         if (!$this->canAccessProperty($name)) {
             return null;
+        }
+        
+        // autoload if it's not set and an autoloader is registered for it
+        if (!$this->__isset($name) && isset($this->autoloaders[$name])) {
+            $autoloader = $this->autoloaders[$name];
+            $this->$autoloader();
         }
         
         if (isset($this->getters[$name])) {
@@ -177,6 +190,21 @@ class Entity implements Accessible
     public function mapGetter($name, $method)
     {
         $this->getters[$name] = $method;
+        return $this;
+    }
+    
+    /**
+     * Maps an autoloader method to the specified method. The mapped method should explicitly set the values using
+     * get() or set(). It is desirable to conventionalize your autoloader names and to make them protected.
+     * 
+     * @param string $name   The name of the property.
+     * @param string $method The name of the method.
+     * 
+     * @return mixed
+     */
+    public function mapAutoloader($name, $method)
+    {
+        $this->autoloaders[$name] = $method;
         return $this;
     }
     
