@@ -3,7 +3,7 @@
 namespace Model;
 
 /**
- * The main repository interface. All model repositorys must implement this.
+ * The main repository interface. All model repositories must implement this.
  * 
  * @category Repositories
  * @package  Model
@@ -20,15 +20,66 @@ abstract class Repository
     private $cache;
     
     /**
-     * Constructs a new repository with the specified cache driver.
+     * Returns a sub-repository for the current repository using the current class as its namespace. The current
+     * caching instance is passed on.
      * 
-     * @param \Model\CacheInterface $cache The cache drive to use, if any.
+     * @param string $name The sub repository to instantiate.
      * 
      * @return \Model\Repository
      */
-    public function __construct(CacheInterface $cache = null)
+    public function __get($name)
+    {
+        $class = get_class($this) . '\\' . ucfirst($name);
+        $class = new $class;
+        $class->setParent($this);
+        $class->setCache($this->getCache());
+        return $class;
+    }
+    
+    /**
+     * Sets the parent repository.
+     * 
+     * @param \Model\Repository $parent The parent repository.
+     * 
+     * @return \Model\Repository
+     */
+    public function setParent(Repository $parent = null)
+    {
+        $this->parent = $parent;
+        return $this;
+    }
+    
+    /**
+     * Returns the parent repository.
+     * 
+     * @return \Model\Repository
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+    
+    /**
+     * Sets the cache interface to use.
+     * 
+     * @param \Model\CacheInterface $cache The cache interface to use.
+     * 
+     * @return \Model\Repository
+     */
+    public function setCache(CacheInterface $cache = null)
     {
         $this->cache = $cache;
+        return $this;
+    }
+    
+    /**
+     * Returns the cache interface being used.
+     * 
+     * @return \Model\CacheInterface|null
+     */
+    public function getCache()
+    {
+        return $this->cache;
     }
     
     /**
