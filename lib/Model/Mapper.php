@@ -3,9 +3,9 @@
 namespace Model;
 
 /**
- * The main model exception class.
+ * The mapping class that maps one array or object to an array.
  * 
- * @category Exceptions
+ * @category Mapping
  * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
@@ -18,6 +18,13 @@ class Mapper implements \IteratorAggregate
      * @var array
      */
     private $map = array();
+    
+    /**
+     * The name of the element that will be used for the top level array's key.
+     * 
+     * @var string
+     */
+    private $key;
     
     /**
      * Intializes a new mapper. Any mapping passed in here is passed off to the map method.
@@ -66,23 +73,60 @@ class Mapper implements \IteratorAggregate
     }
     
     /**
+     * Sets the element value to use for the top level array's key. By default this is simply the index.
+     * 
+     * @param string $key The key to use.
+     * 
+     * @return Mapper
+     */
+    public function setKey($key)
+    {
+        $this->key = $key;
+        return $this;
+    }
+    
+    /**
+     * Returns the name of the element that will be used for the top level array's key.
+     * 
+     * @return string
+     */
+    public function getKey()
+    {
+        return $this->key;
+    }
+    
+    /**
      * Converts the input array to the output array.
      * 
      * @return array
      */
     public function convert()
     {
+        // before is simply all items converted to scalar or array (no objects)
         $before = array();
+        
+        // after is after the values are mapped and is what is returned
         $after  = array();
+        
+        // allow multiple arguments
         foreach (func_get_args() as $arg) {
-            if (!is_array($arg)) {
+            // we can only map traversible items
+            if (!is_array($arg) && !is_object($arg)) {
                 continue;
             }
+            
+            // make sure it's an array so we know how to access each element
+            $arg = $this->convertToArray($arg);
+            
+            // since we allow more than one item to be passed in for conversion, we merge the result
             $before = array_merge($before, $arg);
         }
+        
+        // applies each mapping to each of the elements in the array
         foreach ($this->map as $map) {
             $this->setMappedValue($map['to'], $this->getMappedValue($map['from'], $before), $after);
         }
+        
         return $after;
     }
     
@@ -94,15 +138,28 @@ class Mapper implements \IteratorAggregate
      */
     public function convertArray()
     {
+        // the resulting item is always an array
         $after = array();
+        
+        // allows more than one array of items
         foreach (func_get_args() as $array) {
-            if (!is_array($array)) {
+            // the item must be traversible
+            if (!is_array($array) && !is_object($array)) {
                 continue;
             }
-            foreach ($array as $before) {
-                $after[] = $this->convert($before);
+            
+            // iterate over each entry and convert it
+            foreach ($array as $index => $before) {
+                $converted = $this->convert($before);
+                if ($this->key && $mappedKey = $this->getMappedValue($this->key, $converted)) {
+                    if (is_numeric($mappedKey) || is_string($mappedKey)) {
+                        $index = $mappedKey;
+                    }
+                }
+                $after[$index] = $converted;
             }
         }
+        
         return $after;
     }
     
@@ -206,5 +263,25 @@ class Mapper implements \IteratorAggregate
             $key = (int) $key;
         }
         return $this;
+    }
+    
+    /**
+     * Recursively converts the passed in item to an array. It assumes the item is an array or object.
+     * 
+     * @param mixed $item The item to convert.
+     * 
+     * @return array
+     */
+    private function convertToArray($item)
+    {
+        $array = array();
+        foreach ($item as $key => $value) {
+            if (is_array($value) || is_object($value)) {
+                $array[$key] = $this->convertToArray($value);
+            } else {
+                $array[$key] = $value;
+            }
+        }
+        return $array;
     }
 }

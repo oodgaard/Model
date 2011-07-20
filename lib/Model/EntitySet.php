@@ -36,8 +36,21 @@ class EntitySet implements Accessible
      */
     public function __construct($class, $values = array())
     {
-        $this->class = $class;
+        $this->class = (string) $class;
         $this->import($values);
+    }
+    
+    /**
+     * Creates a new item with the specified data.
+     * 
+     * @param mixed $from The data to create the entity from, if any.
+     * 
+     * @return Entity
+     */
+    public function create($from = array())
+    {
+        $class = $this->getClass();
+        return new $class($from);
     }
     
     /**
@@ -423,8 +436,7 @@ class EntitySet implements Accessible
             // if it's not an entity yet, make it one
             // this will allow the set to not take up any overhead if the item is not accessed
             if (!$this->data[$offset] instanceof $this->class) {
-                $class               = $this->class;
-                $this->data[$offset] = new $class($this->data[$offset]);
+                $this->data[$offset] = $this->create($this->data[$offset]);
             }
             
             // return the value
