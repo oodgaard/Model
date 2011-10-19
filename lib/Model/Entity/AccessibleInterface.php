@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Model\Entity;
 
 /**
  * Basic accessible interface defining common interfaces.
@@ -10,16 +10,16 @@ namespace Model;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-interface Accessible extends \ArrayAccess, \Countable, \Iterator, \Serializable
+interface AccessibleInterface extends \ArrayAccess, \Countable, \Iterator, \Serializable
 {
      /**
       * Fills values from an array.
       * 
-      * @param mixed $array The values to import.
+      * @param mixed $values The values to import.
       * 
       * @return \Model\Entity
       */
-    public function import($array);
+    public function import($values);
     
     /**
      * Fills the entity with the specified values.

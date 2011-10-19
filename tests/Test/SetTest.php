@@ -1,21 +1,23 @@
 <?php
 
-use Model\EntitySet;
+namespace Test;
+use Model\Entity\Set;
 use Provider\ContentEntity;
+use Testes\Test;
 
 /**
- * Tests the EntitySet component.
+ * Tests the Set component.
  * 
- * @category EntitySets
+ * @category Sets
  * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Test_EntitySet extends Testes_UnitTest_Test
+class SetTest extends Test
 {
     public function setUp()
     {
-        $this->set = new EntitySet('\Provider\ContentEntity');
+        $this->set = new Set('\Provider\ContentEntity');
         for ($i = 1; $i <= 10; $i++) {
             $this->set[] = new ContentEntity(array('id' => $i, 'name' => 'test ' . $i));
         }

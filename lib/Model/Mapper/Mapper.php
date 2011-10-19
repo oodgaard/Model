@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Model\Mapper;
 
 /**
  * The mapping class that maps one array or object to an array.

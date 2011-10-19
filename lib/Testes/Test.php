@@ -1,15 +1,38 @@
 <?php
 
+namespace Testes;
+
 /**
- * Basic class for any type of test (benchmark, unit test).
+ * Base test class. Subclasses need only implement test methods. Test methods are any public methods that aren't one of
+ * the following:
+ * - 
  * 
- * @category Testing
+ * @category UnitTesting
  * @package  Testes
  * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2010 Trey Shugart
+ * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-abstract class Testes_Test implements Testes_Runable
+abstract class Test extends TestAbstract
 {
+    /**
+     * Runs all test methods.
+     * 
+     * @return Test
+     */
+    public function run()
+    {
+        $this->setUp();
+        $this->startMemoryCounter();
+        $this->startTimer();
+        foreach ($this->getMethods() as $test) {
+            $this->$test();
+        }
+        $this->stopTimer();
+        $this->stopMemoryCounter();
+        $this->tearDown();
+        return $this;
+    }
+    
     /**
      * Returns all public methods that are valid test methods.
      * 
@@ -17,11 +40,10 @@ abstract class Testes_Test implements Testes_Runable
      */
     public function getMethods()
     {
+        // exclude any methods from the interfaces
         $exclude = array();
         $include = array();
-        $self    = new ReflectionClass($this);
-
-        // find each method to exclude
+        $self    = new \ReflectionClass($this);
         foreach ($self->getInterfaces() as $interface) {
             foreach ($interface->getMethods() as $method) {
                 $exclude[] = $method->getName();
@@ -30,7 +52,6 @@ abstract class Testes_Test implements Testes_Runable
         
         // exclude methods
         foreach ($self->getMethods() as $method) {
-        	// only public methods
         	if (!$method->isPublic()) {
         		continue;
         	}
@@ -40,19 +61,15 @@ abstract class Testes_Test implements Testes_Runable
                 continue;
             }
 
-        	// we only need the method name now
+            // exclude particular methods
             $method = $method->getName();
-
-            // only if it isn't in the exlusion list
             if (in_array($method, $exclude)) {
                 continue;
             }
-
-            // add it to the inclusion list
             $include[] = $method;
         }
         
-        // return the inclusion list
+        // make sure no duplicates are returned
         return array_unique($include);
     }
 }

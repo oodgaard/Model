@@ -1,9 +1,11 @@
 <?php
 
-use Model\EntitySet;
+namespace Test;
+use Model\Entity\Set;
 use Provider\CommentEntity;
 use Provider\ContentEntity;
 use Provider\UserEntity;
+use Testes\Test;
 
 /**
  * Tests the Entity component.
@@ -13,7 +15,7 @@ use Provider\UserEntity;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Test_Entity extends Testes_UnitTest_Test
+class EntityTest extends Test
 {
     /**
      * Ensures that data is properly imported when passing through the constructor.
@@ -46,7 +48,7 @@ class Test_Entity extends Testes_UnitTest_Test
     {
         $entity = new ContentEntity;
         $this->assert($entity->user instanceof UserEntity, 'User relationship was not instantiated.');
-        $this->assert($entity->comments instanceof EntitySet, 'Comments relationship was not instantiated.');
+        $this->assert($entity->comments instanceof Set, 'Comments relationship was not instantiated.');
         
         try {
             $entity->comments->offsetSet(0, new CommentEntity);
@@ -64,7 +66,7 @@ class Test_Entity extends Testes_UnitTest_Test
     {
         $user = new UserEntity;
         $this->assert(count($user->content) === 2, 'There must be 2 content items returned.');
-        $this->assert($user->content instanceof EntitySet, 'The content items must be an entity set.');
+        $this->assert($user->content instanceof Set, 'The content items must be an entity set.');
         $this->assert($user->isLastAdmin === true, 'The user must be the last administrator.');
     }
 }

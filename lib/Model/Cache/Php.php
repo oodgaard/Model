@@ -1,7 +1,6 @@
 <?php
 
 namespace Model\Cache;
-use Model;
 
 /**
  * A cache driver that only caches items in memory for a single execution.
@@ -11,7 +10,7 @@ use Model;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Php implements Model\CacheInterface
+class Php implements CacheInterface
 {
     /**
      * The static cache.
@@ -27,11 +26,12 @@ class Php implements Model\CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache. Not supported in this driver.
      * 
-     * @return void
+     * @return \Model\Cache\Php
      */
     public function set($key, $value, $lifetime = null)
     {
         $this->cache[$key] = $value;
+        return $this;
     }
     
     /**
@@ -66,12 +66,13 @@ class Php implements Model\CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return void
+     * @return \Model\Cache\Php
      */
     public function remove($key)
     {
         if (isset($this->cache[$key])) {
             unset($this->cache[$key]);
         }
+        return $this;
     }
 }

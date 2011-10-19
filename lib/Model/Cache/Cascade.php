@@ -2,7 +2,6 @@
 
 namespace Model\Cache;
 use Model\Exception;
-use Model\CacheInterface;
 
 /**
  * A cache handler that can use multiple cache sources.
@@ -49,13 +48,14 @@ class Cascade implements CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return void
+     * @return \Model\Cache\Cascade
      */
     public function set($key, $value, $lifetime = null)
     {
         foreach ($this->cache as $cache) {
             $cache->set($key, $value, $lifetime);
         }
+        return $this;
     }
     
     /**
@@ -97,12 +97,13 @@ class Cascade implements CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return void
+     * @return \Model\Cache\Cascade
      */
     public function remove($key)
     {
         foreach ($this->cache as $cache) {
             $cache->remove($key);
         }
+        return $this;
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 namespace Model\Cache;
-use Model;
 
 /**
  * The Memcache driver.
@@ -11,7 +10,7 @@ use Model;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Memcache implements Model\CacheInterface
+class Memcache implements CacheInterface
 {
     /**
      * The default Memcache configuration.
@@ -40,10 +39,11 @@ class Memcache implements Model\CacheInterface
      * 
      * @param array $config The Memcache configuration.
      * 
-     * @return \Model\Cache\Driver\Memcache
+     * @return \Model\Cache\Memcache
      */
     public function __construct(array $config = array())
-    {
+    {    
+        $this->config   = array_merge($this->config, $config);
         $this->memcache = new \Memcache;
         foreach ($this->config['servers'] as $server) {
             $this->memcache->addServer($server['host'], $server['port']);
@@ -57,12 +57,13 @@ class Memcache implements Model\CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return void
+     * @return \Model\Cache\Memcache
      */
     public function set($key, $value, $lifetime = null)
     {
         $lifetime = is_null($lifetime) ? $this->config['lifetime'] : $lifetime;
         $this->memcache->add($key, $value, $lifetime);
+        return $this;
     }
     
     /**
@@ -94,10 +95,11 @@ class Memcache implements Model\CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\CacheInterface
+     * @return \Model\Cache\Memcache
      */
     public function remove($key)
     {
         $this->memcache->delete($key);
+        return $this;
     }
 }

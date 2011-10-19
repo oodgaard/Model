@@ -1,7 +1,6 @@
 <?php
 
-namespace Model;
-use Model\Mapper;
+namespace Model\Entity;
 
 /**
  * The main entity class. All model entities should derive from this class.
@@ -11,7 +10,7 @@ use Model\Mapper;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Entity implements Accessible
+class EntityAbstract implements AccessibleInterface
 {
     /**
      * The data in the entity.
@@ -74,7 +73,7 @@ class Entity implements Accessible
      * 
      * @param mixed $vals The values to set.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function __construct($values = array())
     {
@@ -127,9 +126,8 @@ class Entity implements Accessible
         }
         
         // autoload if it's not set and an autoloader is registered for it
-        if (!$this->__isset($name) && isset($this->autoloaders[$name])) {
-            $autoloader = $this->autoloaders[$name];
-            $this->$autoloader();
+        if (!$this->__isset($name) && $this->hasAutoloader($name)) {
+            $this->autoload($name);
         }
         
         if (isset($this->getters[$name])) {
@@ -155,7 +153,7 @@ class Entity implements Accessible
      * 
      * @param string $name The value to unset.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function __unset($name)
     {
@@ -195,7 +193,7 @@ class Entity implements Accessible
     
     /**
      * Maps an autoloader method to the specified method. The mapped method should explicitly set the values using
-     * get() or set(). It is desirable to conventionalize your autoloader names and to make them protected.
+     * get() or set().
      * 
      * @param string $name   The name of the property.
      * @param string $method The name of the method.
@@ -204,7 +202,74 @@ class Entity implements Accessible
      */
     public function mapAutoloader($name, $method)
     {
+        if (!is_string($method)) {
+            throw new Exception('The specified autoloader for {$name} must be a string.');
+        }
+        
         $this->autoloaders[$name] = $method;
+        return $this;
+    }
+    
+    /**
+     * Returns whether or not the specified autoloader exists.
+     * 
+     * @param string $name The name of the autoloader.
+     * 
+     * @return bool
+     */
+    public function hasAutoloader($name)
+    {
+        return isset($this->autoloaders[$name]);
+    }
+    
+    /**
+     * Returns the specified autoloader.
+     * 
+     * @param string $name The name of the autoloader.
+     * 
+     * @throws Exception If the specified autoloader does not exist.
+     * 
+     * @return string
+     */
+    public function getAutoloader($name)
+    {
+        if (!$this->hasAutoloader($name)) {
+            throw new Exception("Cannot get autoloader for {$name} because the autoloader was not defined.");
+        }
+        
+        return $this->autoloaders[$name];
+    }
+    
+    /**
+     * Autoloads the specified item.
+     * 
+     * @param string $name The name of the autoloader.
+     * 
+     * @throws Exception If the specified autoloader does not exist.
+     * 
+     * @return Entity
+     */
+    public function autoload($name)
+    {
+        if (!$this->hasAutoloader($name)) {
+            throw new Exception("Cannot autoload {$name} because an autoloader for it was not defined.");
+        }
+        
+        $autoloader = $this->getAutoloader($name);
+        $this->$autoloader();
+        return $this;
+    }
+    
+    /**
+     * Autoloads all registered autoloaders.
+     * 
+     * @return Entity
+     */
+    public function autoloadAll()
+    {
+        foreach ($this->autoloaders as $name => $autoloader) {
+            $this->autoload($name);
+        }
         return $this;
     }
     
@@ -214,7 +279,7 @@ class Entity implements Accessible
      * @param string $name  The name of the property.
      * @param string $class The class to use.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function hasOne($name, $class)
     {
@@ -226,7 +291,7 @@ class Entity implements Accessible
      * Adds a has-many relationship to the entity.
      * 
      * @param string $name  The name of the property.
-     * @param string $class The class to pass to the EntitySet.
+     * @param string $class The class to pass to the Set.
      */
     public function hasMany($name, $class)
     {
@@ -239,7 +304,7 @@ class Entity implements Accessible
      * 
      * @param mixed $properties A property or array of properties to whitelist.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function whitelist($properties)
     {
@@ -254,7 +319,7 @@ class Entity implements Accessible
      * 
      * @param mixed $properties A property or array of properties to blacklist.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function blacklist($properties)
     {
@@ -269,7 +334,7 @@ class Entity implements Accessible
      * 
      * @param mixed $array The array to import.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function import($array)
     {
@@ -304,7 +369,7 @@ class Entity implements Accessible
      * @param string $name  The property to set.
      * @param mixed  $value The value to set.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function offsetSet($name, $value)
     {
@@ -340,7 +405,7 @@ class Entity implements Accessible
      * 
      * @param string $name The property to unset.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function offsetUnset($name)
     {
@@ -370,7 +435,7 @@ class Entity implements Accessible
     /**
      * Moves to the next item in the iteration.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function next()
     {
@@ -381,7 +446,7 @@ class Entity implements Accessible
     /**
      * Resets the iteration.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function rewind()
     {
@@ -444,8 +509,8 @@ class Entity implements Accessible
         if (isset($this->hasOne[$name]) && !$value instanceof Entity) {
             $class = $this->hasOne[$name];
             $this->data[$name] = new $class($value);
-        } elseif (isset($this->hasMany[$name]) && !$value instanceof EntitySet) {
-            $this->data[$name] = new EntitySet($this->hasMany[$name], $value);
+        } elseif (isset($this->hasMany[$name]) && !$value instanceof Set) {
+            $this->data[$name] = new Set($this->hasMany[$name], $value);
         } else {
             $this->data[$name] = $value;
         }
@@ -472,7 +537,7 @@ class Entity implements Accessible
             $this->data[$name] = new $class;
             return $this->data[$name];
         } elseif (isset($this->hasMany[$name])) {
-            $this->data[$name] = new EntitySet($this->hasMany[$name]);
+            $this->data[$name] = new Set($this->hasMany[$name]);
             return $this->data[$name];
         }
         

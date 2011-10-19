@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Model\Entity;
 
 /**
  * The class that represents a set of entities.
@@ -10,7 +10,7 @@ namespace Model;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class EntitySet implements Accessible
+class Set implements AccessibleInterface
 {
     /**
      * The class used to represent each entity in the set.
@@ -32,7 +32,7 @@ class EntitySet implements Accessible
      * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function __construct($class, $values = array())
     {
@@ -85,7 +85,7 @@ class EntitySet implements Accessible
      * 
      * @param string $class The class to check.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function mustRepresent($class)
     {
@@ -101,7 +101,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $array The values to import.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function import($array)
     {
@@ -123,7 +123,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $vals The values to automate the setting of.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function export()
     {
@@ -146,12 +146,11 @@ class EntitySet implements Accessible
      */
     public function walk($callback, array $userdata = array())
     {
-        if (!is_callable($callback)) {
-            throw new Exception('The callback specified to \Model\Entity->walk() is not callable.');
-        }
         foreach ($this as $entity) {
-            call_user_func($callback, $userdata ? $userdata : $entity);
+            $cb = is_string($callback) ? array($entity, $callback) : $callback;
+            call_user_func($cb, $userdata ? $userdata : $entity);
         }
+        
         return $this;
     }
     
@@ -177,7 +176,7 @@ class EntitySet implements Accessible
      * @param int $currentIndex The current index.
      * @param int $newIndex     The new index.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function moveTo($currentIndex, $newIndex)
     {
@@ -194,7 +193,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $item The item to insert.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function push($index, $item)
     {
@@ -209,7 +208,7 @@ class EntitySet implements Accessible
      * 
      * @param int $index The item to pull out of the current set and return.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function pull($index)
     {
@@ -225,7 +224,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $item The item to prepend.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function prepend($item)
     {
@@ -237,7 +236,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $item The item to append.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function append($item)
     {
@@ -249,7 +248,7 @@ class EntitySet implements Accessible
      * 
      * @param array $keys The keys to reduce the array down to.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function reduce($keys)
     {
@@ -281,7 +280,7 @@ class EntitySet implements Accessible
     /**
      * Empties the current set.
      * 
-     * @return \Model\EntitySet
+     * @return \Model\Entity\Set
      */
     public function clear()
     {
@@ -313,7 +312,7 @@ class EntitySet implements Accessible
      * 
      * @param array $query An array of name/value pairs of fields to match.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function find(array $query, $limit = 0, $offset = 0)
     {
@@ -326,7 +325,7 @@ class EntitySet implements Accessible
      * 
      * @param array $query An array of name/value pairs of fields to match.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function findKey(array $query)
     {
@@ -370,7 +369,7 @@ class EntitySet implements Accessible
     /**
      * Returns the first element without setting the pointer to it.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function first()
     {
@@ -383,7 +382,7 @@ class EntitySet implements Accessible
     /**
      * Returns the first element without setting the pointer to it.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function last()
     {
@@ -401,7 +400,7 @@ class EntitySet implements Accessible
      * @param mixed $offset The offset to set.
      * @param mixed $value  The value to set.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function offsetSet($offset, $value)
     {
@@ -462,7 +461,7 @@ class EntitySet implements Accessible
      * 
      * @param mixed $offset The offset to unset.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function offsetUnset($offset)
     {
@@ -486,7 +485,7 @@ class EntitySet implements Accessible
     /**
      * Returns the current element.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function current()
     {
@@ -506,7 +505,7 @@ class EntitySet implements Accessible
     /**
      * Moves to the next element.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function next()
     {
@@ -517,7 +516,7 @@ class EntitySet implements Accessible
     /**
      * Resets to the first element.
      * 
-     * @return \Model\Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function rewind()
     {

@@ -1,10 +1,11 @@
 <?php
 
 namespace Provider;
-use Model\Entity;
-use Model\Repository;
+use Model\Cache\Php as Cache;
+use Model\Entity\EntityAbstract;
+use Model\Repository\RepositoryAbstract;
 
-abstract class BaseRepository extends Repository
+abstract class BaseRepository extends RepositoryAbstract
 {
     /**
      * Keeps track of the number of times "findById()" was called so we can test
@@ -20,6 +21,11 @@ abstract class BaseRepository extends Repository
      * @var array
      */
     private $entities = array();
+
+    public function __construct()
+    {
+        $this->setCache(new Cache);
+    }
     
     public function findById($id)
     {
@@ -41,7 +47,7 @@ abstract class BaseRepository extends Repository
         return $entity;
     }
     
-    public function save(Entity $entity)
+    public function save(EntityAbstract $entity)
     {
         if ($entity->id) {
             $this->update($entity);
@@ -51,7 +57,7 @@ abstract class BaseRepository extends Repository
         return $this;
     }
     
-    public function remove(Entity $entity)
+    public function remove(EntityAbstract $entity)
     {
         // expire the cache
         $this->expireFor(get_class($this), 'findById', array($entity->id));
@@ -60,7 +66,7 @@ abstract class BaseRepository extends Repository
         unset($this->entities[$entity->id]);
     }
     
-    private function insert(Entity $entity)
+    private function insert(EntityAbstract $entity)
     {
         // generate an id
         $entity->id = md5(microtime());
@@ -72,7 +78,7 @@ abstract class BaseRepository extends Repository
         $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
     }
     
-    private function update(Entity $entity)
+    private function update(EntityAbstract $entity)
     {
         // make sure that it exists first as it can only be updated if it already exists
         // mimics database behavior

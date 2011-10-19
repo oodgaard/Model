@@ -1,5 +1,7 @@
 <?php
 
+namespace Testes;
+
 /**
  * The autoloader.
  * 
@@ -8,7 +10,7 @@
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) Trey Shugart 2010 http://europaphp.org/
  */
-class Testes_Autoloader
+class Autoloader
 {
     /**
      * The NS to autoload.
@@ -24,21 +26,21 @@ class Testes_Autoloader
      * 
      * @var array
      */
-    protected static $paths = array();
+    private static $paths = array();
     
     /**
      * The framework path.
      * 
      * @var string
      */
-    protected static $frameworkPath;
+    private static $frameworkPath;
 
     /**
      * Whether or not it has been registered with SPL yet.
      * 
      * @var bool
      */
-    protected static $isRegistered = false;
+    private static $isRegistered = false;
     
     /**
      * Registers autoloading.
@@ -51,7 +53,7 @@ class Testes_Autoloader
         if ($path) {
             $temp = realpath($path);
             if (!$temp) {
-                throw new Testes_Exception('The test path "' . $path . '" is not valid.');
+                throw new \LogicException('The test path "' . $path . '" is not valid.');
             }
 
             // register the namespace and it's associated path
@@ -71,7 +73,7 @@ class Testes_Autoloader
     public static function autoload($class)
     {
         // get the base file name
-        $basename = str_replace(array('_', '\\'), '/', $class) . '.php';
+        $basename = str_replace(array('_', '\\'), DIRECTORY_SEPARATOR, $class) . '.php';
         
         // test for framework files
         if (strpos($class, self::NS) !== false) {
@@ -89,11 +91,11 @@ class Testes_Autoloader
     }
 
     /**
-     * Registeres the framework path if it hasn't been registered yet.
+     * Registers the framework path if it hasn't been registered yet.
      * 
      * @return void
      */
-    protected static function registerFramework()
+    private static function registerFramework()
     {
         if (!self::$frameworkPath) {
             self::$frameworkPath = realpath(dirname(__FILE__) . '/../');
@@ -101,14 +103,14 @@ class Testes_Autoloader
     }
 
     /**
-     * Registeres autoloading if it hasn't been registered yet.
+     * Registers autoloading if it hasn't been registered yet.
      * 
      * @return void
      */
-    protected static function registerAutoload()
+    private static function registerAutoload()
     {
         if (!self::$isRegistered) {
-            spl_autoload_register(array(self::NS . '_Autoloader', 'autoload'));
+            spl_autoload_register(array('\\' . self::NS . '\Autoloader', 'autoload'));
             self::$isRegistered = true;
         }
     }

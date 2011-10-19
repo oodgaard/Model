@@ -1,9 +1,9 @@
 <?php
 
 namespace Provider;
-use Model\Entity;
+use Model\Entity\EntityAbstract;
 
-class UserEntity extends Entity
+class UserEntity extends EntityAbstract
 {
     public function init()
     {

@@ -1,9 +1,9 @@
 <?php
 
 namespace Provider;
-use Model\Entity;
+use Model\Entity\EntityAbstract;
 
-class ContentEntity extends Entity
+class ContentEntity extends EntityAbstract
 {
     public $init = false;
     

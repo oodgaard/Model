@@ -1,6 +1,7 @@
 <?php
 
-namespace Model;
+namespace Model\Repository;
+use Model\Cache\CacheInterface;
 
 /**
  * The main repository interface. All model repositories must implement this.
@@ -10,12 +11,12 @@ namespace Model;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-abstract class Repository
+abstract class RepositoryAbstract
 {
     /**
      * The cache driver to use, if any.
      * 
-     * @var \Model\CacheInterface|null
+     * @var \Model\Cache\CacheInterface|null
      */
     private $cache;
     
@@ -25,7 +26,7 @@ abstract class Repository
      * 
      * @param string $name The sub repository to instantiate.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     public function __get($name)
     {
@@ -39,11 +40,11 @@ abstract class Repository
     /**
      * Sets the parent repository.
      * 
-     * @param \Model\Repository $parent The parent repository.
+     * @param \Model\Repository\RepositoryAbstract $parent The parent repository.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
-    public function setParent(Repository $parent = null)
+    public function setParent(RepositoryAbstract $parent)
     {
         $this->parent = $parent;
         return $this;
@@ -52,7 +53,7 @@ abstract class Repository
     /**
      * Returns the parent repository.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     public function getParent()
     {
@@ -62,11 +63,11 @@ abstract class Repository
     /**
      * Sets the cache interface to use.
      * 
-     * @param \Model\CacheInterface $cache The cache interface to use.
+     * @param \Model\Cache\CacheInterface $cache The cache interface to use.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
-    public function setCache(CacheInterface $cache = null)
+    public function setCache(CacheInterface $cache)
     {
         $this->cache = $cache;
         return $this;
@@ -75,7 +76,7 @@ abstract class Repository
     /**
      * Returns the cache interface being used.
      * 
-     * @return \Model\CacheInterface|null
+     * @return \Model\Cache\CacheInterface|null
      */
     public function getCache()
     {
@@ -88,7 +89,7 @@ abstract class Repository
      * @param mixed $item The item to store.
      * @param mixed $time The time to store the item for.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     protected function persist($item, $time = null)
     {
@@ -108,7 +109,7 @@ abstract class Repository
     /**
      * Expires the item for the current repository method.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     protected function expire()
     {
@@ -123,7 +124,7 @@ abstract class Repository
      * @param mixed  $item   The item to cache.
      * @param mixed  $time   The time to cache the item for.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     protected function persistFor($class, $method, array $args, $item, $time = null)
     {
@@ -139,7 +140,7 @@ abstract class Repository
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     protected function retrieveFor($class, $method, array $args)
     {
@@ -155,7 +156,7 @@ abstract class Repository
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Model\Repository
+     * @return \Model\Repository\RepositoryAbstract
      */
     protected function expireFor($class, $method, array $args)
     {
@@ -187,7 +188,7 @@ abstract class Repository
     private function getLastClass()
     {
         $callstack = debug_backtrace();
-        return $callstack[count($callstack) - 3]['class'];
+        return get_class($callstack[2]['object']);
     }
     
     /**
@@ -199,7 +200,7 @@ abstract class Repository
     private function getLastMethod()
     {
         $callstack = debug_backtrace();
-        return $callstack[count($callstack) - 3]['function'];
+        return $callstack[2]['function'];
     }
     
     /**
@@ -211,6 +212,6 @@ abstract class Repository
     private function getLastArgs()
     {
         $callstack = debug_backtrace();
-        return $callstack[count($callstack) - 3]['args'];
+        return $callstack[2]['args'];
     }
 }

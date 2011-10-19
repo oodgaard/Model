@@ -1,6 +1,6 @@
 <?php
 
-namespace Model;
+namespace Model\Cache;
 
 /**
  * The cache driver interface.
@@ -28,7 +28,7 @@ interface CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return \Model\CacheInterface
+     * @return \Model\Cache\CacheInterface
      */
     public function set($key, $value, $lifetime = null);
     
@@ -46,7 +46,7 @@ interface CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\CacheInterface
+     * @return \Model\Cache\CacheInterface
      */
     public function remove($key);
 }

@@ -1,10 +1,11 @@
 <?php
 
+namespace Test;
 use Provider\ContentEntity;
 use Provider\ContentRepository;
 use Provider\UserEntity;
 use Provider\UserRepository;
-use Model\Cache\Php as Cache;
+use Testes\Test;
 
 /**
  * Tests the Repository component.
@@ -14,7 +15,7 @@ use Model\Cache\Php as Cache;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Test_Repository extends Testes_UnitTest_Test
+class RepositoryTest extends Test
 {
     /**
      * Ensures that the proper insert method is called.
@@ -84,7 +85,7 @@ class Test_Repository extends Testes_UnitTest_Test
      */
     public function caching()
     {
-        $repo = new ContentRepository(new Cache);
+        $repo = new ContentRepository;
         $item = new ContentEntity;
         $repo->save($item);
         

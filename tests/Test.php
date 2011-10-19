@@ -1,6 +1,8 @@
 <?php
 
-class Test extends Testes_UnitTest
+use Testes\Suite;
+
+class Test extends Suite
 {
     
 }

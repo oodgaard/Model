@@ -1,170 +1,150 @@
 <?php
 
+namespace Testes;
+
 /**
- * Base class for a group of test classes. Since this class implements the
- * testable interface, there can be multiple levels of test groups and tests.
+ * Base test class for test cases and test suites. Subclasses need only to implement setting up and tearing down if
+ * required.
  * 
  * @category UnitTesting
  * @package  Testes
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-abstract class Testes_Suite implements Testes_Runable, Iterator, Countable
+abstract class Suite extends TestAbstract
 {
     /**
-     * Contains all failed assertions.
+     * The tests on this test suite.
      * 
      * @var array
      */
-    protected $assertions = array();
+    private $tests = array();
     
     /**
-     * Contains the tests to be run.
+     * Constructs the test and auto-detects the tests that should be run.
      * 
-     * @var array
+     * @return Suite
      */
-    protected $classes = array();
-
+    public function __construct()
+    {
+        $this->addTests($this->getTestInstances());
+    }
+    
+	/**
+     * Runs all tests in the suite.
+     * 
+     * @return Suite
+     */
+    public function run()
+    {
+        $this->setUp();
+        $this->startMemoryCounter();
+        $this->startTimer();
+        foreach ($this->getTests() as $test) {
+            try {
+                $test->run();
+                $this->addAssertions($test->getAssertions());
+            } catch (\Exception $e) {
+                $this->addException($e);
+                $test->tearDown();
+                $this->tearDown();
+            }
+        }
+        $this->stopTimer();
+        $this->stopMemoryCounter();
+        $this->tearDown();
+        return $this;
+    }
+    
     /**
-     * Returns only classes that are valid unit tests classes from the
-     * current test directory.
+     * Returns only classes that are valid unit tests classes from the current test directory and any subdirectories.
      * 
      * @return array
      */
-    public function getClasses()
+    public function getTestClasses()
     {
-        // reflection for getting path and class information
-        $self = new ReflectionClass($this);
-        
-        // get the path
-        $path = $self->getFileName();
-        $path = str_replace('.php', '', $path);
-        
-        // get the namespace
+        $self      = new \ReflectionClass($this);
+        $path      = $self->getFileName();
+        $path      = str_replace('.php', '', $path);
         $namespace = $self->getName();
-        
-        // load each file in the suite by convention
-        $classes = array();
-        foreach (new DirectoryIterator($path) as $file) {
-            if ($file->isDir()) {
+        $classes   = array();
+        foreach (new \DirectoryIterator($path) as $file) {
+            if ($file->isDir() || strpos($file->getBasename(), '.') === 0) {
                 continue;
             }
-            
-            // add the test
-            $class = str_replace('.php', '', $file->getBasename());
-            $class = $namespace . '_' . $class;
-
-            // make sure it can be added
-            $class = new ReflectionClass($class);
-            
-            // get all user defined interfaces on the current object
+            $class      = str_replace('.php', '', $file->getBasename());
+            $class      = $namespace . '\\' . $class;
+            $class      = new \ReflectionClass($class);
             $interfaces = array();
             foreach ($self->getInterfaces() as $iface) {
                 if ($iface->isUserDefined()) {
                     $userInterfaces[] = $iface->getName();
                 }
             }
-
-            // make sure the class implements those interfaces
+            
             foreach ($interfaces as $iface) {
                 if (!$class->implementsInterface($iface)) {
                     continue 2;
                 }
             }
-
             $classes[] = $class->getName();
         }
-
         return $classes;
     }
     
     /**
-     * Returns the name of the current test or test group.
+     * Returns an array of test instances.
      * 
-     * @return string
+     * @return array
      */
-    public function __toString()
+    public function getTestInstances()
     {
-        return get_class($this);
+        $instances = array();
+        foreach ($this->getTestClasses() as $class) {
+            $instances[] = new $class;
+        }
+        return $instances;
     }
     
     /**
-     * Set up event.
+     * Adds a test to the suite. If a suite is being added, it adds that suite's tests recursively.
      * 
-     * @return void
+     * @param TestInterface $test The test to add.
+     * 
+     * @return Suite
      */
-    public function setUp()
+    public function addTest(TestInterface $test)
     {
-        
+        if ($test instanceof self) {
+            $this->addTests($test->getTests());
+        } else {
+            $this->tests[] = $test;
+        }
+        return $this;
     }
     
     /**
-     * Tear down event.
+     * Adds tests to the suite.
      * 
-     * @return void
+     * @param array $tests The tests to add.
+     * 
+     * @return Suite
      */
-    public function tearDown()
+    public function addTests(array $tests)
     {
-        
+        foreach ($tests as $test) {
+            $this->addTest($test);
+        }
+        return $this;
     }
     
     /**
-     * Returns the current test.
+     * Returns an array of test classes in this suite.
      * 
-     * @return Testes_Testable
+     * @return array
      */
-    public function current()
+    public function getTests()
     {
-        return current($this->classes);
-    }
-    
-    /**
-     * Returns the key of the current test.
-     * 
-     * @return int
-     */
-    public function key()
-    {
-        return key($this->classes);
-    }
-    
-    /**
-     * Moves to the next test.
-     * 
-     * @return void
-     */
-    public function next()
-    {
-        next($this->classes);
-    }
-    
-    /**
-     * Resets the test iterator.
-     * 
-     * @return void
-     */
-    public function rewind()
-    {
-        reset($this->classes);
-    }
-    
-    /**
-     * Returns whether or not the iteration is still valid.
-     * 
-     * @return bool
-     */
-    public function valid()
-    {
-        return is_numeric($this->key());
-    }
-    
-    /**
-     * Returns the number of tests in the test/suite.
-     * 
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->classes);
+        return $this->tests;
     }
 }

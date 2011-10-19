@@ -1,14 +1,13 @@
 <?php
 
 namespace Provider;
-use Model\EntitySet;
-use Model\Repository;
+use Model\Entity\Set;
 
 class UserRepository extends BaseRepository
 {
     public function getContent(UserEntity $user)
     {
-        return new EntitySet('\Provider\UserEntity', array(
+        return new Set('\Provider\UserEntity', array(
             array(
                 'id'   => 1,
                 'name' => 'Proxy content 1'

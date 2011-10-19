@@ -1,6 +1,8 @@
 <?php
 
-use Model\Mapper;
+namespace Test;
+use Model\Mapper\Mapper;
+use Testes\Test;
 
 /**
  * Tests the Mapper component.
@@ -10,7 +12,7 @@ use Model\Mapper;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Test_Mapper extends Testes_UnitTest_Test
+class MapperTest extends Test
 {
     /**
      * Tests a one to one mapping.
