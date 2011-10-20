@@ -1,14 +1,20 @@
 <?php
 
+use Model\Autoloader as Ma;
+use Testes\Autoloader as Ta;
 use Testes\Output\Cli as Output;
+use Test as Test;
 
 error_reporting(E_ALL ^ E_STRICT);
 ini_set('display_errors', 'on');
 
-require dirname(__FILE__) . '/../lib/Model/Autoloader.php';
-require dirname(__FILE__) . '/../lib/Testes/Autoloader.php';
-\Model\Autoloader::register();
-\Testes\Autoloader::register(dirname(__FILE__) . '/../tests');
+$base = dirname(__FILE__) . '/../';
+
+require $base . 'lib/Model/Autoloader.php';
+require $base . 'vendor/Testes/lib/Testes/Autoloader.php';
+
+Ma::register();
+Ta::register($base . 'tests');
 
 $test = new Test;
 $out  = new Output;
