@@ -13,6 +13,13 @@ namespace Model\Entity;
 class Set implements AccessibleInterface
 {
     /**
+     * The namespace to use for entities.
+     * 
+     * @var string
+     */
+    private $ns;
+
+    /**
      * The class used to represent each entity in the set.
      * 
      * @var string
@@ -25,18 +32,27 @@ class Set implements AccessibleInterface
      * @var array
      */
     private $data = array();
+
+    /**
+     * The default namespace to use.
+     * 
+     * @var string
+     */
+    private static $defaultNs;
     
     /**
      * Constructs a new entity set. Primarily used for has many relations.
      * 
      * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
+     * @param string $ns     The namespace to use.
      * 
      * @return \Model\Entity\Set
      */
-    public function __construct($class, $values = array())
+    public function __construct($class, $values = array(), $ns = null)
     {
-        $this->class = (string) $class;
+        $this->setNamespace($ns ? $ns : static::$defaultNs);
+        $this->setClass($class);
         $this->import($values);
     }
     
@@ -45,12 +61,44 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $from The data to create the entity from, if any.
      * 
-     * @return Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function create($from = array())
     {
         $class = $this->getClass();
         return new $class($from);
+    }
+
+    /**
+     * Sets the namespace to use.
+     * 
+     * @param string $ns The namespace to use.
+     * 
+     * @return \Model\Entity\Set
+     */
+    public function setNamespace($ns)
+    {
+        $this->ns = trim($ns, '\\');
+        return $this;
+    }
+
+    /**
+     * Sets the class to use.
+     * 
+     * @param mixed $class The class to use.
+     * 
+     * @return \Model\Entity\Set
+     */
+    public function setClass($class)
+    {
+        if (is_object($class)) {
+            $class = get_class($class);
+        } elseif (!is_string($class)) {
+            throw new \InvalidArgumentException('The class to use for a set must either be a string or instance.');
+        }
+
+        $this->class = trim($class, '\\');
+        return $this;
     }
     
     /**
@@ -60,7 +108,7 @@ class Set implements AccessibleInterface
      */
     public function getClass()
     {
-        return $this->class;
+        return '\\' . $this->ns . '\\' . $this->class;
     }
     
     /**
@@ -91,7 +139,7 @@ class Set implements AccessibleInterface
     {
         if (!$this->isRepresenting($class)) {
             $class = is_object($class) ? get_class($class) : $class;
-            throw new Exception('The entity set is representing "' . $this->class . '" not "' . $class . '".');
+            throw new \RuntimeException('The entity set is representing "' . $this->class . '" not "' . $class . '".');
         }
         return $this;
     }
@@ -107,9 +155,9 @@ class Set implements AccessibleInterface
     {
         // make sure the item is iterable
         if (!is_array($array) && !is_object($array)) {
-            throw new Exception('Item being imported must be an array or object.');
+            throw new \InvalidArgumentException('Item being imported must be an array or object.');
         }
-        
+
         // now apply the values
         foreach ($array as $k => $v) {
             $this->offsetSet($k, $v);
@@ -406,7 +454,7 @@ class Set implements AccessibleInterface
     {
         // ensure traversable
         if (!is_array($value) && !is_object($value)) {
-            throw new Exception('Item being set onto an EntitySet must be an array or object.');
+            throw new \InvalidArgumentException('Item being set onto an EntitySet must be an array or object.');
         }
         
         // detect offset
@@ -554,5 +602,17 @@ class Set implements AccessibleInterface
     public function unserialize($data)
     {
         $this->import(unserialize($data));
+    }
+
+    /**
+     * Sets the default namespace to use.
+     * 
+     * @param string $ns The default namespace to use.
+     * 
+     * @return void
+     */
+    public static function setDefaultNamespace($ns)
+    {
+        static::$defaultNs = trim($ns, '\\');
     }
 }
