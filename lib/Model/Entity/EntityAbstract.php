@@ -67,6 +67,13 @@ class EntityAbstract implements AccessibleInterface
      * @var array
      */
     private $autoloaders = array();
+
+    /**
+     * The namespace of the current entity.
+     * 
+     * @var string
+     */
+    private $ns;
     
     /**
      * Constructs a new entity and sets any passed values.
@@ -283,7 +290,7 @@ class EntityAbstract implements AccessibleInterface
      */
     public function hasOne($name, $class)
     {
-        $this->hasOne[$name] = $class;
+        $this->hasOne[$name] = $this->makeFullyQualified($class);
         return $this;
     }
     
@@ -295,7 +302,7 @@ class EntityAbstract implements AccessibleInterface
      */
     public function hasMany($name, $class)
     {
-        $this->hasMany[$name] = $class;
+        $this->hasMany[$name] = $this->makeFullyQualified($class);
         return $this;
     }
     
@@ -562,5 +569,34 @@ class EntityAbstract implements AccessibleInterface
         }
         
         return true;
+    }
+
+    /**
+     * Returns the namespace for the current entity.
+     * 
+     * @return string
+     */
+    private function getNamespace()
+    {
+        if (!is_string($this->ns)) {
+            $reflect  = new \ReflectionClass($this);
+            $this->ns = $reflect->getNamespaceName();
+        }
+        return $this->ns;
+    }
+
+    /**
+     * Makes the specified class fully qualified if it is not by prepending the current namespace.
+     * 
+     * @param string $class The class to make fully qualified.
+     * 
+     * @return string
+     */
+    private function makeFullyQualified($class)
+    {
+        if (strpos($class, '\\') !== 0) {
+            $class = '\\' . $this->getNamespace() . '\\' . $class;
+        }
+        return $class;
     }
 }

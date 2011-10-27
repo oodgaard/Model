@@ -65,7 +65,7 @@ class Set implements AccessibleInterface
      */
     public function create($from = array())
     {
-        $class = $this->getClass();
+        $class = $this->getFullyQualifiedClass();
         return new $class($from);
     }
 
@@ -83,6 +83,16 @@ class Set implements AccessibleInterface
     }
 
     /**
+     * Returns the namespace the set should use.
+     * 
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->ns;
+    }
+
+    /**
      * Sets the class to use.
      * 
      * @param mixed $class The class to use.
@@ -96,8 +106,7 @@ class Set implements AccessibleInterface
         } elseif (!is_string($class)) {
             throw new \InvalidArgumentException('The class to use for a set must either be a string or instance.');
         }
-
-        $this->class = trim($class, '\\');
+        $this->class = $class;
         return $this;
     }
     
@@ -108,7 +117,17 @@ class Set implements AccessibleInterface
      */
     public function getClass()
     {
-        return '\\' . $this->ns . '\\' . $this->class;
+        return $this->class;
+    }
+
+    /**
+     * Returns the fully qualified name of the class.
+     * 
+     * @return string
+     */
+    public function getFullyQualifiedClass()
+    {
+        return $this->makeFullyQualified($this->class);
     }
     
     /**
@@ -123,7 +142,7 @@ class Set implements AccessibleInterface
         if (is_object($class)) {
             $class = get_class($class);
         }
-        return $this->class === $class;
+        return $this->getFullyQualifiedClass() === $this->makeFullyQualified($class);
     }
     
     /**
@@ -482,7 +501,8 @@ class Set implements AccessibleInterface
         if ($this->offsetExists($offset)) {
             // if it's not an entity yet, make it one
             // this will allow the set to not take up any overhead if the item is not accessed
-            if (!$this->data[$offset] instanceof $this->class) {
+            $class = $this->getFullyQualifiedClass();
+            if (!$this->data[$offset] instanceof $class) {
                 $this->data[$offset] = $this->create($this->data[$offset]);
             }
             
@@ -602,6 +622,20 @@ class Set implements AccessibleInterface
     public function unserialize($data)
     {
         $this->import(unserialize($data));
+    }
+
+    /**
+     * Makes the specified class fully qualified.
+     * 
+     * @return string
+     */
+    private function makeFullyQualified($class)
+    {
+        $class = $this->class;
+        if ($this->ns && strpos($class, '\\') !== 0) {
+            $class = $this->ns . '\\' . $class;
+        }
+        return $class;
     }
 
     /**
