@@ -10,7 +10,7 @@ namespace Model\Mapper;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Mapper implements \IteratorAggregate
+class Mapper
 {
     /**
      * The internal mapping to convert the input data to.
@@ -161,16 +161,6 @@ class Mapper implements \IteratorAggregate
         }
         
         return $after;
-    }
-    
-    /**
-     * Returns the elements in the iterator. SplFixedArray is used because it has a very small memory footprint.
-     * 
-     * @return SplFixedArray
-     */
-    public function getIterator()
-    {
-        return new SplFixedArray($this->convert());
     }
     
     /**
