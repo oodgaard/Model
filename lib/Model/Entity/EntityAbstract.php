@@ -355,7 +355,7 @@ class EntityAbstract implements AccessibleInterface
     {
         $array = array();
         foreach ($this->data as $k => $v) {
-            if ($v instanceof Accessible) {
+            if ($v instanceof AccessibleInterface) {
                 $v = $v->export();
             }
             $array[$k] = $v;
