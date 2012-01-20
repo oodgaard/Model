@@ -13,6 +13,13 @@ namespace Model\Entity;
 class Set implements AccessibleInterface
 {
     /**
+     * The namespace to use for entities.
+     * 
+     * @var string
+     */
+    private $ns;
+
+    /**
      * The class used to represent each entity in the set.
      * 
      * @var string
@@ -25,18 +32,27 @@ class Set implements AccessibleInterface
      * @var array
      */
     private $data = array();
+
+    /**
+     * The default namespace to use.
+     * 
+     * @var string
+     */
+    private static $defaultNs;
     
     /**
      * Constructs a new entity set. Primarily used for has many relations.
      * 
      * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
+     * @param string $ns     The namespace to use.
      * 
      * @return \Model\Entity\Set
      */
-    public function __construct($class, $values = array())
+    public function __construct($class, $values = array(), $ns = null)
     {
-        $this->class = (string) $class;
+        $this->setNamespace($ns ? $ns : static::$defaultNs);
+        $this->setClass($class);
         $this->import($values);
     }
     
@@ -45,12 +61,53 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $from The data to create the entity from, if any.
      * 
-     * @return Entity
+     * @return \Model\Entity\EntityAbstract
      */
     public function create($from = array())
     {
-        $class = $this->getClass();
+        $class = $this->getFullyQualifiedClass();
         return new $class($from);
+    }
+
+    /**
+     * Sets the namespace to use.
+     * 
+     * @param string $ns The namespace to use.
+     * 
+     * @return \Model\Entity\Set
+     */
+    public function setNamespace($ns)
+    {
+        $this->ns = trim($ns, '\\');
+        return $this;
+    }
+
+    /**
+     * Returns the namespace the set should use.
+     * 
+     * @return string
+     */
+    public function getNamespace()
+    {
+        return $this->ns;
+    }
+
+    /**
+     * Sets the class to use.
+     * 
+     * @param mixed $class The class to use.
+     * 
+     * @return \Model\Entity\Set
+     */
+    public function setClass($class)
+    {
+        if (is_object($class)) {
+            $class = get_class($class);
+        } elseif (!is_string($class)) {
+            throw new \InvalidArgumentException('The class to use for a set must either be a string or instance.');
+        }
+        $this->class = $class;
+        return $this;
     }
     
     /**
@@ -61,6 +118,16 @@ class Set implements AccessibleInterface
     public function getClass()
     {
         return $this->class;
+    }
+
+    /**
+     * Returns the fully qualified name of the class.
+     * 
+     * @return string
+     */
+    public function getFullyQualifiedClass()
+    {
+        return $this->makeFullyQualified($this->class);
     }
     
     /**
@@ -75,7 +142,7 @@ class Set implements AccessibleInterface
         if (is_object($class)) {
             $class = get_class($class);
         }
-        return $this->class === $class;
+        return $this->getFullyQualifiedClass() === $this->makeFullyQualified($class);
     }
     
     /**
@@ -91,7 +158,7 @@ class Set implements AccessibleInterface
     {
         if (!$this->isRepresenting($class)) {
             $class = is_object($class) ? get_class($class) : $class;
-            throw new Exception('The entity set is representing "' . $this->class . '" not "' . $class . '".');
+            throw new \RuntimeException('The entity set is representing "' . $this->class . '" not "' . $class . '".');
         }
         return $this;
     }
@@ -107,9 +174,9 @@ class Set implements AccessibleInterface
     {
         // make sure the item is iterable
         if (!is_array($array) && !is_object($array)) {
-            throw new Exception('Item being imported must be an array or object.');
+            throw new \InvalidArgumentException('Item being imported must be an array or object.');
         }
-        
+
         // now apply the values
         foreach ($array as $k => $v) {
             $this->offsetSet($k, $v);
@@ -406,7 +473,7 @@ class Set implements AccessibleInterface
     {
         // ensure traversable
         if (!is_array($value) && !is_object($value)) {
-            throw new Exception('Item being set onto an EntitySet must be an array or object.');
+            throw new \InvalidArgumentException('Item being set onto an EntitySet must be an array or object.');
         }
         
         // detect offset
@@ -434,7 +501,8 @@ class Set implements AccessibleInterface
         if ($this->offsetExists($offset)) {
             // if it's not an entity yet, make it one
             // this will allow the set to not take up any overhead if the item is not accessed
-            if (!$this->data[$offset] instanceof $this->class) {
+            $class = $this->getFullyQualifiedClass();
+            if (!$this->data[$offset] instanceof $class) {
                 $this->data[$offset] = $this->create($this->data[$offset]);
             }
             
@@ -554,5 +622,31 @@ class Set implements AccessibleInterface
     public function unserialize($data)
     {
         $this->import(unserialize($data));
+    }
+
+    /**
+     * Makes the specified class fully qualified.
+     * 
+     * @return string
+     */
+    private function makeFullyQualified($class)
+    {
+        $class = $this->class;
+        if ($this->ns && strpos($class, '\\') !== 0) {
+            $class = $this->ns . '\\' . $class;
+        }
+        return $class;
+    }
+
+    /**
+     * Sets the default namespace to use.
+     * 
+     * @param string $ns The default namespace to use.
+     * 
+     * @return void
+     */
+    public static function setDefaultNamespace($ns)
+    {
+        static::$defaultNs = trim($ns, '\\');
     }
 }
