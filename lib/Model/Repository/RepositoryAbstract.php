@@ -16,56 +16,16 @@ abstract class RepositoryAbstract
     /**
      * The cache driver to use, if any.
      * 
-     * @var \Model\Cache\CacheInterface|null
+     * @var CacheInterface
      */
     private $cache;
     
     /**
-     * Returns a sub-repository for the current repository using the current class as its namespace. The current
-     * caching instance is passed on.
-     * 
-     * @param string $name The sub repository to instantiate.
-     * 
-     * @return \Model\Repository\RepositoryAbstract
-     */
-    public function __get($name)
-    {
-        $class = get_class($this) . '\\' . ucfirst($name);
-        $class = new $class;
-        $class->setParent($this);
-        $class->setCache($this->getCache());
-        return $class;
-    }
-    
-    /**
-     * Sets the parent repository.
-     * 
-     * @param \Model\Repository\RepositoryAbstract $parent The parent repository.
-     * 
-     * @return \Model\Repository\RepositoryAbstract
-     */
-    public function setParent(RepositoryAbstract $parent)
-    {
-        $this->parent = $parent;
-        return $this;
-    }
-    
-    /**
-     * Returns the parent repository.
-     * 
-     * @return \Model\Repository\RepositoryAbstract
-     */
-    public function getParent()
-    {
-        return $this->parent;
-    }
-    
-    /**
      * Sets the cache interface to use.
      * 
-     * @param \Model\Cache\CacheInterface $cache The cache interface to use.
+     * @param CacheInterface $cache The cache interface to use.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     public function setCache(CacheInterface $cache)
     {
@@ -76,7 +36,7 @@ abstract class RepositoryAbstract
     /**
      * Returns the cache interface being used.
      * 
-     * @return \Model\Cache\CacheInterface|null
+     * @return CacheInterface|null
      */
     public function getCache()
     {
@@ -89,7 +49,7 @@ abstract class RepositoryAbstract
      * @param mixed $item The item to store.
      * @param mixed $time The time to store the item for.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     protected function persist($item, $time = null)
     {
@@ -109,7 +69,7 @@ abstract class RepositoryAbstract
     /**
      * Expires the item for the current repository method.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     protected function expire()
     {
@@ -124,7 +84,7 @@ abstract class RepositoryAbstract
      * @param mixed  $item   The item to cache.
      * @param mixed  $time   The time to cache the item for.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     protected function persistFor($class, $method, array $args, $item, $time = null)
     {
@@ -140,7 +100,7 @@ abstract class RepositoryAbstract
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     protected function retrieveFor($class, $method, array $args)
     {
@@ -156,7 +116,7 @@ abstract class RepositoryAbstract
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return \Model\Repository\RepositoryAbstract
+     * @return RepositoryAbstract
      */
     protected function expireFor($class, $method, array $args)
     {
