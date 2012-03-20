@@ -1,6 +1,9 @@
 <?php
 
 namespace Model\Entity;
+use InvalidArgumentException;
+use RuntimeException;
+use UnexpectedValueException;
 
 /**
  * The class that represents a set of entities.
@@ -12,13 +15,6 @@ namespace Model\Entity;
  */
 class Set implements AccessibleInterface
 {
-    /**
-     * The namespace to use for entities.
-     * 
-     * @var string
-     */
-    private $ns;
-
     /**
      * The class used to represent each entity in the set.
      * 
@@ -32,28 +28,23 @@ class Set implements AccessibleInterface
      * @var array
      */
     private $data = array();
-
-    /**
-     * The default namespace to use.
-     * 
-     * @var string
-     */
-    private static $defaultNs;
     
     /**
      * Constructs a new entity set. Primarily used for has many relations.
      * 
-     * @param string $class  The class that represents the entities.
      * @param mixed  $values The values to apply.
-     * @param string $ns     The namespace to use.
+     * @param string $class  The class that represents the entities. By default, the set uses the class of the first
+     *                       object it stores.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
-    public function __construct($class, $values = array(), $ns = null)
+    public function __construct($values = array(), $class = null)
     {
-        $this->setNamespace($ns ? $ns : static::$defaultNs);
-        $this->setClass($class);
-        $this->import($values);
+        if ($class) {
+            $this->setClass($class);
+        }
+        
+        $this->fill($values);
     }
     
     /**
@@ -61,11 +52,11 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $from The data to create the entity from, if any.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function create($from = array())
     {
-        $class = $this->getFullyQualifiedClass();
+        $class = $this->class;
         return new $class($from);
     }
 
@@ -74,12 +65,11 @@ class Set implements AccessibleInterface
      * 
      * @param string $ns The namespace to use.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function setNamespace($ns)
     {
-        $this->ns = trim($ns, '\\');
-        return $this;
+        return $this->setClass($ns . '\\' . basename($this->class));
     }
 
     /**
@@ -89,7 +79,7 @@ class Set implements AccessibleInterface
      */
     public function getNamespace()
     {
-        return $this->ns;
+        return dirname($this->class);
     }
 
     /**
@@ -97,16 +87,11 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $class The class to use.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function setClass($class)
     {
-        if (is_object($class)) {
-            $class = get_class($class);
-        } elseif (!is_string($class)) {
-            throw new \InvalidArgumentException('The class to use for a set must either be a string or instance.');
-        }
-        $this->class = $class;
+        $this->class = $this->makeFullyQualifiedClass($class);
         return $this;
     }
     
@@ -118,16 +103,6 @@ class Set implements AccessibleInterface
     public function getClass()
     {
         return $this->class;
-    }
-
-    /**
-     * Returns the fully qualified name of the class.
-     * 
-     * @return string
-     */
-    public function getFullyQualifiedClass()
-    {
-        return $this->makeFullyQualified($this->class);
     }
     
     /**
@@ -142,7 +117,7 @@ class Set implements AccessibleInterface
         if (is_object($class)) {
             $class = get_class($class);
         }
-        return $this->getFullyQualifiedClass() === $this->makeFullyQualified($class);
+        return $this->class === $this->makeFullyQualifiedClass($class);
     }
     
     /**
@@ -152,33 +127,39 @@ class Set implements AccessibleInterface
      * 
      * @param string $class The class to check.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function mustRepresent($class)
     {
         if (!$this->isRepresenting($class)) {
             $class = is_object($class) ? get_class($class) : $class;
-            throw new \RuntimeException('The entity set is representing "' . $this->class . '" not "' . $class . '".');
+            throw new RuntimeException(
+                'The entity set is representing "'
+                . $this->class
+                . '" not "'
+                . $class
+                . '".'
+            );
         }
         return $this;
     }
     
     /**
-     * Fills values from an array.
+     * Fills values from a traversable item.
      * 
-     * @param mixed $array The values to import.
+     * @param mixed $traversable The values to import.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
-    public function import($array)
+    public function fill($traversable)
     {
         // make sure the item is iterable
-        if (!is_array($array) && !is_object($array)) {
-            throw new \InvalidArgumentException('Item being imported must be an array or object.');
+        if (!is_array($traversable) && !is_object($traversable)) {
+            throw new InvalidArgumentException('Item being imported must traversable.');
         }
 
         // now apply the values
-        foreach ($array as $k => $v) {
+        foreach ($traversable as $k => $v) {
             $this->offsetSet($k, $v);
         }
         
@@ -186,19 +167,53 @@ class Set implements AccessibleInterface
     }
     
     /**
-     * Fills the entity with the specified values.
+     * Converts the set to an array.
      * 
-     * @param mixed $vals The values to automate the setting of.
-     * 
-     * @return \Model\Entity\EntityAbstract
+     * @return array
      */
-    public function export()
+    public function toArray()
     {
         $array = array();
         foreach ($this as $k => $v) {
             $array[$k] = $v->export();
         }
         return $array;
+    }
+    
+    /**
+     * Resets the data array.
+     * 
+     * @return Set
+     */
+    public function clean()
+    {
+        $this->data = array();
+        return $this;
+    }
+    
+    /**
+     * Returns whether or not the specified accessible is clean.
+     * 
+     * @return bool
+     */
+    public function isClean()
+    {
+        return count($this->data) === 0;
+    }
+    
+    /**
+     * Validates each item in the set.
+     * 
+     * @throws ValidatorException If an item is not valid.
+     * 
+     * @return Set
+     */
+    public function validate()
+    {
+        foreach ($this->data as $item) {
+            $item->validate();
+        }
+        return $this;
     }
     
     /**
@@ -243,12 +258,11 @@ class Set implements AccessibleInterface
      * @param int $currentIndex The current index.
      * @param int $newIndex     The new index.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function moveTo($currentIndex, $newIndex)
     {
         if ($item = $this->offsetGet($currentIndex)) {
-            $item = clone $item;
             $this->offsetUnset($currentIndex);
             $this->push($newIndex, $item);
         }
@@ -260,13 +274,17 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $item The item to insert.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function push($index, $item)
     {
-        $start      = array_slice($this->data, 0, $index);
-        $end        = array_slice($this->data, $index);
+        $start = array_slice($this->data, 0, $index);
+        $end   = array_slice($this->data, $index);
+        
+        $this->validateEntity($item);
+        
         $this->data = array_merge($start, array($item), $end);
+        
         return $this;
     }
     
@@ -275,7 +293,7 @@ class Set implements AccessibleInterface
      * 
      * @param int $index The item to pull out of the current set and return.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function pull($index)
     {
@@ -291,7 +309,7 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $item The item to prepend.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function prepend($item)
     {
@@ -303,7 +321,7 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $item The item to append.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function append($item)
     {
@@ -315,7 +333,7 @@ class Set implements AccessibleInterface
      * 
      * @param array $keys The keys to reduce the array down to.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function reduce($keys)
     {
@@ -347,7 +365,7 @@ class Set implements AccessibleInterface
     /**
      * Empties the current set.
      * 
-     * @return \Model\Entity\Set
+     * @return Set
      */
     public function clear()
     {
@@ -379,7 +397,7 @@ class Set implements AccessibleInterface
      * 
      * @param array $query An array of name/value pairs of fields to match.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function find(array $query, $limit = 0, $offset = 0)
     {
@@ -392,7 +410,7 @@ class Set implements AccessibleInterface
      * 
      * @param array $query An array of name/value pairs of fields to match.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function findKey(array $query)
     {
@@ -436,7 +454,7 @@ class Set implements AccessibleInterface
     /**
      * Returns the first element without setting the pointer to it.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function first()
     {
@@ -449,7 +467,7 @@ class Set implements AccessibleInterface
     /**
      * Returns the first element without setting the pointer to it.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function last()
     {
@@ -467,22 +485,16 @@ class Set implements AccessibleInterface
      * @param mixed $offset The offset to set.
      * @param mixed $value  The value to set.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function offsetSet($offset, $value)
     {
-        // ensure traversable
-        if (!is_array($value) && !is_object($value)) {
-            throw new \InvalidArgumentException('Item being set onto an EntitySet must be an array or object.');
-        }
+        $this->validateEntity($value);
         
-        // detect offset
         $offset = is_null($offset) ? count($this->data) : $offset;
         
-        // apply to data
         $this->data[$offset] = $value;
         
-        // chain
         return $this;
     }
     
@@ -499,14 +511,6 @@ class Set implements AccessibleInterface
     public function offsetGet($offset)
     {
         if ($this->offsetExists($offset)) {
-            // if it's not an entity yet, make it one
-            // this will allow the set to not take up any overhead if the item is not accessed
-            $class = $this->getFullyQualifiedClass();
-            if (!$this->data[$offset] instanceof $class) {
-                $this->data[$offset] = $this->create($this->data[$offset]);
-            }
-            
-            // return the value
             return $this->data[$offset];
         }
         return null;
@@ -529,7 +533,7 @@ class Set implements AccessibleInterface
      * 
      * @param mixed $offset The offset to unset.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function offsetUnset($offset)
     {
@@ -553,7 +557,7 @@ class Set implements AccessibleInterface
     /**
      * Returns the current element.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function current()
     {
@@ -573,7 +577,7 @@ class Set implements AccessibleInterface
     /**
      * Moves to the next element.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function next()
     {
@@ -584,7 +588,7 @@ class Set implements AccessibleInterface
     /**
      * Resets to the first element.
      * 
-     * @return \Model\Entity\EntityAbstract
+     * @return Entity
      */
     public function rewind()
     {
@@ -609,7 +613,7 @@ class Set implements AccessibleInterface
      */
     public function serialize()
     {
-        return serialize($this->export());
+        return serialize($this->toArray());
     }
     
     /**
@@ -621,20 +625,68 @@ class Set implements AccessibleInterface
      */
     public function unserialize($data)
     {
-        $this->import(unserialize($data));
+        $this->fill(unserialize($data));
     }
-
+    
     /**
-     * Makes the specified class fully qualified.
+     * Ensures the item is a valid entity instance.
+     * 
+     * @param Entity $item The entity to validate.
+     * 
+     * @throws UnexpectedValueException If the item is not an object.
+     * @throws UnexpectedValueException If the item is not a valid instance.
+     * 
+     * @return void
+     */
+    private function validateEntity($item)
+    {
+        if (!is_object($item)) {
+            throw new UnexpectedValueException('The item passed into "' . get_class($this) . '" is not an object.');
+        }
+        
+        if (!$this->class) {
+            $this->class = get_class($item);
+        }
+        
+        if (!$item instanceof $this->class) {
+            throw new UnexpectedValueException(
+                'The item "'
+                . get_class($item)
+                . '" must be an instance of "'
+                . $this->class
+                . '".'
+            );
+        }
+    }
+    
+    /**
+     * Makes the specified class into a fully qualified class name.
+     * 
+     * @param string $class The class.
      * 
      * @return string
      */
-    private function makeFullyQualified($class)
+    private function makeFullyQualifiedClass($class)
     {
-        $class = $this->class;
-        if ($this->ns && strpos($class, '\\') !== 0) {
-            $class = $this->ns . '\\' . $class;
+        if (!$class) {
+            throw new UnexpectedValueException('Cannot make a fully qualified class out of an empty value.');
         }
+        
+        if (is_object($class)) {
+            $class = get_class($class);
+        } elseif (!is_string($class)) {
+            throw new InvalidArgumentException(
+                'Cannot make fully qualfied class name from argument because it is not an object or string.'
+            );
+        }
+        
+        $ns    = dirname($class);
+        $ns    = trim($ns, '\\');
+        $ns    = $ns ? '\\' . $ns : '';
+        $class = basename($class);
+        $class = trim($class, '\\');
+        $class = $ns . '\\' . $class;
+        
         return $class;
     }
 
@@ -647,6 +699,6 @@ class Set implements AccessibleInterface
      */
     public static function setDefaultNamespace($ns)
     {
-        static::$defaultNs = trim($ns, '\\');
+        static::$defaultNs = $ns;
     }
 }
