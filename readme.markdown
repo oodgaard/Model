@@ -12,22 +12,39 @@ Because you want your models to be defined by your business requirements not dat
 Theory of Abstraction
 ---------------------
 
-Since you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend.
+Since you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend. Mappers can be used to import and export between backends and business entities.
 
-Authoring Entities
+Entities
 ------------------
 
 To create an entity, all you really have to do is extend the base entity class:
 
     <?php
     
-    namespace Entity;
-    use Model\Entity;
+    namespace Model\Entity;
     
     class Content extends Entity
     {
         
     }
+
+### Value Objects
+
+Value objects are used to define properties. By default, a range of value objects are provided under the `Model\Vo` namespace:
+
+* Alias - Allows one property to act as another property.
+* Boolean - Value is cast as a `boolean`.
+* Date - Value is passed into and manipulated using a `DateTime` object.
+* Filter - Allows a value to be filtered before it is set.
+* Float - Value is cast as a `float`.
+* Generic - A basic VO that passes through any value.
+* HasMany - Allows a one-to-many relationship to a given entity set of other entities.
+* HasOne - Allows a one-to-one relationship to another entity.
+* Integer - Value is cast as an `int`.
+* Money - Value is cast as a `string` and `number_format()` is used to format the string to 2 decimal places.
+* Proxy - Takes a proxy callback to use for retrieving the value if it has not been set. Once loaded, that value is reused for the lifetime of the object.
+* Set - Represents a set, or array, of arbitrary values.
+* String - Value is cast as a `string`.
 
 ### Relationships
 
@@ -35,16 +52,11 @@ You can also map relationships to other entities:
 
     <?php
 
-    namespace Entity;
-    use Model\Entity;
+    namespace Model\Entity;
 
     class Content extends Entity
     {
-        public function init()
-        {
-            $this->hasOne('user', '\Entity\Content\User');
-            $this->hasMany('modifications', '\Entity\Content\Modification');
-        }
+        
     }
 
 By adding relationships, you ensure that if the specified property is set or accessed, that it is an instance of the specified class.
