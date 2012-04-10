@@ -21,42 +21,42 @@ class Mapper implements MapperInterface
      * @var array
      */
     public $copy = [];
-    
+
     /**
      * The items to move.
      * 
      * @var array
      */
     public $move = [];
-    
+
     /**
      * Property blacklist.
      * 
      * @var array
      */
     public $blacklist = [];
-    
+
+    /**
+     * Value filters.
+     * 
+     * @var array
+     */
+    public $filters = [];
+
     /**
      * Property whitelist.
      * 
      * @var array
      */
     public $whitelist = [];
-    
-    /**
-     * Value filters.
-     * 
-     * @var array
-     */
-    private $filters = [];
-    
+
     /**
      * The internal mapping to convert the input data to.
      * 
      * @var array
      */
     private $map = [];
-    
+
     /**
      * Constructs and initializes the mapper. Auto-configures the mapper based on preset properties and methods.
      * 
@@ -68,13 +68,13 @@ class Mapper implements MapperInterface
         foreach ($this->copy as $from => $to) {
             $this->copy($from, $to);
         }
-        
+
         // apply moved properties from a $move property
         foreach ($this->move as $from => $to) {
             $this->move($from, $to);
         }
     }
-    
+
     /**
      * Configuration hook.
      * 
@@ -82,9 +82,9 @@ class Mapper implements MapperInterface
      */
     public function configure()
     {
-        
+
     }
-    
+
     /**
      * Sets a source to destination map.
      * 
@@ -98,7 +98,7 @@ class Mapper implements MapperInterface
         $this->map[$to] = $from;
         return $this;
     }
-    
+
     /**
      * Moves the item to the specified index.
      * 
@@ -112,7 +112,7 @@ class Mapper implements MapperInterface
         $this->copy($from, $to)->blacklist($from);
         return $this;
     }
-    
+
     /**
      * Whitelists the specified destination key.
      * 
@@ -125,7 +125,7 @@ class Mapper implements MapperInterface
         $this->whitelist[] = $to;
         return $this;
     }
-    
+
     /**
      * Blacklists the specified destination key.
      * 
@@ -138,7 +138,7 @@ class Mapper implements MapperInterface
         $this->blacklist[] = $to;
         return $this;
     }
-    
+
     /**
      * Filters the specified destination key.
      * 
@@ -166,12 +166,12 @@ class Mapper implements MapperInterface
         } else {
             $to = $from;
         }
-        
+
         // whitelist
         foreach ($this->whitelist as $dest) {
             $this->setMappedValue($dest, $this->getMappedValue($dest, $from), $to);
         }
-        
+
         // blacklist
         foreach ($this->blacklist as $dest) {
             $this->unsetMappedValue($dest, $to);
@@ -208,9 +208,9 @@ class Mapper implements MapperInterface
         } elseif (isset($from[$parts[0]])) {
             $value = $from[$parts[0]];
         }
-        
+
         // return a filtered value (if no filter is defined, it is simply passed through)
-        return $this->applyFilterTo($map, $value);
+        return $value;
     }
 
     /**
@@ -226,17 +226,18 @@ class Mapper implements MapperInterface
     {
         // only 2 parts at a time
         $parts = explode('.', $map, 2);
+        $value = $this->applyFilterTo($map, $value);
 
         // check if we are at the end
         // if not, continue to set
         if (isset($parts[1])) {
             $this->modifyKey($parts[0], $to);
-            
+
             // make sure the destination is at least an empty array
             if (!isset($to[$parts[0]])) {
                 $to[$parts[0]] = array();
             }
-            
+
             $this->setMappedValue($parts[1], $value, $to[$parts[0]]);
         } else {
             $this->modifyKey($parts[0], $to);
@@ -246,7 +247,7 @@ class Mapper implements MapperInterface
         // since we modify a reference, we can chain if we want
         return $this;
     }
-    
+
     /**
      * Removes the mapped value.
      * 
@@ -260,13 +261,13 @@ class Mapper implements MapperInterface
         $parts = explode('.', $map);
         $last  = array_pop($parts);
         $value = &$to;
-        
+
         foreach ($parts as $part) {
             $value = &$value[$part];
         }
-        
+
         unset($value[$last]);
-        
+
         return $this;
     }
 
@@ -303,7 +304,7 @@ class Mapper implements MapperInterface
         }
         return $this;
     }
-    
+
     /**
      * Applies a filter to the specified value.
      * 
