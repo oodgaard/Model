@@ -29,17 +29,6 @@ class EntityTest extends Test
     }
     
     /**
-     * Ensures that constructor events are called upon construction.
-     * 
-     * @return void
-     */
-    public function constructorEvents()
-    {
-        $content = new ContentEntity;
-        $this->assert($content->init, 'Entity init() was not triggered.');
-    }
-    
-    /**
      * Ensures that relationships are properly handled when getting/setting.
      * 
      * @return void
@@ -67,6 +56,6 @@ class EntityTest extends Test
         $user = new UserEntity;
         $this->assert(count($user->content) === 2, 'There must be 2 content items returned.');
         $this->assert($user->content instanceof Set, 'The content items must be an entity set.');
-        $this->assert($user->isLastAdmin === true, 'The user must be the last administrator.');
+        $this->assert($user->isLastAdministrator === true, 'The user must be the last administrator.');
     }
 }

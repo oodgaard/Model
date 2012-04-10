@@ -23,8 +23,8 @@ class DocComment implements ConfiguratorInterface
      * @var array
      */
     private $tags = [
-        'mapper' => 'Model\Configurator\DocComment\Mapper',
-        'vo'     => 'Model\Configurator\DocComment\Vo'
+        'map' => 'Model\Configurator\DocComment\MapTag',
+        'var' => 'Model\Configurator\DocComment\VarTag'
     ];
     
     /**

@@ -1,25 +1,31 @@
 <?php
 
 namespace Provider;
-use Model\Entity\EntityAbstract;
+use Model\Entity\Entity;
 
-class UserEntity extends EntityAbstract
+class UserEntity extends Entity
 {
-    public function init()
+    /**
+     * Returns the user's content items.
+     * 
+     * @var Model\Vo\Proxy array($this, 'proxyGetContent')
+     */
+    private $content;
+    
+    /**
+     * Returns whether or not this is the last administrator.
+     * 
+     * @var Model\Vo\Proxy array($this, 'proxyIsLastAdministrator')
+     */
+    private $isLastAdministrator;
+    
+    public function proxyGetContent()
     {
-        $this->mapGetter('content', 'getContent');
-        $this->mapGetter('isLastAdmin', 'isLastAdmin');
+        return (new UserRepository)->getContent($this);
     }
     
-    public function getContent()
+    public function proxyIsLastAdministrator()
     {
-        $repo = new UserRepository;
-        return $repo->getContent($this);
-    }
-    
-    public function isLastAdmin()
-    {
-        $repo = new UserRepository;
-        return $repo->isLastAdministrator($this);
+        return (new UserRepository)->isLastAdministrator($this);
     }
 }

@@ -32,23 +32,93 @@ To create an entity, all you really have to do is extend the base entity class:
 
 Value objects are used to define properties. By default, a range of value objects are provided under the `Model\Vo` namespace:
 
-* Alias - Allows one property to act as another property.
-* Boolean - Value is cast as a `boolean`.
-* Date - Value is passed into and manipulated using a `DateTime` object.
-* Filter - Allows a value to be filtered before it is set.
-* Float - Value is cast as a `float`.
-* Generic - A basic VO that passes through any value.
-* HasMany - Allows a one-to-many relationship to a given entity set of other entities.
-* HasOne - Allows a one-to-one relationship to another entity.
-* Integer - Value is cast as an `int`.
-* Money - Value is cast as a `string` and `number_format()` is used to format the string to 2 decimal places.
-* Proxy - Takes a proxy callback to use for retrieving the value if it has not been set. Once loaded, that value is reused for the lifetime of the object.
-* Set - Represents a set, or array, of arbitrary values.
-* String - Value is cast as a `string`.
+* `Alias` - Allows one property to act as another property.
+* `Boolean` - Value is cast as a `boolean`.
+* `Date` - Value is passed into and manipulated using a `DateTime` object.
+* `Filter` - Allows a value to be filtered before it is set.
+* `Float` - Value is cast as a `float`.
+* `Generic` - A basic VO that passes through any value.
+* `HasMany` - Allows a one-to-many relationship to a given entity set of other entities.
+* `HasOne` - Allows a one-to-one relationship to another entity.
+* `Integer` - Value is cast as an `int`.
+* `Money` - Value is cast as a `string` and `number_format()` is used to format the string to 2 decimal places.
+* `Proxy` - Takes a proxy callback to use for retrieving the value if it has not been set. Once loaded, that value is reused for the lifetime of the object.
+* `Set` - Represents a set, or array, of arbitrary values.
+* `String` - Value is cast as a `string`.
+
+### Mappers
+
+Mappers are used to translate information going into or out of your entities much like DTO's. For example, your content entity may have many fields, but your fields are sub-objects of your content entity. When you go to store this information, you need to somehow format the information so that it can be easily inserted into a database.
+
+    <?php
+    
+    namespace Model\Mapper;
+    use DateTime;
+    
+    class ContentToDb extends Mapper
+    {
+        public $move = [
+            'id'          => 'content.id',
+            'title'       => 'content.title',
+            'description' => 'content.description',
+            'created'     => 'content.created',
+            'updated'     => 'content.updated',
+            'id'          => 'fields.$.id'
+        ];
+        
+        public content__created($date)
+        {
+            return $this->toMysqlDateTime($date);
+        }
+        
+        public content__updated($date)
+        {
+            return $this->toMysqlDateTime($date);
+        }
+        
+        private function toMysqlDateTime(DateTime $date)
+        {
+            return $date->format('Y-m-d H:i:s');
+        }
+    }
+
+### Configuration
+
+By default, entities are configured using doc comment tags applied to the class itself or its properties.
+
+Supported `class` doc tags:
+
+* `@mapper` - Applies a mapper to the entity.
+
+Supported `property` doc tags:
+
+* `@vo` - Applies a value object to the entity.
+
+If you don't like this approach and want to configure your entity programatically, you can use the `configure()` hook and use the built-in methods:
+
+    public function configure()
+    {
+        $this->setMapper('mymapper', new Model\Mapper\MyMapper);
+        $this->setVo('id', new Model\Vo\Integer);
+    }
+
+To apply a mapping to a class you use the `@mapper` doc tag:
+
+    /**
+     * Main content item.
+     * 
+     * @mapper fromDb Model\Mapper\Content\FromDb
+     * @mapper toDb   Model\Mapper\Content\ToDb
+     * @mapper toApi  Model\Mapper\Content\ToApi
+     */
+    class Content extends Entity
+    {
+    
+    }
 
 ### Relationships
 
-You can also map relationships to other entities:
+Relationships are defined using the `HasOne` and `HasMany` value objects:
 
     <?php
 

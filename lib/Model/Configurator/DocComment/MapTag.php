@@ -15,7 +15,7 @@ use UnexpectedValueException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  http://europaphp.org/license
  */
-class Mapper implements DocTagInterface
+class MapTag implements DocTagInterface
 {
     /**
      * Configures the entity with the specified VO.

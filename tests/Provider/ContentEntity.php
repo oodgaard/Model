@@ -1,16 +1,17 @@
 <?php
 
 namespace Provider;
-use Model\Entity\EntityAbstract;
+use Model\Entity\Entity;
 
-class ContentEntity extends EntityAbstract
+class ContentEntity extends Entity
 {
-    public $init = false;
+    /**
+     * @var Model\Vo\HasOne new Provider\UserEntity
+     */
+    private $user;
     
-    public function init()
-    {
-        $this->hasOne('user', '\Provider\UserEntity');
-        $this->hasMany('comments', '\Provider\CommentEntity');
-        $this->init = true;
-    }
+    /**
+     * @var Model\Vo\HasMany new Model\Entity\Set('Provider\CommentEntity')
+     */
+    private $comments;
 }

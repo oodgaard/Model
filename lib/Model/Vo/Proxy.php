@@ -20,14 +20,14 @@ class Proxy extends Generic
      * @var Closure
      */
     private $cb;
-    
+
     /**
      * Whether or not it has been loaded.
      * 
      * @var bool
      */
     private $loaded = false;
-    
+
     /**
      * Sets the value.
      * 
@@ -39,11 +39,11 @@ class Proxy extends Generic
     public function __construct($cb)
     {
         if (!is_callable($cb)) {
-            throw new InvalidArgumentException('The specifie callback is not valid.');
+            throw new InvalidArgumentException('The specified callback is not valid.');
         }
         $this->cb = $cb;
     }
-    
+
     /**
      * Initializes the value.
      * 
@@ -54,7 +54,7 @@ class Proxy extends Generic
         $this->loaded = false;
         parent::set(null);
     }
-    
+
     /**
      * Sets the value and marks the proxy as loaded.
      * 
@@ -67,7 +67,7 @@ class Proxy extends Generic
         $this->loaded = true;
         parent::set($value);
     }
-    
+
     /**
      * Returns the value.
      * 

@@ -27,16 +27,17 @@ class MapperTest extends Test
         );
 
         $mapper = new Mapper;
-        $mapper->map('key1', 'my-new-key1');
+        $mapper->move('key1', 'my-new-key1');
+        $mapper->blacklist('key2');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(isset($output['my-new-key1']) && $output['my-new-key1'] === 'value1', 'The value for "key1" was not set.');
         $this->assert(!isset($output['key1']), 'The value for "key1" was passed through.');
         $this->assert(!isset($output['key2']), 'The value for "key2" was passed through.');
         
-        $mapper->map('key2', 'my-new-key2');
+        $mapper->move('key2', 'my-new-key2');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(isset($output['my-new-key2']) && $output['my-new-key2'] === 'value2', 'The value for "key2" was not set.');
     }
     
@@ -52,9 +53,9 @@ class MapperTest extends Test
         );
 
         $mapper = new Mapper;
-        $mapper->map('key1', 'ns1.key1');
+        $mapper->move('key1', 'ns1.key1');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(
             isset($output['ns1'])
             && isset($output['ns1']['key1'])
@@ -75,9 +76,9 @@ class MapperTest extends Test
         );
 
         $mapper = new Mapper;
-        $mapper->map('key1', 'ns1.subns1.key1');
+        $mapper->move('key1', 'ns1.subns1.key1');
 
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(
             isset($output['ns1'])
             && isset($output['ns1']['subns1'])
@@ -103,9 +104,9 @@ class MapperTest extends Test
         );
 
         $mapper = new Mapper;
-        $mapper->map('ns1.key1', 'ns2.key2');
+        $mapper->move('ns1.key1', 'ns2.key2');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(
             isset($output['ns2'])
             && isset($output['ns2']['key2'])
@@ -128,9 +129,9 @@ class MapperTest extends Test
         );
         
         $mapper = new Mapper;
-        $mapper->map('ns1.key1', 'ns2.1.key2');
+        $mapper->move('ns1.key1', 'ns2.1.key2');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(
             isset($output['ns2'])
             && isset($output['ns2'][1])
@@ -153,10 +154,10 @@ class MapperTest extends Test
         );
         
         $mapper = new Mapper;
-        $mapper->map('key1', '$.key1');
-        $mapper->map('key2', '$.key2');
+        $mapper->move('key1', '$.key1');
+        $mapper->move('key2', '$.key2');
         
-        $output = $mapper->convert($data);
+        $output = $mapper->map($data);
         $this->assert(
             isset($output[0])
             && isset($output[0]['key1'])

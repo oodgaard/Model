@@ -1,9 +1,9 @@
 <?php
 
 namespace Provider;
-use Model\Repository\RepositoryAbstract;
+use Model\Entity\Entity;
 
-class CommentEntity extends RepositoryAbstract
+class CommentEntity extends Entity
 {
     
 }

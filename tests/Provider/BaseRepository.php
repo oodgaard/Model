@@ -2,7 +2,7 @@
 
 namespace Provider;
 use Model\Cache\Php as Cache;
-use Model\Entity\EntityAbstract;
+use Model\Entity\Entity;
 use Model\Repository\RepositoryAbstract;
 
 abstract class BaseRepository extends RepositoryAbstract
@@ -47,7 +47,7 @@ abstract class BaseRepository extends RepositoryAbstract
         return $entity;
     }
     
-    public function save(EntityAbstract $entity)
+    public function save(Entity $entity)
     {
         if ($entity->id) {
             $this->update($entity);
@@ -57,7 +57,7 @@ abstract class BaseRepository extends RepositoryAbstract
         return $this;
     }
     
-    public function remove(EntityAbstract $entity)
+    public function remove(Entity $entity)
     {
         // expire the cache
         $this->expireFor(get_class($this), 'findById', array($entity->id));
@@ -66,7 +66,7 @@ abstract class BaseRepository extends RepositoryAbstract
         unset($this->entities[$entity->id]);
     }
     
-    private function insert(EntityAbstract $entity)
+    private function insert(Entity $entity)
     {
         // generate an id
         $entity->id = md5(microtime());
@@ -78,7 +78,7 @@ abstract class BaseRepository extends RepositoryAbstract
         $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
     }
     
-    private function update(EntityAbstract $entity)
+    private function update(Entity $entity)
     {
         // make sure that it exists first as it can only be updated if it already exists
         // mimics database behavior

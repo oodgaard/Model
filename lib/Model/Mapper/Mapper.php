@@ -73,18 +73,6 @@ class Mapper implements MapperInterface
         foreach ($this->move as $from => $to) {
             $this->move($from, $to);
         }
-        
-        // apply filters from pre-defined methods in traits or the extending map class
-        $refl = new ReflectionClass($this);
-        foreach ($refl->getMethods() as $method) {
-            $decl  = $method->getDeclaringClass();
-            if ($method->isPublic() && ($decl->isTrait() || $decl->getName() === get_class($this))) {
-                $this->filter(
-                    str_replace('__', '.', $method->getName()),
-                    $method->getClosure($this)
-                );
-            }
-        }
     }
     
     /**
@@ -155,17 +143,13 @@ class Mapper implements MapperInterface
      * Filters the specified destination key.
      * 
      * @param string $to The destination key.
+     * @param string $fn The method name to use for filtering.
      * 
      * @return Mapper
      */
-    public function filter($to, Closure $cb)
+    public function filter($to, $fn)
     {
-        if (!isset($this->filters[$to])) {
-            $this->filters[$to] = [];
-        }
-        
-        $this->filters[$to][] = $cb;
-        
+        $this->filters[$to] = $fn;
         return $this;
     }
 
@@ -182,11 +166,6 @@ class Mapper implements MapperInterface
         } else {
             $to = $from;
         }
-
-        // applies each mapping to each of the elements in the array
-        foreach ($this->map as $dest => $src) {
-            $this->setMappedValue($dest, $this->getMappedValue($src, $from), $to);
-        }
         
         // whitelist
         foreach ($this->whitelist as $dest) {
@@ -197,14 +176,10 @@ class Mapper implements MapperInterface
         foreach ($this->blacklist as $dest) {
             $this->unsetMappedValue($dest, $to);
         }
-        
-        // filters
-        foreach ($this->filters as $dest => $filters) {
-            $value = $this->getMappedValue($dest, $to);
-            foreach ($filters as $filter) {
-                $value = $filter($value);
-            }
-            $this->setMappedValue($dest, $value, $to);
+
+        // applies each mapping to each of the elements in the array
+        foreach ($this->map as $dest => $src) {
+            $this->setMappedValue($dest, $this->getMappedValue($src, $from), $to);
         }
 
         return $to;
@@ -223,18 +198,19 @@ class Mapper implements MapperInterface
         // only get the first dot part and the rest still intact
         // this way we can tell if we are at the end
         $parts = explode('.', $map, 2);
+        $value = null;
 
         // if we are NOT at the end of the dot-notated string we continue
         // to return the mapped value using the rest of the dot parts
         // otherwise, we attempt to return the mapped value if it is set
         if (isset($parts[1]) && isset($from[$parts[0]])) {
-            return $this->getMappedValue($parts[1], $from[$parts[0]]);;
+            $value = $this->getMappedValue($parts[1], $from[$parts[0]]);;
         } elseif (isset($from[$parts[0]])) {
-            return $from[$parts[0]];
+            $value = $from[$parts[0]];
         }
-
-        // by default, null is always returned
-        return null;
+        
+        // return a filtered value (if no filter is defined, it is simply passed through)
+        return $this->applyFilterTo($map, $value);
     }
 
     /**
@@ -255,9 +231,12 @@ class Mapper implements MapperInterface
         // if not, continue to set
         if (isset($parts[1])) {
             $this->modifyKey($parts[0], $to);
+            
+            // make sure the destination is at least an empty array
             if (!isset($to[$parts[0]])) {
                 $to[$parts[0]] = array();
             }
+            
             $this->setMappedValue($parts[1], $value, $to[$parts[0]]);
         } else {
             $this->modifyKey($parts[0], $to);
@@ -313,7 +292,7 @@ class Mapper implements MapperInterface
      * @param mixed &$key The key to modify.
      * @param array $to   The array we are mapping to so we can gather information about it.
      * 
-     * @return \Model\Mapper
+     * @return Mapper
      */
     private function modifyKey(&$key, array $to)
     {
@@ -323,5 +302,21 @@ class Mapper implements MapperInterface
             $key = (int) $key;
         }
         return $this;
+    }
+    
+    /**
+     * Applies a filter to the specified value.
+     * 
+     * @param string $dest  The source key.
+     * @param mixed  $value The value to filter.
+     * 
+     * @return mixed
+     */
+    private function applyFilterTo($dest, $value)
+    {
+        if (isset($this->filters[$dest])) {
+            return call_user_func(array($this, $this->filters[$dest]), $value);
+        }
+        return $value;
     }
 }
