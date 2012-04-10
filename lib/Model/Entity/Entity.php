@@ -2,11 +2,13 @@
 
 namespace Model\Entity;
 use Model\Behavior\BehaviorInterface;
-use Model\Filter\FilterInterface;
+use Model\Configurator;
+use Model\Mapper\MapperInterface;
 use Model\Validator\ValidatorInterface;
 use Model\Validator\ValidatorException;
+use Model\Vo\Generic;
 use Model\Vo\VoInterface;
-use ReflectionClass;
+use RuntimeException;
 
 /**
  * The main entity class. All model entities should derive from this class.
@@ -26,11 +28,11 @@ class Entity implements AccessibleInterface
     private $data = array();
     
     /**
-     * The filters applied to the object.
+     * Mappers assigned to the entity.
      * 
      * @var array
      */
-    private $filters = array();
+    private $mappers = [];
     
     /**
      * The validators applied to the entity.
@@ -40,47 +42,39 @@ class Entity implements AccessibleInterface
     private $validators = array();
     
     /**
-     * Constructs a new entity and sets any passed values.
+     * Constructs, configures and fills the entity with data, if any is passed.
      * 
-     * @param mixed $vals The values to set.
+     * @param mixed  $data   The data to fill the entity with.
+     * @param string $mapper The mapper to use to import the data.
      * 
      * @return Entity
      */
-    public function __construct($values = array())
+    public function __construct($data = array(), $mapper = null)
     {
-        $this->init();
-        $this->fill($values);
-    }
-
-    /**
-     * Allows the entity to be set up before any data is imported.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-
+        $this->configure();
+        $this->fill($data, $mapper);
     }
     
     /**
-     * Easy property setting.
+     * Applies the specified value to the VO with the specified name.
      * 
-     * @param string $name  The property name.
-     * @param mixed  $value The property value.
+     * @param string $name  The VO name.
+     * @param mixed  $value The value to set.
      * 
-     * @return void
+     * @return Entity
      */
     public function __set($name, $value)
     {
-        if (isset($this->data[$name]) && $this->filter($name)) {
-            $this->data[$name]->set($value);
+        if (!isset($this->data[$name])) {
+            $this->data[$name] = new Generic;
         }
+        $this->data[$name]->set($value);
     }
     
     /**
-     * For easy property getting.
+     * Returns the value of the specified VO.
      * 
-     * @param string $name The property name.
+     * @param string $name The VO name.
      * 
      * @return mixed
      */
@@ -92,55 +86,53 @@ class Entity implements AccessibleInterface
     }
     
     /**
-     * For easy property checking.
+     * Returns whether or not the VO exists.
+     * 
+     * @param string $name The name of the VO.
      * 
      * @return bool
      */
     public function __isset($name)
     {
-        return isset($this->data[$name]) && $this->data[$name]->exists();
+        return isset($this->data[$name]);
     }
     
     /**
-     * For easy property unsetting.
+     * Removes the VO from the object.
      * 
-     * @param string $name The value to unset.
+     * @param string $name The name of the VO.
      * 
-     * @return Entity
+     * @return void
      */
     public function __unset($name)
     {
         if (isset($this->data[$name])) {
-            $this->data[$name]->remove();
+            unset($this->data[$name]);
         }
     }
     
     /**
-     * Cleans the entity by clearing each VO.
+     * Configuration hook for setting up the entity.
+     * 
+     * @return void
+     */
+    public function configure()
+    {
+        $conf = new Configurator\DocComment;
+        $conf->configure($this);
+    }
+    
+    /**
+     * Initializes each VO.
      * 
      * @return Entity
      */
-    public function clean()
-    {
+    public function init()
+    {    
         foreach ($this->data as $vo) {
-            $vo->remove();
+            $vo->init();
         }
         return $this;
-    }
-    
-    /**
-     * Returns whether or not the entity is clean.
-     * 
-     * @return bool
-     */
-    public function isClean()
-    {
-        foreach ($this->data as $item) {
-            if ($item->exists()) {
-                return false;
-            }
-        }
-        return true;
     }
     
     /**
@@ -153,38 +145,72 @@ class Entity implements AccessibleInterface
      */
     public function setVo($name, VoInterface $vo)
     {
+        $vo->init();
         $this->data[$name] = $vo;
         return $this;
     }
     
     /**
-     * Returns the specified VO.
+     * Sets the entity to use for exporting data.
      * 
-     * @param string $name The name of the VO.
-     * 
-     * @throws RuntimeException If the VO does not exist on the entity.
-     * 
-     * @return Vo
-     */
-    public function getVo($name)
-    {
-        if (!isset($this->data[$name])) {
-            throw new RuntimeException('The VO "' . $name . '" does not exist on "' . get_class($this) . '".');
-        }
-        return $this->data[$name];
-    }
-    
-    /**
-     * Adds a filter to the entity.
-     * 
-     * @param FilterInterface $filter The filter to use.
+     * @param string          $name   The exporter name.
+     * @param MapperInterface $mapper The mapper used to export the data.
      * 
      * @return Entity
      */
-    public function addFilter(FilterInterface $filter)
+    public function setMapper($name, MapperInterface $mapper)
     {
-        $this->filters[] = $filter;
+        $this->mappers[$name] = $mapper;
         return $this;
+    }
+    
+    /**
+     * Fills the entity with the specified data.
+     * 
+     * @param mixed  $data   The data to fill the entity with.
+     * @param string $mapper The mapper to use to import the data.
+     * 
+     * @return Entity
+     */
+    public function fill($data, $mapper = null)
+    {
+        if (is_array($data) || is_object($data)) {
+            if (isset($this->mappers[$mapper])) {
+                $data = $this->mappers[$mapper]->map($data);
+            }
+            
+            foreach ($data as $k => $v) {
+                $this->__set($k, $v);
+            }
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * Converts the entity to an array.
+     * 
+     * @param string $mapper The mapper to use to export the data.
+     * 
+     * @return array
+     */
+    public function toArray($mapper = null)
+    {
+        $array = array();
+        
+        foreach ($this->data as $k => $v) {
+            $v = $v->get();
+            if ($v instanceof AccessibleInterface) {
+                $v = $v->toArray();
+            }
+            $array[$k] = $v;
+        }
+        
+        if (isset($this->mappers[$mapper])) {
+            $array = $this->mappers[$mapper]->map($array);
+        }
+        
+        return $array;
     }
     
     /**
@@ -197,19 +223,6 @@ class Entity implements AccessibleInterface
     public function addValidator(ValidatorInterface $validator)
     {
         $this->validators[] = $validator;
-        return $this;
-    }
-    
-    /**
-     * Applies the behavior to the entity.
-     * 
-     * @param BehaviorInterface $behavior The behavior to apply.
-     * 
-     * @return Entity 
-     */
-    public function actAs(BehaviorInterface $behavior)
-    {
-        $behavior->behave($this);
         return $this;
     }
     
@@ -238,7 +251,7 @@ class Entity implements AccessibleInterface
         // validate each relationship
         foreach ($this->data as $item) {
             $item = $item->get();
-            if ($item instanceof ValidatableInterface) {
+            if ($item instanceof AccessibleInterface) {
                 $item->validate();
             }
         }
@@ -247,55 +260,22 @@ class Entity implements AccessibleInterface
     }
     
     /**
-     * Fills the entity with the specified values.
+     * Sets the VO value.
      * 
-     * @param mixed $traversable The traversable to import.
+     * @param string $name  The name of the VO.
+     * @param mixed  $value The value of the VO.
      * 
-     * @return Entity
-     */
-    public function fill($traversable)
-    {
-        if (is_array($traversable) || is_object($traversable)) {
-            foreach ($traversable as $k => $v) {
-                $this->__set($k, $v);
-            }
-        }
-        return $this;
-    }
-    
-    /**
-     * Converts the entity to an array.
-     * 
-     * @return array
-     */
-    public function toArray()
-    {
-        $array = array();
-        foreach ($this->data as $k => $v) {
-            if ($v->exists()) {
-                $array[$k] = $v->get();
-            }
-        }
-        return $array;
-    }
-    
-    /**
-     * For setting properties like an array.
-     * 
-     * @param string $name  The property to set.
-     * @param mixed  $value The value to set.
-     * 
-     * @return Entity
+     * @return void
      */
     public function offsetSet($name, $value)
     {
-        return $this->__set($name, $value);
+        $this->__set($name, $value);
     }
     
     /**
-     * For getting properties like an array.
+     * Returns the value of the VO.
      * 
-     * @param string $name The property to get.
+     * @param string $name The name of the VO.
      * 
      * @return mixed
      */
@@ -305,27 +285,37 @@ class Entity implements AccessibleInterface
     }
     
     /**
-     * For isset checking using array syntax.
+     * Returns whether or not the VO exists.
      * 
-     * @param string $name The property to check.
+     * @param string $name The name of the VO.
      * 
      * @return bool
      */
     public function offsetExists($name)
     {
-        return $this->__isset($name);
+        
     }
     
     /**
-     * For unsetting using array syntax.
+     * Removes the VO from the object.
      * 
-     * @param string $name The property to unset.
+     * @param string $name The name of the VO.
      * 
-     * @return Entity
+     * @return void
      */
     public function offsetUnset($name)
     {
-        return $this->__unset($name);
+        
+    }
+    
+    /**
+     * Returns the number of VOs on the object.
+     * 
+     * @return int
+     */
+    public function count()
+    {
+       return count($this->data); 
     }
     
     /**
@@ -335,11 +325,11 @@ class Entity implements AccessibleInterface
      */
     public function current()
     {
-        return $this->__get($this->key());
+        return current($this->data)->get();
     }
     
     /**
-     * Returns the current key in the iteration.
+     * Returns the current key of the current iten in the iteration.
      * 
      * @return string
      */
@@ -351,43 +341,31 @@ class Entity implements AccessibleInterface
     /**
      * Moves to the next item in the iteration.
      * 
-     * @return Entity
+     * @return void
      */
     public function next()
     {
         next($this->data);
-        return $this;
     }
     
     /**
-     * Resets the iteration.
+     * Resets iteration.
      * 
-     * @return Entity
+     * @return void
      */
     public function rewind()
     {
         reset($this->data);
-        return $this;
     }
     
     /**
-     * Returns whether or not to keep iteration.
+     * Returns whether or not the iteration is still valid.
      * 
      * @return bool
      */
     public function valid()
     {
-        return !is_null($this->key());
-    }
-    
-    /**
-     * Counts the number of values in the entity.
-     * 
-     * @return int
-     */
-    public function count()
-    {
-        return count($this->data);
+        return $this->key() !== null;
     }
     
     /**
@@ -410,22 +388,5 @@ class Entity implements AccessibleInterface
     public function unserialize($data)
     {
         $this->fill(unserialize($data));
-    }
-    
-    /**
-     * Returns true if the specified property can be set or false if not.
-     * 
-     * @param string $name The property name.
-     * 
-     * @return bool
-     */
-    private function filter($name)
-    {
-        foreach ($this->filters as $filter) {
-            if ($filter->filter($name) === false) {
-                return false;
-            }
-        }
-        return true;
     }
 }

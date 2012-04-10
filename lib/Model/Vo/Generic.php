@@ -3,23 +3,30 @@
 namespace Model\Vo;
 
 /**
- * Float VO.
+ * Works with any value.
  * 
  * @category ValueObjects
  * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class Float extends Generic
+class Generic implements VoInterface
 {
     /**
-     * Sets the default value.
+     * The generic value.
+     * 
+     * @var mixed
+     */
+    private $value;
+    
+    /**
+     * Initializes the value.
      * 
      * @return void
      */
     public function init()
     {
-        $this->set(0);
+        $this->set(null);
     }
     
     /**
@@ -31,6 +38,16 @@ class Float extends Generic
      */
     public function set($value)
     {
-        parent::set((float) $value);
+        $this->value = $value;
+    }
+    
+    /**
+     * Returns the value.
+     * 
+     * @return mixed
+     */
+    public function get()
+    {
+        return $this->value;
     }
 }

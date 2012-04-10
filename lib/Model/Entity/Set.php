@@ -3,7 +3,6 @@
 namespace Model\Entity;
 use InvalidArgumentException;
 use RuntimeException;
-use UnexpectedValueException;
 
 /**
  * The class that represents a set of entities.
@@ -32,77 +31,27 @@ class Set implements AccessibleInterface
     /**
      * Constructs a new entity set. Primarily used for has many relations.
      * 
-     * @param mixed  $values The values to apply.
-     * @param string $class  The class that represents the entities. By default, the set uses the class of the first
-     *                       object it stores.
+     * @param string $class  The class that represents the entities.
+     * @param mixed  $data   The data to apply.
+     * @param string $mapper The mapper to use to import the data.
      * 
      * @return Set
      */
-    public function __construct($values = array(), $class = null)
+    public function __construct($class, $data = array(), $mapper = null)
     {
-        if ($class) {
-            $this->setClass($class);
-        }
-        
-        $this->fill($values);
+        $this->class = $class;
+        $this->fill($data, $mapper);
     }
     
     /**
-     * Creates a new item with the specified data.
-     * 
-     * @param mixed $from The data to create the entity from, if any.
-     * 
-     * @return Entity
-     */
-    public function create($from = array())
-    {
-        $class = $this->class;
-        return new $class($from);
-    }
-
-    /**
-     * Sets the namespace to use.
-     * 
-     * @param string $ns The namespace to use.
+     * Empties the current set.
      * 
      * @return Set
      */
-    public function setNamespace($ns)
+    public function init()
     {
-        return $this->setClass($ns . '\\' . basename($this->class));
-    }
-
-    /**
-     * Returns the namespace the set should use.
-     * 
-     * @return string
-     */
-    public function getNamespace()
-    {
-        return dirname($this->class);
-    }
-
-    /**
-     * Sets the class to use.
-     * 
-     * @param mixed $class The class to use.
-     * 
-     * @return Set
-     */
-    public function setClass($class)
-    {
-        $this->class = $this->makeFullyQualifiedClass($class);
+        $this->data = [];
         return $this;
-    }
-    
-    /**
-     * Returns the class being used for this set instance.
-     * 
-     * @return string
-     */
-    public function getClass()
-    {
-        return $this->class;
     }
     
     /**
@@ -117,7 +66,7 @@ class Set implements AccessibleInterface
         if (is_object($class)) {
             $class = get_class($class);
         }
-        return $this->class === $this->makeFullyQualifiedClass($class);
+        return $this->class === $class;
     }
     
     /**
@@ -147,58 +96,35 @@ class Set implements AccessibleInterface
     /**
      * Fills values from a traversable item.
      * 
-     * @param mixed $traversable The values to import.
+     * @param mixed  $data   The values to import.
+     * @param string $mapper The mapper to use for importing.
      * 
      * @return Entity
      */
-    public function fill($traversable)
+    public function fill($data, $mapper = null)
     {
-        // make sure the item is iterable
-        if (!is_array($traversable) && !is_object($traversable)) {
-            throw new InvalidArgumentException('Item being imported must traversable.');
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as $k => $v) {
+                $this->offsetSet($k, $this->ensureEntity($mapper));
+            }
         }
-
-        // now apply the values
-        foreach ($traversable as $k => $v) {
-            $this->offsetSet($k, $v);
-        }
-        
         return $this;
     }
     
     /**
      * Converts the set to an array.
      * 
+     * @param string $mapper The mapper to use for exporting.
+     * 
      * @return array
      */
-    public function toArray()
+    public function toArray($mapper = null)
     {
         $array = array();
         foreach ($this as $k => $v) {
-            $array[$k] = $v->export();
+            $array[$k] = $v->toArray($mapper);
         }
         return $array;
-    }
-    
-    /**
-     * Resets the data array.
-     * 
-     * @return Set
-     */
-    public function clean()
-    {
-        $this->data = array();
-        return $this;
-    }
-    
-    /**
-     * Returns whether or not the specified accessible is clean.
-     * 
-     * @return bool
-     */
-    public function isClean()
-    {
-        return count($this->data) === 0;
     }
     
     /**
@@ -280,8 +206,7 @@ class Set implements AccessibleInterface
     {
         $start = array_slice($this->data, 0, $index);
         $end   = array_slice($this->data, $index);
-        
-        $this->validateEntity($item);
+        $item  = $this->ensureEntity($item);
         
         $this->data = array_merge($start, array($item), $end);
         
@@ -359,17 +284,6 @@ class Set implements AccessibleInterface
         
         // re-index
         $this->data = array_values($this->data);
-        return $this;
-    }
-    
-    /**
-     * Empties the current set.
-     * 
-     * @return Set
-     */
-    public function clear()
-    {
-        $this->data = array();
         return $this;
     }
     
@@ -489,7 +403,9 @@ class Set implements AccessibleInterface
      */
     public function offsetSet($offset, $value)
     {
-        $this->validateEntity($value);
+        if (!$value instanceof Entity) {
+            $value = $this->ensureEntity($value);
+        }
         
         $offset = is_null($offset) ? count($this->data) : $offset;
         
@@ -631,74 +547,19 @@ class Set implements AccessibleInterface
     /**
      * Ensures the item is a valid entity instance.
      * 
-     * @param Entity $item The entity to validate.
-     * 
-     * @throws UnexpectedValueException If the item is not an object.
-     * @throws UnexpectedValueException If the item is not a valid instance.
+     * @param Entity $item   The entity to ensure.
+     * @param string $mapper The mapper to use to import the data.
      * 
      * @return void
      */
-    private function validateEntity($item)
+    private function ensureEntity($item, $mapper = null)
     {
-        if (!is_object($item)) {
-            throw new UnexpectedValueException('The item passed into "' . get_class($this) . '" is not an object.');
+        $class = $this->class;
+        
+        if (!$item instanceof $class) {
+            $item = new $class($item, $mapper);
         }
         
-        if (!$this->class) {
-            $this->class = get_class($item);
-        }
-        
-        if (!$item instanceof $this->class) {
-            throw new UnexpectedValueException(
-                'The item "'
-                . get_class($item)
-                . '" must be an instance of "'
-                . $this->class
-                . '".'
-            );
-        }
-    }
-    
-    /**
-     * Makes the specified class into a fully qualified class name.
-     * 
-     * @param string $class The class.
-     * 
-     * @return string
-     */
-    private function makeFullyQualifiedClass($class)
-    {
-        if (!$class) {
-            throw new UnexpectedValueException('Cannot make a fully qualified class out of an empty value.');
-        }
-        
-        if (is_object($class)) {
-            $class = get_class($class);
-        } elseif (!is_string($class)) {
-            throw new InvalidArgumentException(
-                'Cannot make fully qualfied class name from argument because it is not an object or string.'
-            );
-        }
-        
-        $ns    = dirname($class);
-        $ns    = trim($ns, '\\');
-        $ns    = $ns ? '\\' . $ns : '';
-        $class = basename($class);
-        $class = trim($class, '\\');
-        $class = $ns . '\\' . $class;
-        
-        return $class;
-    }
-
-    /**
-     * Sets the default namespace to use.
-     * 
-     * @param string $ns The default namespace to use.
-     * 
-     * @return void
-     */
-    public static function setDefaultNamespace($ns)
-    {
-        static::$defaultNs = $ns;
+        return $item;
     }
 }

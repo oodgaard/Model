@@ -16,13 +16,20 @@ use Serializable;
  */
 interface AccessibleInterface extends ArrayAccess, Countable, Iterator, Serializable
 {
-     /**
-      * Fills values from an array.
-      * 
-      * @param mixed $values The values to import.
-      * 
-      * @return AccessibleInterface
-      */
+    /**
+     * Removes all data from the object.
+     * 
+     * @return AccessibleInterface
+     */
+    public function init();
+    
+    /**
+     * Fills values from an array.
+     * 
+     * @param mixed $values The values to import.
+     * 
+     * @return AccessibleInterface
+     */
     public function fill($values);
     
     /**
@@ -31,20 +38,6 @@ interface AccessibleInterface extends ArrayAccess, Countable, Iterator, Serializ
      * @return array
      */
     public function toArray();
-    
-    /**
-     * Clears all of the data on the object.
-     * 
-     * @return array
-     */
-    public function clean();
-    
-    /**
-     * Returns whether or not the specified accessible is clean.
-     * 
-     * @return bool
-     */
-    public function isClean();
     
     /**
      * Validates the accessible item.

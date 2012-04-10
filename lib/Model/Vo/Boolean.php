@@ -3,25 +3,15 @@
 namespace Model\Vo;
 
 /**
- * Float VO.
+ * Boolean VO.
  * 
  * @category ValueObjects
  * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class Float extends Generic
+class Boolean extends Generic
 {
-    /**
-     * Sets the default value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->set(0);
-    }
-    
     /**
      * Sets the value.
      * 
@@ -31,6 +21,6 @@ class Float extends Generic
      */
     public function set($value)
     {
-        parent::set((float) $value);
+        parent::set((bool) $value);
     }
 }

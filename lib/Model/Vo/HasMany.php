@@ -3,6 +3,14 @@
 namespace Model\Vo;
 use Model\Entity\Set;
 
+/**
+ * One-to-many relationship VO.
+ * 
+ * @category ValueObjects
+ * @package  Model
+ * @author   Trey Shugart <treshugart@gmail.com>
+ * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
+ */
 class HasMany implements VoInterface
 {
     /**
@@ -15,13 +23,23 @@ class HasMany implements VoInterface
     /**
      * Sets up the entity set.
      * 
-     * @param $class The class to apply to the set for entities.
+     * @param Set $set The entity set to use.
      * 
      * @return HasMany
      */
-    public function __construct($class = null)
+    public function __construct(Set $set)
     {
-        $this->set = new Set(array(), $class);
+        $this->set = $set;
+    }
+    
+    /**
+     * Initializes the value.
+     * 
+     * @return void
+     */
+    public function init()
+    {
+        $this->set->init();
     }
     
     /**
@@ -33,7 +51,7 @@ class HasMany implements VoInterface
      */
     public function set($value)
     {
-        $this->set->clean()->fill($value);
+        $this->set->init()->fill($value);
     }
     
     /**
@@ -44,25 +62,5 @@ class HasMany implements VoInterface
     public function get()
     {
         return $this->set;
-    }
-    
-    /**
-     * Returns whether or not the set exists.
-     * 
-     * @return bool
-     */
-    public function exists()
-    {
-        return !$this->set->isClean();
-    }
-    
-    /**
-     * Unsets the set.
-     * 
-     * @return void
-     */
-    public function remove()
-    {
-        $this->set->clean();
     }
 }

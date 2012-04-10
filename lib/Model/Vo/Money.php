@@ -2,27 +2,25 @@
 
 namespace Model\Vo;
 
-class Money implements VoInterface
+/**
+ * Money VO.
+ * 
+ * @category ValueObjects
+ * @package  Model
+ * @author   Trey Shugart <treshugart@gmail.com>
+ * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
+ */
+class Money extends Generic
 {
-    private $value;
-    
+    /**
+     * Sets the value.
+     * 
+     * @param mixed $value The value to set.
+     * 
+     * @return void
+     */
     public function set($value)
     {
-        $this->value = number_format($value, 2);
-    }
-    
-    public function get()
-    {
-        return $this->value;
-    }
-    
-    public function exists()
-    {
-        return $this->value !== null;
-    }
-    
-    public function remove()
-    {
-        $this->value = null;
+        parent::set(number_format($value, 2));
     }
 }
