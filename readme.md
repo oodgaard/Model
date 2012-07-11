@@ -154,7 +154,7 @@ Here is an example entity using the above tags:
          * 
          * @auto autoloadSlug
          * 
-         * @vo Modle\Vo\String
+         * @vo Model\Vo\String
          * 
          * @valid Zend\Validator\Alnum The content :title's slug is invalid.
          */
