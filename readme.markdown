@@ -66,19 +66,14 @@ Mappers are used to translate information going into or out of your entities muc
             'id'          => 'fields.$.id'
         ];
         
-        public content__created($date)
-        {
-            return $this->toMysqlDateTime($date);
-        }
+        public $filters = [
+            'created' => 'filterDate',
+            'updated' => 'filterDate'
+        ];
         
-        public content__updated($date)
+        public function filterDate($date)
         {
-            return $this->toMysqlDateTime($date);
-        }
-        
-        private function toMysqlDateTime(DateTime $date)
-        {
-            return $date->format('Y-m-d H:i:s');
+            return date('Y-m-d H:i:s', strtotime($date));
         }
     }
 
