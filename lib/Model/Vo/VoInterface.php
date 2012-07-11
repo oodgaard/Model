@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Vo;
+use Model\Validator\ValidatableInterface;
 
 /**
  * The base value object interface.
@@ -10,15 +11,8 @@ namespace Model\Vo;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-interface VoInterface
+interface VoInterface extends ValidatableInterface
 {
-    /**
-     * Hook for initializing the VO.
-     * 
-     * @return void
-     */
-    public function init();
-    
     /**
      * Sets the value.
      * 
@@ -34,4 +28,18 @@ interface VoInterface
      * @return mixed
      */
     public function get();
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists();
+    
+    /**
+     * Hook for initializing the VO.
+     * 
+     * @return void
+     */
+    public function remove();
 }

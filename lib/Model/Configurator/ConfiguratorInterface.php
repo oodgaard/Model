@@ -14,12 +14,11 @@ use Model\Entity\Entity;
 interface ConfiguratorInterface
 {
     /**
-     * Sets a doc tag implementation to use for the specified tag.
+     * Configures the specified entity.
      * 
-     * @param string $name  The tag name.
-     * @param string $class The class to handle the tag.
+     * @param Entity $entity The entity to configure.
      * 
-     * @return DocComment
+     * @return void
      */
     public function configure(Entity $entity);
 }

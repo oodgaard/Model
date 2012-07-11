@@ -13,14 +13,14 @@ use RuntimeException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class VoSet implements VoInterface
+class VoSet extends VoAbstract
 {
     /**
      * The array holding the VOs.
      * 
      * @var array
      */
-    private $arr;
+    private $arr = [];
     
     /**
      * The class to use.
@@ -48,16 +48,6 @@ class VoSet implements VoInterface
     {
         $this->class = new ReflectionClass($class);
         $this->args  = $args;
-    }
-    
-    /**
-     * Initializes the value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->arr = [];
     }
     
     /**
@@ -96,6 +86,26 @@ class VoSet implements VoInterface
     public function get()
     {
         return $this->arr;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return count($this->arr) > 0;
+    }
+    
+    /**
+     * Initializes the value.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->arr = [];
     }
     
     /**

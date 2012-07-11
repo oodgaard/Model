@@ -11,37 +11,27 @@ use Model\Entity\Set;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class HasMany implements VoInterface
+class HasMany extends VoAbstract
 {
     /**
-     * The entity set.
+     * The value.
      * 
-     * @var Set
+     * @var mixed
      */
-    private $set;
-    
+    private $value;
+
     /**
-     * Sets up the entity set.
+     * Sets up the entity.
      * 
-     * @param Set $set The entity set to use.
+     * @param string $class The entity class name to use.
      * 
      * @return HasMany
      */
-    public function __construct(Set $set)
+    public function __construct($class)
     {
-        $this->set = $set;
+        $this->value = new Set($class);
     }
-    
-    /**
-     * Initializes the value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->set->init();
-    }
-    
+
     /**
      * Fills the set with the value.
      * 
@@ -51,16 +41,36 @@ class HasMany implements VoInterface
      */
     public function set($value)
     {
-        $this->set->init()->fill($value);
+        $this->value->clear()->fill($value);
     }
-    
+
     /**
-     * Returns the set.
+     * Returns the value.
      * 
-     * @return Set
+     * @return mixed
      */
     public function get()
     {
-        return $this->set;
+        return $this->value;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return true;
+    }
+    
+    /**
+     * Hook for initializing the VO.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->value->clear();
     }
 }

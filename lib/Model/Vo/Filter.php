@@ -34,16 +34,6 @@ class Filter extends Generic
         }
         $this->cb = $cb;
     }
-    
-    /**
-     * Sets the default value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->set(null);
-    }
 
     /**
      * Sets the value.

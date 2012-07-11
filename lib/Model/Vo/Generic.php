@@ -10,7 +10,7 @@ namespace Model\Vo;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class Generic implements VoInterface
+class Generic extends VoAbstract
 {
     /**
      * The generic value.
@@ -18,16 +18,6 @@ class Generic implements VoInterface
      * @var mixed
      */
     private $value;
-    
-    /**
-     * Initializes the value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->set(null);
-    }
     
     /**
      * Sets the value.
@@ -49,5 +39,25 @@ class Generic implements VoInterface
     public function get()
     {
         return $this->value;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return isset($this->value);
+    }
+    
+    /**
+     * Initializes the value.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->value = null;
     }
 }

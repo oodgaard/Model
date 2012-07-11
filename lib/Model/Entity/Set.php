@@ -1,7 +1,10 @@
 <?php
 
 namespace Model\Entity;
+use Closure;
 use InvalidArgumentException;
+use Model\Validator\Validatable;
+use Model\Validator\ValidatableInterface;
 use RuntimeException;
 
 /**
@@ -12,8 +15,10 @@ use RuntimeException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Set implements AccessibleInterface
+class Set implements AccessibleInterface, ValidatableInterface
 {
+    use Validatable;
+    
     /**
      * The class used to represent each entity in the set.
      * 
@@ -48,7 +53,7 @@ class Set implements AccessibleInterface
      * 
      * @return Set
      */
-    public function init()
+    public function clear()
     {
         $this->data = [];
         return $this;
@@ -105,10 +110,29 @@ class Set implements AccessibleInterface
     {
         if (is_array($data) || is_object($data)) {
             foreach ($data as $k => $v) {
-                $this->offsetSet($k, $this->ensureEntity($mapper));
+                $this->offsetSet(null, $this->ensureEntity($v, $mapper));
             }
         }
         return $this;
+    }
+    
+    /**
+     * Validates the entity and returns the error messages.
+     * 
+     * @return array
+     */
+    public function validate()
+    {
+        $messages   = [];
+        $validators = $this->getValidators();
+        
+        $this->walk(function($entity) use (&$messages, $validators) {
+            foreach ($validators as $message => $validator) {
+                $messages = array_merge($messages, $entity->validate());
+            }
+        });
+        
+        return $messages;
     }
     
     /**
@@ -121,25 +145,12 @@ class Set implements AccessibleInterface
     public function toArray($mapper = null)
     {
         $array = array();
+        
         foreach ($this as $k => $v) {
             $array[$k] = $v->toArray($mapper);
         }
+        
         return $array;
-    }
-    
-    /**
-     * Validates each item in the set.
-     * 
-     * @throws ValidatorException If an item is not valid.
-     * 
-     * @return Set
-     */
-    public function validate()
-    {
-        foreach ($this->data as $item) {
-            $item->validate();
-        }
-        return $this;
     }
     
     /**
@@ -147,16 +158,18 @@ class Set implements AccessibleInterface
      * is passed, it is used in lieu of passing the entity as the first argument just in case a different order of
      * of parameters need to be passed in.
      * 
-     * @param mixed $callback A callable callback.
-     * @param array $userdata Any userdata to pass to the callback.
+     * @param mixed The callback to execute on each item.
      * 
      * @return mixed
      */
-    public function walk($callback, array $userdata = array())
+    public function walk($callback)
     {
+        if (!is_callable($callback)) {
+            throw new InvalidArgumentException('The passed argument is not callable.');
+        }
+        
         foreach ($this as $entity) {
-            $cb = is_string($callback) ? array($entity, $callback) : $callback;
-            call_user_func($cb, $userdata ? $userdata : $entity);
+            call_user_func($callback, $entity);
         }
         
         return $this;
@@ -198,11 +211,12 @@ class Set implements AccessibleInterface
     /**
      * Inserts an item at the specified offset.
      * 
-     * @param mixed $item The item to insert.
+     * @param mixed $index The index to push the item into.
+     * @param mixed $item  The item to insert.
      * 
      * @return Set
      */
-    public function push($index, $item)
+    public function push($index, $item = [])
     {
         $start = array_slice($this->data, 0, $index);
         $end   = array_slice($this->data, $index);
@@ -216,7 +230,7 @@ class Set implements AccessibleInterface
     /**
      * Pulls an item from the current collection and returns it.
      * 
-     * @param int $index The item to pull out of the current set and return.
+     * @param mixed $index The item to pull out of the current set and return.
      * 
      * @return Entity
      */
@@ -236,7 +250,7 @@ class Set implements AccessibleInterface
      * 
      * @return Set
      */
-    public function prepend($item)
+    public function prepend($item = [])
     {
         return $this->push(0, $item);
     }
@@ -244,13 +258,33 @@ class Set implements AccessibleInterface
     /**
      * Appends an item.
      * 
-     * @param mixed $item The item to append.
+     * @param mixed $item The item to append. If set to nothing, an empty item is added.
      * 
      * @return Set
      */
-    public function append($item)
+    public function append($item = [])
     {
         return $this->push($this->count(), $item);
+    }
+    
+    /**
+     * Filters the set using the specified callback.
+     * 
+     * @param Closure $filter The filter to use.
+     * 
+     * @return Set
+     */
+    public function filter(Closure $filter)
+    {
+        $keys = [];
+        
+        foreach ($this as $k => $item) {
+            if ($filter($item) !== false) {
+                $keys[] = $k;
+            }
+        }
+        
+        return $this->reduce($keys);
     }
     
     /**
@@ -264,6 +298,7 @@ class Set implements AccessibleInterface
     {
         // find items that exist
         $found = array();
+        
         foreach ((array) $keys as $key) {
             if (isset($this->data[$key])) {
                 $found[$key] = $key;
@@ -284,6 +319,27 @@ class Set implements AccessibleInterface
         
         // re-index
         $this->data = array_values($this->data);
+        
+        return $this;
+    }
+    
+    /**
+     * Removes all items matching the specified query.
+     * 
+     * @param array $query The query of items to remove.
+     * 
+     * @return Set
+     */
+    public function remove(array $query)
+    {
+        // remove each item
+        foreach ($this->findKeys($query) as $key) {
+            unset($this->data[$key]);
+        }
+        
+        // re-index
+        $this->data = array_values($this->data);
+        
         return $this;
     }
     
@@ -407,7 +463,7 @@ class Set implements AccessibleInterface
             $value = $this->ensureEntity($value);
         }
         
-        $offset = is_null($offset) ? count($this->data) : $offset;
+        $offset = is_numeric($offset) ? (int) $offset : count($this->data);
         
         $this->data[$offset] = $value;
         
@@ -554,12 +610,9 @@ class Set implements AccessibleInterface
      */
     private function ensureEntity($item, $mapper = null)
     {
-        $class = $this->class;
-        
-        if (!$item instanceof $class) {
-            $item = new $class($item, $mapper);
+        if (!$item instanceof $this->class) {
+            $item = new $this->class($item, $mapper);
         }
-        
         return $item;
     }
 }

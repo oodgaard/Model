@@ -1,8 +1,8 @@
 <?php
 
 namespace Model\Configurator\DocComment;
-use Closure;
 use Model\Entity\Entity;
+use ReflectionProperty;
 use Reflector;
 use UnexpectedValueException;
 
@@ -14,7 +14,7 @@ use UnexpectedValueException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  http://europaphp.org/license
  */
-class VarTag implements DocTagInterface
+class VoTag implements DocTagInterface
 {
     /**
      * Configures the entity with the specified VO.
@@ -23,14 +23,25 @@ class VarTag implements DocTagInterface
      * @param Reflector $refl   The property to configure.
      * @param Entity    $entity The entity being configured.
      * 
-     * @return Vo
+     * @return void
      */
     public function configure($value, Reflector $refl, Entity $entity)
     {
+        // make sure we are using a property
+        if (!$refl instanceof ReflectionProperty) {
+            throw new LogicException('The @vo tag can only be applied to class properties.');
+        }
+        
+        // property must be public
+        if (!$refl->isPublic()) {
+            return;
+        }
+        
         // the first part of the var tag is the var type (VO instance class name)
         // the second part is an evaluated set of arguments to pass to the constructor of the VO
-        $parts = explode(' ', $value, 2);
-        
+        $value = trim($value);
+        $parts = preg_split('/\s+/', $value, 2);
+
         // the class is retrieved using a closure so that we can bind a scope to it
         $class = function() use ($parts) {
             if (isset($parts[1])) {
@@ -52,6 +63,9 @@ class VarTag implements DocTagInterface
         
         // set the default value if it exists
         $this->setDefaultValueIfExists($entity, $refl);
+        
+        // unset the property
+        unset($entity->{$refl->getName()});
     }
     
     /**

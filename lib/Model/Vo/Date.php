@@ -12,7 +12,7 @@ use DateTimeZone;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class Date implements VoInterface
+class Date extends VoAbstract
 {
     /**
      * The configuration for the date.
@@ -50,16 +50,6 @@ class Date implements VoInterface
     }
     
     /**
-     * Initializes the value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->date->modify('now');
-    }
-    
-    /**
      * Sets the value.
      * 
      * @param mixed $value The value to set.
@@ -70,8 +60,11 @@ class Date implements VoInterface
     {
         if (is_numeric($value)) {
             $value = date($this->config['format'], $value);
+        } elseif ($value == null) {
+            $this->date = null;
+        } else {
+            $this->date->modify($value);
         }
-        $this->date->modify($value);
     }
     
     /**
@@ -81,6 +74,26 @@ class Date implements VoInterface
      */
     public function get()
     {
-        return $this->date->format($this->config['format']);
+        return $this->date != null ? $this->date->format($this->config['format']) : null;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return isset($this->date);
+    }
+    
+    /**
+     * Initializes the value.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->date->modify('now');
     }
 }

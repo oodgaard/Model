@@ -1,8 +1,7 @@
 <?php
 
 namespace Model\Vo;
-use Model\Entity\Entity;
-use UnexpectedValueException;
+use Model\Entity;
 
 /**
  * One-to-one relationship VO.
@@ -12,56 +11,66 @@ use UnexpectedValueException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class HasOne implements VoInterface
+class HasOne extends VoAbstract
 {
     /**
-     * The entity.
+     * The value.
      * 
-     * @var Entity
+     * @var mixed
      */
-    private $entity;
-    
+    private $value;
+
     /**
-     * Constructs a new relationship VO.
+     * Sets up the entity.
      * 
-     * @param Entity $entity The entity to represent each object.
+     * @param string $class The entity class name to use.
      * 
-     * @return HasOne
+     * @return HasMany
      */
-    public function __construct(Entity $entity)
+    public function __construct($class)
     {
-        $this->entity = new $entity;
+        $this->value = new $class;
     }
-    
+
     /**
-     * Initializes the value.
+     * Fills the set with the value.
      * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->entity->init();
-    }
-    
-    /**
-     * Fills the entity with the specified value.
-     * 
-     * @param mixed $value The value to fill the entity with.
+     * @param mixed $value The value to fill the set with.
      * 
      * @return void
      */
     public function set($value)
     {
-        $this->entity->init()->fill($value);
+        $this->value->clear()->fill($value);
     }
-    
+
     /**
-     * Returns the entity.
+     * Returns the value.
      * 
-     * @return Entity
+     * @return mixed
      */
     public function get()
     {
-        return $this->entity;
+        return $this->value;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return true;
+    }
+    
+    /**
+     * Hook for initializing the VO.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->value->clear();
     }
 }

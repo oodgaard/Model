@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Vo;
+use InvalidArgumentException;
 
 /**
  * Represents an array of values.
@@ -10,49 +11,35 @@ namespace Model\Vo;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
  */
-class Set implements VoInterface
+class Set extends VoAbstract
 {
     /**
      * The internal array.
      * 
      * @var array
      */
-    private $arr;
-    
-    /**
-     * Initializes the value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->value = [];
-    }
+    private $value;
     
     /**
      * Sets the value.
      * 
-     * @param mixed $value The value to set.
+     * @param array $value The value to set.
      * 
      * @return void
      */
     public function set($value)
     {
         // ensure valid array or object
-        if (!is_array($value) || !is_object($value)) {
-            throw new InvalidArgumentException(
-                'The value must be an object or array. '
-                . ucfirst(gettype($value))
-                . ' given.'
-            );
+        if (!is_array($value)) {
+            return;
         }
         
         // reset because we are not appending
-        $this->arr = [];
+        $this->value = [];
         
         // import values
         foreach ($value as $k => $v) {
-            $this->arr[$k] = $v;
+            $this->value[$k] = $v;
         }
     }
 
@@ -63,6 +50,26 @@ class Set implements VoInterface
      */
     public function get()
     {
-        return $this->arr;
+        return $this->value;
+    }
+    
+    /**
+     * Returns whether or not the VO has a value.
+     * 
+     * @return bool
+     */
+    public function exists()
+    {
+        return count($this->value) > 0;
+    }
+    
+    /**
+     * Initializes the value.
+     * 
+     * @return void
+     */
+    public function remove()
+    {
+        $this->value = [];
     }
 }

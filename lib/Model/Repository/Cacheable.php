@@ -4,14 +4,14 @@ namespace Model\Repository;
 use Model\Cache\CacheInterface;
 
 /**
- * The main repository interface. All model repositories must implement this.
+ * Caching implementation.
  * 
  * @category Repositories
  * @package  Model
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-abstract class RepositoryAbstract
+trait Cacheable
 {
     /**
      * The cache driver to use, if any.
@@ -27,20 +27,10 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    public function setCache(CacheInterface $cache)
+    public function setCacheDriver(CacheInterface $cache)
     {
         $this->cache = $cache;
         return $this;
-    }
-    
-    /**
-     * Returns the cache interface being used.
-     * 
-     * @return CacheInterface|null
-     */
-    public function getCache()
-    {
-        return $this->cache;
     }
     
     /**
@@ -51,7 +41,7 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    protected function persist($item, $time = null)
+    protected function setCache($item, $time = null)
     {
         return $this->persistFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs(), $item, $time);
     }
@@ -61,7 +51,7 @@ abstract class RepositoryAbstract
      * 
      * @return mixed
      */
-    protected function retrieve()
+    protected function getCache()
     {
         return $this->retrieveFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
@@ -71,7 +61,7 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    protected function expire()
+    protected function clearCache()
     {
         return $this->expireFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
@@ -86,7 +76,7 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    protected function persistFor($class, $method, array $args, $item, $time = null)
+    protected function setCacheFor($class, $method, array $args, $item, $time = null)
     {
         if ($this->cache) {
             $this->cache->set($this->generateCacheKey($class, $method, $args), $item, $time);
@@ -102,7 +92,7 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    protected function retrieveFor($class, $method, array $args)
+    protected function getCacheFor($class, $method, array $args)
     {
         if ($this->cache) {
             return $this->cache->get($this->generateCacheKey($class, $method, $args));
@@ -118,7 +108,7 @@ abstract class RepositoryAbstract
      * 
      * @return RepositoryAbstract
      */
-    protected function expireFor($class, $method, array $args)
+    protected function clearCacheFor($class, $method, array $args)
     {
         if ($this->cache) {
             $this->cache->remove($this->generateCacheKey($class, $method, $args));

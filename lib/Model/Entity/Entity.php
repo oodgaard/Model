@@ -4,8 +4,9 @@ namespace Model\Entity;
 use Model\Behavior\BehaviorInterface;
 use Model\Configurator;
 use Model\Mapper\MapperInterface;
-use Model\Validator\ValidatorInterface;
-use Model\Validator\ValidatorException;
+use Model\Repository;
+use Model\Validator\Assertable;
+use Model\Validator\AssertableInterface;
 use Model\Vo\Generic;
 use Model\Vo\VoInterface;
 use RuntimeException;
@@ -18,14 +19,23 @@ use RuntimeException;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Entity implements AccessibleInterface
+class Entity implements AccessibleInterface, AssertableInterface
 {
+    use Assertable;
+    
+    /**
+     * Autoloaders to use for autoloading data onto VOs.
+     * 
+     * @var array
+     */
+    private $autoloaders = [];
+    
     /**
      * The data in the entity.
      * 
      * @var array
      */
-    private $data = array();
+    private $data = [];
     
     /**
      * Mappers assigned to the entity.
@@ -35,13 +45,6 @@ class Entity implements AccessibleInterface
     private $mappers = [];
     
     /**
-     * The validators applied to the entity.
-     * 
-     * @var array
-     */
-    private $validators = array();
-    
-    /**
      * Constructs, configures and fills the entity with data, if any is passed.
      * 
      * @param mixed  $data   The data to fill the entity with.
@@ -49,9 +52,9 @@ class Entity implements AccessibleInterface
      * 
      * @return Entity
      */
-    public function __construct($data = array(), $mapper = null)
+    public function __construct($data = [], $mapper = null)
     {
-        $this->configure();
+        $this->init();
         $this->fill($data, $mapper);
     }
     
@@ -61,14 +64,13 @@ class Entity implements AccessibleInterface
      * @param string $name  The VO name.
      * @param mixed  $value The value to set.
      * 
-     * @return Entity
+     * @return void
      */
     public function __set($name, $value)
     {
-        if (!isset($this->data[$name])) {
-            $this->data[$name] = new Generic;
+        if (isset($this->data[$name])) {
+            $this->data[$name]->set($value);
         }
-        $this->data[$name]->set($value);
     }
     
     /**
@@ -81,6 +83,9 @@ class Entity implements AccessibleInterface
     public function __get($name)
     {
         if (isset($this->data[$name])) {
+            if (isset($this->autoloaders[$name]) && !$this->data[$name]->exists()) {
+                $this->data[$name]->set($this->{$this->autoloaders[$name]}());
+            }
             return $this->data[$name]->get();
         }
     }
@@ -94,7 +99,7 @@ class Entity implements AccessibleInterface
      */
     public function __isset($name)
     {
-        return isset($this->data[$name]);
+        return isset($this->data[$name]) && $this->data[$name]->exists();
     }
     
     /**
@@ -107,7 +112,7 @@ class Entity implements AccessibleInterface
     public function __unset($name)
     {
         if (isset($this->data[$name])) {
-            unset($this->data[$name]);
+            $this->data[$name]->remove();
         }
     }
     
@@ -116,21 +121,21 @@ class Entity implements AccessibleInterface
      * 
      * @return void
      */
-    public function configure()
+    public function init()
     {
         $conf = new Configurator\DocComment;
         $conf->configure($this);
     }
     
     /**
-     * Initializes each VO.
+     * Clears all data on the entity.
      * 
      * @return Entity
      */
-    public function init()
-    {    
+    public function clear()
+    {
         foreach ($this->data as $vo) {
-            $vo->init();
+            $vo->remove();
         }
         return $this;
     }
@@ -145,8 +150,49 @@ class Entity implements AccessibleInterface
      */
     public function setVo($name, VoInterface $vo)
     {
-        $vo->init();
         $this->data[$name] = $vo;
+        return $this;
+    }
+    
+    /**
+     * Returns the specified VO.
+     * 
+     * @param string $name The VO name.
+     * 
+     * @return VoInterface
+     */
+    public function getVo($name)
+    {
+        if (!isset($this->data[$name])) {
+            throw new RuntimeException(sprintf('The VO "%s" does not exist.', $name));
+        }
+        return $this->data[$name];
+    }
+    
+    /**
+     * Returns whether or not the specified VO exists.
+     * 
+     * @param string $name The VO name.
+     * 
+     * @return bool
+     */
+    public function hasVo($name)
+    {
+        return isset($this->data[$name]);
+    }
+    
+    /**
+     * Removes the specified VO if it exists.
+     * 
+     * @param string $name The VO name.
+     * 
+     * @return Entity
+     */
+    public function removeVo($name)
+    {
+        if (isset($this->data[$name])) {
+            unset($this->data[$name]);
+        }
         return $this;
     }
     
@@ -154,13 +200,120 @@ class Entity implements AccessibleInterface
      * Sets the entity to use for exporting data.
      * 
      * @param string          $name   The exporter name.
-     * @param MapperInterface $mapper The mapper used to export the data.
+     * @param MapperInterface $mapper The mapper class name.
      * 
      * @return Entity
      */
     public function setMapper($name, MapperInterface $mapper)
     {
         $this->mappers[$name] = $mapper;
+        return $this;
+    }
+    
+    /**
+     * Returns the specified mapper.
+     * 
+     * @param string $name The mapper name.
+     * 
+     * @return MapperInterface
+     */
+    public function getMapper($name)
+    {
+        if (!isset($this->mappers[$name])) {
+            throw new RuntimeException(sprintf('The mapper "%s" does not exist.', $name));
+        }
+        return $this->mappers[$name];
+    }
+    
+    /**
+     * Returns whether or not the specified mapper exists.
+     * 
+     * @param string $name The mapper name.
+     * 
+     * @return bool
+     */
+    public function hasMapper($name)
+    {
+        return isset($this->mappers[$name]);
+    }
+    
+    /**
+     * Removes the specified mapper if it exists.
+     * 
+     * @param string $name The mapper name.
+     * 
+     * @return Entity
+     */
+    public function removeMapper($name)
+    {
+        if (isset($this->mappers[$name])) {
+            unset($this->mappers[$name]);
+        }
+        return $this;
+    }
+    
+    /**
+     * Applies the autoloader to the specified VO.
+     * 
+     * @param string $name   The VO name.
+     * @param string $method The method to use.
+     * 
+     * @return Entity
+     */
+    public function setAutoloader($name, $method)
+    {
+        if (!method_exists($this, $method)) {
+            throw new RuntimeException(sprintf(
+                'The autoload method "%s" does not exist on "%s".',
+                $method,
+                get_class($this)
+            ));
+        }
+        
+        $this->autoloaders[$name] = $method;
+        
+        return $this;
+    }
+    
+    /**
+     * Returns the specified autoloader.
+     * 
+     * @param string $name The autoloader name.
+     * 
+     * @return string
+     */
+    public function getAutoloader($name)
+    {
+        if (!isset($this->autoloaders[$name])) {
+            throw new RuntimeException(sprintf('The autoloader "%s" does not exist.', $name));
+        }
+        return $this->autoloaders[$name];
+    }
+    
+    /**
+     * Returns whether or not the specified autoloader exists.
+     * 
+     * @param string $name The autoloader name.
+     * 
+     * @return bool
+     */
+    public function hasAutoloader($name)
+    {
+        return isset($this->autoloaders[$name]);
+    }
+    
+    /**
+     * Removes the specified autoloader if it exists.
+     * 
+     * @param string $name The autoloader name.
+     * 
+     * @return Entity
+     */
+    public function removeAutoloader($name)
+    {
+        if (isset($this->autoloaders[$name])) {
+            unset($this->autoloaders[$name]);
+        }
         return $this;
     }
     
@@ -174,13 +327,26 @@ class Entity implements AccessibleInterface
      */
     public function fill($data, $mapper = null)
     {
+        // if there is no data don't do anything
+        if (!$data) {
+            return $this;
+        }
+        
+        // if there is a mapper we must work some magic
+        if ($mapper && isset($this->mappers[$mapper])) {
+            $data = $this->makeDataArrayFromAnything($data);
+            $data = $this->mappers[$mapper]->map($data);
+        }
+        
+        // let the VOs worry about the value
         if (is_array($data) || is_object($data)) {
-            if (isset($this->mappers[$mapper])) {
-                $data = $this->mappers[$mapper]->map($data);
-            }
-            
             foreach ($data as $k => $v) {
-                $this->__set($k, $v);
+                $current = $this->__get($k);
+                if ($current instanceof AccessibleInterface) {
+                    $current->fill($v, $mapper);
+                } else {
+                    $this->__set($k, $v);
+                }
             }
         }
         
@@ -199,14 +365,16 @@ class Entity implements AccessibleInterface
         $array = array();
         
         foreach ($this->data as $k => $v) {
-            $v = $v->get();
+            $v = $this->__get($k);
+            
             if ($v instanceof AccessibleInterface) {
-                $v = $v->toArray();
+                $v = $v->toArray($mapper);
             }
+            
             $array[$k] = $v;
         }
         
-        if (isset($this->mappers[$mapper])) {
+        if ($mapper && isset($this->mappers[$mapper])) {
             $array = $this->mappers[$mapper]->map($array);
         }
         
@@ -214,49 +382,38 @@ class Entity implements AccessibleInterface
     }
     
     /**
-     * Adds a validator to the entity.
+     * Validates the entity and returns the error messages.
      * 
-     * @param ValidatorInterface $validator The validator to use.
-     * 
-     * @return Entity
-     */
-    public function addValidator(ValidatorInterface $validator)
-    {
-        $this->validators[] = $validator;
-        return $this;
-    }
-    
-    /**
-     * Validates the entity and throws an exception if it is not valid.
-     * 
-     * @throws Exception If the entity is not valid.
-     * 
-     * @return Entity
+     * @return array
      */
     public function validate()
     {
-        // validate the entity against all validators
-        foreach ($this->validators as $validator) {
-            if ($validator->validate($this) === false) {
-                throw new ValidatorException(
-                    'The entity "'
-                    . get_class($this)
-                    . '" did not pass "'
-                    . get_class($validator)
-                    . '" validation.'
-                );
+        $messages = [];
+        
+        // validate each VO
+        foreach ($this->data as $vo) {
+            if ($voMessages = $vo->validate()) {
+                $messages = array_merge($messages, $voMessages);
             }
         }
         
-        // validate each relationship
-        foreach ($this->data as $item) {
-            $item = $item->get();
-            if ($item instanceof AccessibleInterface) {
-                $item->validate();
+        // then validate the entity
+        foreach ($this->validators as $message => $validator) {
+            if (call_user_func($validator, $this) === false) {
+                $messages[] = $message;
             }
         }
         
-        return $this;
+        // format error messages
+        foreach ($messages as &$message) {
+            foreach ($this->data as $name => $vo) {
+                if (is_scalar($vo = $vo->get())) {
+                    $message = str_replace(':' . $name, $vo, $message);
+                }
+            }
+        }
+        
+        return $messages;
     }
     
     /**
@@ -293,7 +450,7 @@ class Entity implements AccessibleInterface
      */
     public function offsetExists($name)
     {
-        
+        return $this->__isset($name);
     }
     
     /**
@@ -305,7 +462,7 @@ class Entity implements AccessibleInterface
      */
     public function offsetUnset($name)
     {
-        
+        $this->__unset($name);
     }
     
     /**
@@ -329,7 +486,7 @@ class Entity implements AccessibleInterface
     }
     
     /**
-     * Returns the current key of the current iten in the iteration.
+     * Returns the current key of the current item in the iteration.
      * 
      * @return string
      */
@@ -388,5 +545,33 @@ class Entity implements AccessibleInterface
     public function unserialize($data)
     {
         $this->fill(unserialize($data));
+    }
+    
+    /**
+     * Makes an array from an array or object.
+     * 
+     * @param mixed $data The data to turn into an array.
+     * 
+     * @return array
+     */
+    private function makeDataArrayFromAnything($data)
+    {
+        // arrays get passed through
+        if (is_array($data)) {
+            return $data;
+        }
+        
+        // objects get a shallow conversion because we do
+        // not need a deep conversion and it is faster
+        if (is_object($data)) {
+            $arr = [];
+            foreach ($data as $k => $v) {
+                $arr[$k] = $v;
+            }
+            return $arr;
+        }
+        
+        // if it is anything else, just return an empty array
+        return [];
     }
 }

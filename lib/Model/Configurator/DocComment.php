@@ -5,6 +5,7 @@ use Model\Configurator\DocComment;
 use Model\Entity\Entity;
 use Reflector;
 use ReflectionClass;
+use ReflectionProperty;
 use RuntimeException;
 
 /**
@@ -18,40 +19,43 @@ use RuntimeException;
 class DocComment implements ConfiguratorInterface
 {
     /**
-     * The tags to use for configuration.
+     * The tags and their configurators.
      * 
      * @var array
      */
-    private $tags = [
-        'map' => 'Model\Configurator\DocComment\MapTag',
-        'var' => 'Model\Configurator\DocComment\VarTag'
-    ];
+    private $tags = [];
+    
+    /**
+     * Sets up the doc comment configurator.
+     * 
+     * @return DocComment
+     */
+    public function __construct()
+    {
+        $this->set('auto', new DocComment\AutoTag);
+        $this->set('map', new DocComment\MapTag);
+        $this->set('valid', new DocComment\ValidTag);
+        $this->set('vo', new DocComment\VoTag);
+    }
     
     /**
      * Sets a doc tag implementation to use for the specified tag.
      * 
-     * @param string $name  The tag name.
-     * @param string $class The class to handle the tag.
+     * @param string                     $name The tag name.
+     * @param DocComment\DocTagInterface $tag  The tag instance to handle the tag.
      * 
      * @return DocComment
      */
-    public function set($name, $class)
+    public function set($name, DocComment\DocTagInterface $tag)
     {
-        if (!is_subclass_of($class, 'Model\Entity\Configurator\DocComment\DocTagInterface')) {
-            throw new RuntimeException(
-                'The specified tag configurator must implement "Model\Entity\Configurator\DocComment\DocTagInterface".'
-            );
-        }
-        
-        $this->tags[$name] = $class;
-        
+        $this->tags[$name] = $tag;
         return $this;
     }
     
     /**
      * Configures the specified entity.
      * 
-     * @param Entity $entity The entity to configure.
+     * @param EntityAbstract $entity The entity to configure.
      * 
      * @return DocComment
      */
@@ -105,6 +109,11 @@ class DocComment implements ConfiguratorInterface
                 continue;
             }
             
+            // default the split[1] value
+            if (!isset($split[1])) {
+                $split[1] = null;
+            }
+            
             // instantate the tag class
             $tags[] = [
                 'name'  => $split[0],
@@ -129,7 +138,7 @@ class DocComment implements ConfiguratorInterface
         
         // remove the trailing comment and whitespace on the last element
         foreach ($parts as &$part) {
-            $part = trim($part, "\r\n */");
+            $part = trim($part, "\r\n\t */");
         }
     }
 }

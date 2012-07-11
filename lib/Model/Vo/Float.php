@@ -13,16 +13,6 @@ namespace Model\Vo;
 class Float extends Generic
 {
     /**
-     * Sets the default value.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        $this->set(0);
-    }
-    
-    /**
      * Sets the value.
      * 
      * @param mixed $value The value to set.

@@ -4,6 +4,7 @@ namespace Model\Entity;
 use ArrayAccess;
 use Countable;
 use Iterator;
+use Model\Validator\ValidatableInterface;
 use Serializable;
 
 /**
@@ -17,34 +18,28 @@ use Serializable;
 interface AccessibleInterface extends ArrayAccess, Countable, Iterator, Serializable
 {
     /**
-     * Removes all data from the object.
+     * Clears all values on the object.
      * 
      * @return AccessibleInterface
      */
-    public function init();
+    public function clear();
     
     /**
      * Fills values from an array.
      * 
-     * @param mixed $values The values to import.
+     * @param mixed  $data   The values to import.
+     * @param string $mapper The mapper to use to export the data.
      * 
      * @return AccessibleInterface
      */
-    public function fill($values);
+    public function fill($data, $mapper = null);
     
     /**
      * Fills the entity with the specified values.
      * 
+     * @param string $mapper A mapper to use for importing data.
+     * 
      * @return array
      */
-    public function toArray();
-    
-    /**
-     * Validates the accessible item.
-     * 
-     * @throws ValidatorException If the item is not valid.
-     * 
-     * @return AccessibleInterface
-     */
-    public function validate();
+    public function toArray($mapper = null);
 }
