@@ -67,8 +67,8 @@ Mappers are used to translate information going into or out of your entities muc
         ];
         
         public $filters = [
-            'created' => 'filterDate',
-            'updated' => 'filterDate'
+            'content.created' => 'filterDate',
+            'content.updated' => 'filterDate'
         ];
         
         public function filterDate($date)
