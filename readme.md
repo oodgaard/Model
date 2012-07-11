@@ -103,14 +103,14 @@ By default, entities are configured using doc comment tags applied to the class 
 
 Supported `class` doc tags:
 
-* `@map` - Applies a mapper to the entity.
-* `@valid` - Adds a validator to the entity. This can be any class implementing `__invoke()` or Zend Validator.
+* `@map` Applies a mapper to the entity.
+* `@valid` Adds a validator to the entity. This can be any class implementing `__invoke()` or Zend Validator.
 
 Supported `property` doc tags:
 
-* `@auto` - Sets an autoloader for the value object.
-* `@valid` - Adds a validator to the value object. Must be applied after `@vo`.
-* `@vo` - Applies a value object to the entity. Must be applied before `@valid`.
+* `@auto` Sets an autoloader for the value object.
+* `@valid` Adds a validator to the value object. Must be applied after `@vo`. Must also be `is_callable()` or a Zend 1.x or 2.x validator.
+* `@vo` Applies a value object to the entity. Must be applied before `@valid`.
 
 If you don't like this approach and want to configure your entity programatically, you can use the `configure()` hook and use the built-in methods:
 
