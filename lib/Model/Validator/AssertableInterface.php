@@ -19,5 +19,5 @@ interface AssertableInterface extends ValidatableInterface
      * 
      * @throws ValidatorException If the instance is not valid.
      */
-    public function assert();
+    public function assert($message = null, $code = 0);
 }

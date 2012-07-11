@@ -54,6 +54,7 @@ class Entity implements AccessibleInterface, AssertableInterface
      */
     public function __construct($data = [], $mapper = null)
     {
+        $this->configure();
         $this->init();
         $this->fill($data, $mapper);
     }
@@ -117,14 +118,24 @@ class Entity implements AccessibleInterface, AssertableInterface
     }
     
     /**
-     * Configuration hook for setting up the entity.
+     * Configuration hook for setting up the entity. Gets called before `init()`.
+     * 
+     * @return void
+     */
+    public function configure()
+    {
+        $conf = new Configurator\DocComment;
+        $conf->configure($this);
+    }
+    
+    /**
+     * Initialization hook. Gets called after `configure()`.
      * 
      * @return void
      */
     public function init()
     {
-        $conf = new Configurator\DocComment;
-        $conf->configure($this);
+        
     }
     
     /**

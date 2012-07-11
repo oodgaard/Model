@@ -3,16 +3,16 @@ Introduction
 
 ### What
 
-Model is a simple, lightweight and easy-to-use Domain Driven Entity framework.
+Model is a simple, lightweight and easy-to-use Domain Driven Entity framework written using PHP 5.4.x in mind.
 
 ### Why
 
-Because you want your models to be defined by your business requirements not database requirements. You also want control over how backends are used to access data whether it be Zend, Doctrine, Propel or simply just PDO or MongoDB. You can even call an external service or read data from an XML file.
+Because you want your models to be defined by your business requirements not database requirements. You also want control over how backends are used to access data whether it be Zend, Doctrine, Propel or simply just PDO or MongoDB. It even leaves you free to use other data sources and libraries; there's really no strings attached.
 
 Theory of Abstraction
 ---------------------
 
-Since you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without thinking about how it will be stored and how it will be retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend. Mappers can be used to import and export between backends and business entities.
+Since you are not tied to a specific backend, you are free to choose how you structure your entities and repositories without basing it on how it will be stored or retrieved. When you structure your entities, you should think solely about how you will be using them from a domain perspective not how it will be stored in the backend. Mappers can be used to import and export between backends and business entities.
 
 Entities
 ------------------
@@ -52,10 +52,10 @@ Mappers are used to translate information going into or out of your entities muc
 
     <?php
     
-    namespace Model\Mapper;
+    namespace Model\Mapper\Content;
     use DateTime;
     
-    class ContentToDb extends Mapper
+    class ToDb extends Mapper
     {
         public $move = [
             'id'          => 'content.id',
@@ -82,17 +82,40 @@ Mappers are used to translate information going into or out of your entities muc
         }
     }
 
+### Validators
+
+Validators are used to validate the state of an entity. The only requirement for a validator is that it `is_callable()`. There are two types of ways to validate your entities. You can either attach a validator to the entity itself or directly to a value object.
+
+Attaching them to your entities are handy when you need to validate the entity's state based on different property values. You may have one value that depends on another.
+
+    $entity->addValidator('That's malarkey! The content ":title" cannot be created before it is updated.', function($entity) {
+        return $entity->created <= $entity->updated;
+    });
+
+Attaching them to your value objects are great for when you are doing very specific validation on a type of value like whether or not the created date is a valid date.
+
+    $entity->getVo('title')->addValidator('":title" is an invalid content title.', function($vo) {
+        return (new Zend\Validator\Alnum)->isValid($vo->get());
+    });
+
+As you can see, we used both a generic `<=` operator and a Zend Validator. If you decide to use the `@valid` on a value object described in the next section, it will allow you to use a pass a generic class name implementing `__invoke()` as well as a Zend Framework 1.x and 2.x validator class name.
+
+*If you need to pass options to the validator, it is recommeded to use the `addValidator()` method instead of the `@valid` tag.*
+
 ### Configuration
 
 By default, entities are configured using doc comment tags applied to the class itself or its properties.
 
 Supported `class` doc tags:
 
-* `@mapper` - Applies a mapper to the entity.
+* `@map` - Applies a mapper to the entity.
+* `@valid` - Adds a validator to the entity. This can be any class implementing `__invoke()` or Zend Validator.
 
 Supported `property` doc tags:
 
-* `@vo` - Applies a value object to the entity.
+* `@auto` - Sets an autoloader for the value object.
+* `@valid` - Adds a validator to the value object. Must be applied after `@vo`.
+* `@vo` - Applies a value object to the entity. Must be applied before `@valid`.
 
 If you don't like this approach and want to configure your entity programatically, you can use the `configure()` hook and use the built-in methods:
 
@@ -102,18 +125,103 @@ If you don't like this approach and want to configure your entity programaticall
         $this->setVo('id', new Model\Vo\Integer);
     }
 
-To apply a mapping to a class you use the `@mapper` doc tag:
+Here is an example entity using the above tags:
 
+    <?php
+    
+    namespace Model\Entity;
+    use Model\Behavior\Timestampable;
+    
     /**
      * Main content item.
      * 
      * @mapper fromDb Model\Mapper\Content\FromDb
-     * @mapper toDb   Model\Mapper\Content\ToDb
      * @mapper toApi  Model\Mapper\Content\ToApi
+     * @mapper toDb   Model\Mapper\Content\ToDb
+     * 
+     * @valid Model\Validator\Content
      */
     class Content extends Entity
     {
+        use Timestampable;
+        
+        /**
+         * The content id.
+         * 
+         * @vo Model\Vo\Integer
+         * 
+         * @valid Zend\Validator\Int
+         */
+        public $id;
+        
+        /**
+         * The URL slug for the content item.
+         * 
+         * @auto autoloadSlug
+         * 
+         * @vo Modle\Vo\String
+         * 
+         * @valid Zend\Validator\Alnum The content :title's slug is invalid.
+         */
+        public $slug;
+        
+        /**
+         * The content title.
+         * 
+         * @vo Model\Vo\String
+         * 
+         * @valid Zend\Validator\Alnum   The content ":title" title is invalid.
+         * @valid Model\Validator\Unique The content ":title" title is already taken.
+         */
+        public $title;
+        
+        /**
+         * The content body.
+         * 
+         * @vo Model\Vo\String
+         * 
+         * @valid Zend\Validator\NotEmpty The content :title must not be empty.
+         */
+        public $body;
+        
+        /**
+         * Returns the slug based on the title.
+         * 
+         * @return string
+         */
+        public function autoloadSlug()
+        {
+            return preg_replace('/[^a-zA-Z0-9\-]+/', '-', $this->title;
+        }
+    }
+
+### Behaviors via Traits
+
+You'll notice the use of the `Timestampable` trait. This trait is not included in the library, however, it exemplifies how you can use traits to mix functionality into your entities. We assume the trait has the following definition:
+
+    <?php
     
+    namespace Model\Behavior;
+    
+    trait Timestampable
+    {
+        /**
+         * When the item was created.
+         * 
+         * @vo Model\Vo\Datetime
+         * 
+         * @valid Zend\Validator\Date The created date ":created" is not valid.
+         */
+        public $created;
+        
+        /**
+         * When the item was last updated.
+         * 
+         * @vo Model\Vo\Datetime
+         * 
+         * @valid Zend\Validator\Date The last updated date ":updated" is not valid.
+         */
+        public $updated;
     }
 
 ### Relationships
@@ -161,173 +269,94 @@ And you can even pass any traversable item:
         new stdClass,
     );
 
-Autoloading Data: Proxies
--------------------------
+### Validating an Entity
 
-Instead of always having to manually load external data or relationships onto an entity, you can specify a proxy callback to load the data for you.
-
-    namespace Entity;
-    use Repository\Content as ContentRepository;
-    use Repository\User as UserRepository;
-
-    class Content
-    {
-        public function init()
-        {
-            // set up the proxy
-            $this->proxy('user', function(Content $content) {
-                $repo = new UserRepository;
-                return $repo->findById($content->idUser);
-            });
-
-            // and if you are loading a relation you can ensure an entity is created
-            $this->hasOne('user', '\Entity\Content\User');
-
-            // you can even load arbitrary data
-            $this->proxy('views', function(Content $content) {
-                $repo = new ContentRepository;
-                return $repo->getNumberOfViews($content->id);
-            });
-        }
+When it comes time to validate your entity, you have two options. First, you can simply validate the entity and get it's error messages.
+    
+    if ($errors = $entity->validate()) {
+        // do some error handling
     }
 
-Now when we get a content item, we can autoload the user:
+However, when your root entity is not valid, you'll most likely want to halt execution and catch it somewhere. The `assert()` method allows you to do just that.
 
-    use Repository\Content as ContentRepository;
+    // validate and throw an exception if it's not valid
+    $entity->assert('Some errors occured.', 1000);
 
-    $content = new ContentRepository;
-    $content = $content->getById(1);
+Asserting will throw a special type of exception which is an isntance of `Model\Validator\ValidatorException`. This exception class allows you to get each error message that was caught during the entire validation of the entity. This includes all entity validators and value object validators of the root entity and all child entities.
 
-    isset($content->user); // false
-    $content->user->id; // 1 (or some other value)
+This allows you to catch that somewhere in your code.
 
-Or you can just manage local data:
+    use Model\Validator\ValidatorException;
+    use Exception;
 
-    namespace Entity;
-
-    class User
-    {
-        public function init()
-        {
-            $this->proxy('name', function(User $user) {
-                return $user->firstName . ' ' . $user->lastName;
-            });
-        }
+    try {
+        // do something like dispatch your application
+    } catch (ValidatorException $e) {
+        // handle validation errors
+    } catch (Exception $e) {
+        // fatal exception
     }
 
-Good things about proxies:
-* Autoloading means if you don't use the data, then you won't load the data.
-* You can manage your own caching which means you may not have to make that extra query.
-* If you load using a repository method, then you can just use that to manage the cache.
-* Using a closure allows for greater flexibility if necessary.
+You can handle that any way you want using the methods in the exception:
 
-Of course, if you are neurotic about running more than one query for data you can always just load it all at once and map it to the object from your query result or however you want to do it in your repository.
+    <?php
+    
+    use Model\Validator\ValidatorException;
+    
+    // allows a main message
+    $exception = new ValidatorException('The following errors happened:');
+    
+    // allows you to add messages
+    $exception->addMessage('my first message');
+    $exception->addMessages([
+        'my second message',
+        'my third message'
+    ]);
+    
+    // implements IteratorAggregate
+    foreach ($exception as $message) {
+        ...
+    }
+    
+    // The following errors happened:
+    // 
+    // - my first message
+    // - my second message
+    // - my third message
+    // 
+    // [stack trace goes here]
+    echo $exception;
+    
+    // or you can just throw it
+    throw $exception;
 
-Authoring Repositories
-----------------------
+Repositories
+------------
 
 Authoring repositories is fairly straight forward:
 
     <?php
     
-    namespace Repository;
-    use Model\Repository;
+    namespace Model\Repository;
+    use Model\Entity;
     
-    class Content extends Repository
+    class Content implements RepositoryInterface
     {
+        // enables caching methods
+        use Cacheable;
         
-    }
-
-You are free to define your own base class for abstracted functionality and your own method definitions. By extending the base `\Model\Repository`, you have access to caching methods which make caching easier than managing your own drivers. However, if you use MongoDB, you may not have to cache at all.
-
-Easing the Mapping of Data
---------------------------
-
-When given the open-ended structure of defining your own storage implementations, you may be asking how in the heck you would separate data from an entity. To mitigate this, a mapper is included to map your data any way you want.
-
-    <?php
-    
-    use Entity\Content;
-    use Model\Mapper;
-    
-    // set up the entity
-    $content = new Content;
-    $content->hasOne('user', '\Entity\Content\User');
-    
-    // set the content data
-    $content->title   = 'My Blerg Prost';
-    $content->created = '2011-03-29 20:00:00';
-    $content->updated = '2011-03-29 20:00:00';
-    
-    // and the user data
-    $content->user->id   = 1;
-    $content->user->name = 'Me Meeson';
-    
-    // split the data up
-    $mapper = new Mapper;
-    $mapper->map('title', 'content.title');
-    $mapper->map('created', 'content.created');
-    $mapper->map('updated', 'content.updated');
-    $mapper->map('user.id', array('content.idUser', 'user.id');
-    $mapper->map('user.name' array('content.author', 'user.name');
-
-Now, calling:
-
-    $mapper->convert($content->export());
-
-Would return:
-
-    array(
-        'content' => array(
-            'title'   => 'My Blerg Prost',
-            'created' => '2011-03-29 20:00:00',
-            'updated' => '2011-03-29 20:00:00',
-            'idUser'  => 1,
-            'author'  => 'Me Meeson'
-        ),
-        'user' => array(
-            'id'   => 1,
-            'name' => 'Me Meeson'
-        )
-    )
-
-The mapper has segregated user information and content information as well as mapped the required user data into the content array. You can now use the mapped data to save each set of information off to their respective places however you intend to.
-
-You probably wouldn't want to manually specify your mapping in your repositories, though, for the sake of maintainability. The mapper allows you to create a sub-class of it and specify an `init` method to set up your mapping definition:
-
-    <?php
-    
-    namespace Map;
-    use Model\Mapper;
-    
-    class Content extends Mapper
-    {
-        public function init()
+        public function getById($id)
         {
-            $this->map('title', 'content.title');
-            $this->map('created', 'content.created');
-            $this->map('updated', 'content.updated');
-            $this->map('user.id', array('content.idUser', 'user.id');
-            $this->map('user.name' array('content.author', 'user.name');
+            ...
+        }
+        
+        public function getByTitle($title)
+        {
+            ...
+        }
+        
+        public function save(Entity\Content $content)
+        {
+            ...
         }
     }
-
-This way you can map your data by just using an instance of the `\Map\Content` class:
-
-    <?php
-    
-    use Entity\Content as ContentEntity;
-    use Map\Content as ContentMap;
-    
-    $content = new ContentEntity;
-    
-    // ...
-    
-    $mapper = new ContentMap();
-    $mapped = $mapper->convert($content->export());
-
-You can also pass more than one array to `convert()`:
-
-    $mapped = $mapper->convert($content->export(), array('title' => 'My Overridden Title'));
-
-Array's are merged as if using `array_merge()` and then converted.
