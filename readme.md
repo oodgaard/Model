@@ -156,7 +156,7 @@ Here is an example entity using the above tags:
          * 
          * @vo Model\Vo\String
          * 
-         * @valid Zend\Validator\Alnum The content :title's slug is invalid.
+         * @valid Zend\Validator\Alnum The content ":title" slug ":slug" is invalid.
          */
         public $slug;
         
@@ -229,7 +229,19 @@ Relationships are defined using the `HasOne` and `HasMany` value objects:
 
     class Content extends Entity
     {
+        /**
+         * The owner.
+         * 
+         * @vo Model\Vo\HasOne 'Model\Entity\Content\User'
+         */
+        public $user;
         
+        /**
+         * The the past modifications of the entity.
+         * 
+         * @vo Model\Vo\HasMany 'Model\Entity\Content\Modification'
+         */
+        public $modifications;
     }
 
 By adding relationships, you ensure that if the specified property is set or accessed, that it is an instance of the specified class.
@@ -240,10 +252,10 @@ By adding relationships, you ensure that if the specified property is set or acc
     
     $entity = new Content;
     
-    // instance of \Entity\Content\User
+    // instance of Model\Entity\Content\User
     $user = $entity->user;
     
-    // instance of \Model\EntitySet containing instances of \Entity\Content\Modification
+    // instance of Model\EntitySet containing instances of Model\Entity\Content\Modification
     $modifications = $entity->modifications;
 
 This means that if you set an array to one of these properties, it will ensure that an instance of the specified relationship is instantiated and filled with the specified array data.
