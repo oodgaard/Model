@@ -1,12 +1,16 @@
 <?php
 
 namespace Provider;
-use Model\Cache\Php as Cache;
+use Exception;
+use Model\Cache\Php;
 use Model\Entity\Entity;
-use Model\Repository\RepositoryAbstract;
+use Model\Repository\Cacheable;
+use Model\Repository\RepositoryInterface;
 
-abstract class BaseRepository extends RepositoryAbstract
+abstract class BaseRepository implements RepositoryInterface
 {
+    use Cacheable;
+    
     /**
      * Keeps track of the number of times "findById()" was called so we can test
      * if an item was cached or not.
@@ -24,19 +28,19 @@ abstract class BaseRepository extends RepositoryAbstract
 
     public function __construct()
     {
-        $this->setCache(new Cache);
+        $this->setCacheDriver(new Php);
     }
     
     public function findById($id)
     {
         // if it is found in cache, return it
-        if ($cache = $this->retrieve()) {
+        if ($cache = $this->getCache()) {
             return $cache;
         }
         
         if (isset($this->entities[$id])) {
             $entity = $this->entities[$id];
-            $this->persist($entity);
+            $this->setCache($entity);
         } else {
             $entity = false;
         }
@@ -60,7 +64,7 @@ abstract class BaseRepository extends RepositoryAbstract
     public function remove(Entity $entity)
     {
         // expire the cache
-        $this->expireFor(get_class($this), 'findById', array($entity->id));
+        $this->clearCacheFor(get_class($this), 'findById', array($entity->id));
         
         // then remove the item from the storage property
         unset($this->entities[$entity->id]);
@@ -75,7 +79,7 @@ abstract class BaseRepository extends RepositoryAbstract
         $this->entities[$entity->id] = $entity;
         
         // store in cache for the specified method
-        $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
+        $this->setCacheFor(get_class($this), 'findById', array($entity->id), $entity);
     }
     
     private function update(Entity $entity)
@@ -83,13 +87,13 @@ abstract class BaseRepository extends RepositoryAbstract
         // make sure that it exists first as it can only be updated if it already exists
         // mimics database behavior
         if (!isset($this->entities[$entity->id])) {
-            throw new \Exception(get_class($entity) . ' does not exists, therefore it was not updated.');
+            throw new Exception(get_class($entity) . ' does not exists, therefore it was not updated.');
         }
         
         // update the stored entity
         $this->entities[$entity->id] = $entity;
         
         // update the cache
-        $this->persistFor(get_class($this), 'findById', array($entity->id), $entity);
+        $this->setCacheFor(get_class($this), 'findById', array($entity->id), $entity);
     }
 }

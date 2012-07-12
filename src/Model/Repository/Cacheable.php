@@ -34,6 +34,16 @@ trait Cacheable
     }
     
     /**
+     * Returns the cache driver.
+     * 
+     * @return CacheInterface
+     */
+    public function getCacheDriver()
+    {
+        return $this->cache;
+    }
+    
+    /**
      * Persists data for the current repository method.
      * 
      * @param mixed $item The item to store.
@@ -41,9 +51,9 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    protected function setCache($item, $time = null)
+    private function setCache($item, $time = null)
     {
-        return $this->persistFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs(), $item, $time);
+        return $this->setCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs(), $item, $time);
     }
     
     /**
@@ -51,9 +61,9 @@ trait Cacheable
      * 
      * @return mixed
      */
-    protected function getCache()
+    private function getCache()
     {
-        return $this->retrieveFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
+        return $this->getCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
     
     /**
@@ -61,9 +71,9 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    protected function clearCache()
+    private function clearCache()
     {
-        return $this->expireFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
+        return $this->clearCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
     
     /**
@@ -76,7 +86,7 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    protected function setCacheFor($class, $method, array $args, $item, $time = null)
+    private function setCacheFor($class, $method, array $args, $item, $time = null)
     {
         if ($this->cache) {
             $this->cache->set($this->generateCacheKey($class, $method, $args), $item, $time);
@@ -92,7 +102,7 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    protected function getCacheFor($class, $method, array $args)
+    private function getCacheFor($class, $method, array $args)
     {
         if ($this->cache) {
             return $this->cache->get($this->generateCacheKey($class, $method, $args));
@@ -108,7 +118,7 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    protected function clearCacheFor($class, $method, array $args)
+    private function clearCacheFor($class, $method, array $args)
     {
         if ($this->cache) {
             $this->cache->remove($this->generateCacheKey($class, $method, $args));

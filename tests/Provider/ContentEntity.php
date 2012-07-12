@@ -6,12 +6,22 @@ use Model\Entity\Entity;
 class ContentEntity extends Entity
 {
     /**
-     * @var Model\Vo\HasOne new Provider\UserEntity
+     * @vo Model\Vo\Integer
      */
-    private $user;
+    public $id;
     
     /**
-     * @var Model\Vo\HasMany new Model\Entity\Set('Provider\CommentEntity')
+     * @vo Model\Vo\String
      */
-    private $comments;
+    public $name;
+    
+    /**
+     * @vo Model\Vo\HasOne new Provider\UserEntity
+     */
+    public $user;
+    
+    /**
+     * @vo Model\Vo\HasMany new Model\Entity\Set('Provider\CommentEntity')
+     */
+    public $comments;
 }

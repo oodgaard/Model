@@ -3,7 +3,7 @@
 namespace Test;
 use Model\Entity\Set;
 use Provider\ContentEntity;
-use Testes\Test;
+use Testes\Test\UnitAbstract;
 
 /**
  * Tests the Set component.
@@ -13,7 +13,7 @@ use Testes\Test;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class SetTest extends Test
+class SetTest extends UnitAbstract
 {
     public function setUp()
     {

@@ -1,11 +1,12 @@
 <?php
 
 namespace Test;
+use Exception;
 use Model\Entity\Set;
 use Provider\CommentEntity;
 use Provider\ContentEntity;
 use Provider\UserEntity;
-use Testes\Test;
+use Testes\Test\UnitAbstract;
 
 /**
  * Tests the Entity component.
@@ -15,7 +16,7 @@ use Testes\Test;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class EntityTest extends Test
+class EntityTest extends UnitAbstract
 {
     /**
      * Ensures that data is properly imported when passing through the constructor.
@@ -41,7 +42,7 @@ class EntityTest extends Test
         
         try {
             $entity->comments->offsetSet(0, new CommentEntity);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->assert(false, 'Entity could not be added to set.');
         }
     }
@@ -53,9 +54,11 @@ class EntityTest extends Test
      */
     public function testMappedGetters()
     {
-        $user = new UserEntity;
-        $this->assert(count($user->content) === 2, 'There must be 2 content items returned.');
-        $this->assert($user->content instanceof Set, 'The content items must be an entity set.');
+        $user    = new UserEntity;
+        $content = $user->getContent();
+        
+        $this->assert(count($content) === 2, 'There must be 2 content items returned.');
+        $this->assert($content instanceof Set, 'The content items must be an entity set.');
         $this->assert($user->isLastAdministrator === true, 'The user must be the last administrator.');
     }
 }

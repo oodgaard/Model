@@ -5,21 +5,18 @@ use Model\Entity\Set;
 
 class UserRepository extends BaseRepository
 {
-    public function getContent(UserEntity $user)
+    public function getContent()
     {
-        return new Set('\Provider\UserEntity', array(
-            array(
-                'id'   => 1,
-                'name' => 'Proxy content 1'
-            ),
-            array(
-                'id'   => 2,
-                'name' => 'Proxy content 2'
-            )
-        ));
+        return new Set('Provider\ContentEntity', [[
+            'id'   => 1,
+            'name' => 'Proxy content 1'
+        ], [
+            'id'   => 2,
+            'name' => 'Proxy content 2'
+        ]]);
     }
     
-    public function isLastAdministrator(UserEntity $user)
+    public function isLastAdministrator()
     {
         return true;
     }

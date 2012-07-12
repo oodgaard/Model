@@ -1,22 +1,32 @@
 <?php
 
-use Model\Autoloader as Ma;
-use Testes\Autoloader as Ta;
-use Testes\Output\Cli as Output;
-use Test as Test;
+use Testes\Coverage\Coverage;
+use Testes\Finder\Finder;
+use Testes\Autoloader;
 
-error_reporting(E_ALL ^ E_STRICT);
-ini_set('display_errors', 'on');
+$base = __DIR__ . '/..';
 
-$base = dirname(__FILE__) . '/../';
+require $base . '/vendor/autoload.php';
 
-require $base . 'lib/Model/Autoloader.php';
-require $base . 'vendor/Testes/lib/Testes/Autoloader.php';
+Autoloader::register();
+Autoloader::addPath($base . '/tests');
+Autoloader::addPath($base . '/src');
 
-Ma::register();
-Ta::register($base . 'tests');
+$coverage = (new Coverage)->start();
+$suite    = (new Finder($base . '/tests', 'Test'))->run();
+$analyzer = $coverage->stop()->addDirectory($base . '/src')->is('\.php$');
 
-$test = new Test;
-$out  = new Output;
+?>
 
-echo $out->render($test->run());
+<?php if ($suite->getAssertions()->isPassed()): ?>
+All tests passed!
+<?php else: ?>
+Tests failed:
+<?php foreach ($suite->getAssertions()->getFailed() as $ass): ?>
+  <?php echo $ass->getTestClass(); ?>:<?php echo $ass->getTestLine(); ?> <?php echo $ass->getMessage(); ?>
+
+<?php endforeach; ?>
+<?php endif; ?>
+
+Coverage: <?php echo $analyzer->getPercentTested(); ?>%
+

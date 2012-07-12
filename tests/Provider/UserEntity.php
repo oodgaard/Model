@@ -6,26 +6,21 @@ use Model\Entity\Entity;
 class UserEntity extends Entity
 {
     /**
-     * Returns the user's content items.
-     * 
-     * @var Model\Vo\Proxy array($this, 'proxyGetContent')
-     */
-    private $content;
-    
-    /**
      * Returns whether or not this is the last administrator.
      * 
-     * @var Model\Vo\Proxy array($this, 'proxyIsLastAdministrator')
+     * @auto autoloadIsLastAdministrator
+     * 
+     * @vo Model\Vo\Boolean
      */
-    private $isLastAdministrator;
+    public $isLastAdministrator;
     
-    public function proxyGetContent()
+    public function getContent()
     {
-        return (new UserRepository)->getContent($this);
+        return (new UserRepository)->getContent();
     }
     
-    public function proxyIsLastAdministrator()
+    public function autoloadIsLastAdministrator()
     {
-        return (new UserRepository)->isLastAdministrator($this);
+        return (new UserRepository)->isLastAdministrator();
     }
 }

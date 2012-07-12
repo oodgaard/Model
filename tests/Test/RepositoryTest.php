@@ -5,7 +5,7 @@ use Provider\ContentEntity;
 use Provider\ContentRepository;
 use Provider\UserEntity;
 use Provider\UserRepository;
-use Testes\Test;
+use Testes\Test\UnitAbstract;
 
 /**
  * Tests the Repository component.
@@ -15,7 +15,7 @@ use Testes\Test;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class RepositoryTest extends Test
+class RepositoryTest extends UnitAbstract
 {
     /**
      * Ensures that the proper insert method is called.
@@ -43,7 +43,7 @@ class RepositoryTest extends Test
     {
         $repo   = new ContentRepository;
         $entity = new ContentEntity(array(
-            'name' => 'Trey Shugart'
+            'name' => 'my content'
         ));
         
         // save it for the first time
@@ -54,7 +54,8 @@ class RepositoryTest extends Test
         
         // save it again and test to see if the "wasSaved" property was saved
         $repo->save($entity);
-        $this->assert($repo->findById($entity->id)->wasSaved, 'The entity was not updated.');
+        
+        $this->assert($repo->findById($entity->id)->name === 'my content', 'The entity was not updated.');
     }
     
     /**
