@@ -14,6 +14,13 @@ use Model\Entity\Set;
 class HasMany extends VoAbstract
 {
     /**
+     * The class name.
+     * 
+     * @var string
+     */
+    private $class;
+
+    /**
      * The value.
      * 
      * @var mixed
@@ -29,7 +36,7 @@ class HasMany extends VoAbstract
      */
     public function __construct($class)
     {
-        $this->value = new Set($class);
+        $this->class = $class;
     }
 
     /**
@@ -41,7 +48,7 @@ class HasMany extends VoAbstract
      */
     public function set($value)
     {
-        $this->value->clear()->fill($value);
+        $this->get()->clear()->fill($value);
     }
 
     /**
@@ -51,9 +58,12 @@ class HasMany extends VoAbstract
      */
     public function get()
     {
+        if (!$this->exists()) {
+            $this->value = new Set($this->class);
+        }
         return $this->value;
     }
-    
+
     /**
      * Returns whether or not the VO has a value.
      * 
@@ -61,9 +71,9 @@ class HasMany extends VoAbstract
      */
     public function exists()
     {
-        return true;
+        return isset($this->value);
     }
-    
+
     /**
      * Hook for initializing the VO.
      * 
