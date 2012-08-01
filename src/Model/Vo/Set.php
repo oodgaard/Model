@@ -18,7 +18,7 @@ class Set extends VoAbstract
      * 
      * @var array
      */
-    private $value;
+    private $value = [];
     
     /**
      * Sets the value.
