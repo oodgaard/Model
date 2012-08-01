@@ -1,7 +1,9 @@
 <?php
 
 namespace Model\Repository;
+use LogicException;
 use Model\Cache\CacheInterface;
+use ReflectionMethod;
 
 /**
  * Caching implementation.
@@ -19,6 +21,58 @@ trait Cacheable
      * @var CacheInterface
      */
     private $cache;
+    
+    /**
+     * The default cache time.
+     * 
+     * @var int
+     */
+    private $cacheTime;
+    
+    /**
+     * Automatically decides what to do with the cache.
+     * 
+     * @param string $name The method name.
+     * @param array  $args The method args.
+     * 
+     * @return mixed
+     */
+    public function __call($name, array $args = [])
+    {
+        $class = get_class();
+        
+        // if the method does not exist, then there's nothing we can do
+        if (!method_exists($this, $name)) {
+            throw new LogicException(sprintf(
+                'The method "%s" does not exist in "%s".',
+                $name,
+                $class
+            ));
+        }
+        
+        // make sure method is protected
+        if (!(new ReflectionMethod($class, $name))->isProtected()) {
+            throw new LogicException(sprintf(
+                'In order to automate the caching of "%s::%s()", you must mark it as protected.',
+                $class,
+                $name
+            ));
+        }
+        
+        // if it already exists in the cache, just return it
+        if ($this->hasCacheFor($class, $name, $args)) {
+            return $this->getCacheFor($class, $name, $args);
+        }
+        
+        // get the value of the method
+        $value = call_user_func_array([$this, $name], $args);
+        
+        // cache it
+        $this->setCacheFor($class, $name, $args, $value, $this->cacheTime);
+        
+        // return it
+        return $value;
+    }
     
     /**
      * Sets the cache interface to use.
@@ -44,6 +98,29 @@ trait Cacheable
     }
     
     /**
+     * Sets the cache time for automatic caching.
+     * 
+     * @param int $time The cache time.
+     * 
+     * @return Cacheable
+     */
+    public function setCacheTime($time)
+    {
+        $this->cacheTime = $time;
+        return $this;
+    }
+    
+    /**
+     * Returns the cache time.
+     * 
+     * @return mixed
+     */
+    public function getCacheTime()
+    {
+        return $this->cacheTime;
+    }
+    
+    /**
      * Persists data for the current repository method.
      * 
      * @param mixed $item The item to store.
@@ -64,6 +141,16 @@ trait Cacheable
     private function getCache()
     {
         return $this->getCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
+    }
+    
+    /**
+     * Removes the cache for the current repository method.
+     * 
+     * @return bool
+     */
+    private function hasCache()
+    {
+        return $this->hasCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
     }
     
     /**
@@ -111,6 +198,22 @@ trait Cacheable
     }
     
     /**
+     * Provides a way to check the cache for a method other than the one that was called.
+     * 
+     * @param string $method The method to cache for.
+     * @param array  $args   The arguments to cache for.
+     * 
+     * @return RepositoryAbstract
+     */
+    private function hasCacheFor($class, $method, array $args)
+    {
+        if ($this->cache) {
+            return $this->cache->exists($this->generateCacheKey($class, $method, $args));
+        }
+        return false;
+    }
+    
+    /**
      * Provides a way to expire a method cache other than the one that was called.
      * 
      * @param string $method The method to cache for.
@@ -140,8 +243,7 @@ trait Cacheable
     }
     
     /**
-     * Returns the last repository class that was called. This class is designed to be called from the "persist()",
-     * "retrieve()" or "expire()" methods.
+     * Returns the last repository class that was called.
      * 
      * @return string
      */
@@ -152,8 +254,7 @@ trait Cacheable
     }
     
     /**
-     * Returns the last repository method that was called. This method is designed to be called from the "persist()",
-     * "retrieve()" or "expire()" methods.
+     * Returns the last repository method that was called.
      * 
      * @return string
      */
@@ -164,8 +265,7 @@ trait Cacheable
     }
     
     /**
-     * Returns the arguments that were passed to the last called repository method. This method is designed to be
-     * called from the "persist()", "retrieve()" or "expire()" methods.
+     * Returns the arguments that were passed to the last called repository method.
      * 
      * @return array
      */

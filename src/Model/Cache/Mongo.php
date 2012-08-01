@@ -10,46 +10,51 @@ namespace Model\Cache;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-class Memcache implements CacheInterface
+class Mongo implements CacheInterface
 {
     /**
      * The default Memcache configuration.
      * 
      * @var array
      */
-    protected $config = array(
-        'servers' => array(
-            array(
-                'host' => 'localhost',
-                'port' => 11211
-            )
-        ),
-        'lifetime' => 0
-    );
-    
+    private $config = [
+        'db'         => 'cache',
+        'collection' => 'cache',
+        'dsn'        => null,
+        'lifetime'   => null,
+        'options'    => []
+    ];
+
     /**
      * The memcache instance to use.
      * 
-     * @var Memcache
+     * @var MongoDb
      */
-    protected $memcache;
-    
+    private $mongo;
+
     /**
      * Constructs a new memcache cache driver and sets its configuration.
      * 
      * @param array $config The Memcache configuration.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Mongo
      */
-    public function __construct(array $config = array())
-    {    
-        $this->config   = array_merge($this->config, $config);
-        $this->memcache = new \Memcache;
-        foreach ($this->config['servers'] as $server) {
-            $this->memcache->addServer($server['host'], $server['port']);
-        }
+    public function __construct(array $config = [])
+    {
+        $this->config = array_merge($this->config, $config);
+        
+        $mongo   = new \Mongo($this->config['dsn'], $this->config['options']);
+        $mongodb = $mongo->selectDB($this->config['db']);
+        
+        $this->collection = $mongodb->selectCollection($this->config['collection']);
+        $this->collection->ensureIndex([
+            '_id'     => 1,
+            'expires' => 1
+        ], [
+            'background' => true
+        ]);
     }
-    
+
     /**
      * Sets an item in the cache.
      * 
@@ -57,15 +62,18 @@ class Memcache implements CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Mongo
      */
     public function set($key, $value, $lifetime = null)
     {
-        $lifetime = is_null($lifetime) ? $this->config['lifetime'] : $lifetime;
-        $this->memcache->add($key, $value, $lifetime);
+        $this->collection->save([
+            '_id'     => $key,
+            'value'   => serialize($value),
+            'expires' => $this->config['lifetime'] ?: time() + ($lifetime ?: 1000)
+        ]);
         return $this;
     }
-    
+
     /**
      * Returns an item from the cache.
      * 
@@ -75,9 +83,16 @@ class Memcache implements CacheInterface
      */
     public function get($key)
     {
-        return $this->memcache->get($key);
+        $value = $this->collection->findOne(['_id' => $key, 'expires' => ['$gte' => time()]]);
+        
+        if ($value) {
+            $value = $value['value'];
+            $value = unserialize($value);
+        }
+        
+        return $value ?: false;
     }
-    
+
     /**
      * Checks to see if the specified cache item exists.
      * 
@@ -87,19 +102,19 @@ class Memcache implements CacheInterface
      */
     public function exists($key)
     {
-        return $this->memcache->get($key) !== false;
+        return $this->get($key) !== null;
     }
-    
+
     /**
      * Removes the item with the specified key.
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Mongo
      */
     public function remove($key)
     {
-        $this->memcache->delete($key);
+        $this->collection->remove(['_id' => $key]);
         return $this;
     }
 }
