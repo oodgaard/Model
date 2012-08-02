@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Repository;
+use InvalidArgumentException;
 use LogicException;
 use Model\Cache\CacheInterface;
 use ReflectionMethod;
@@ -16,21 +17,22 @@ use ReflectionMethod;
 trait Cacheable
 {
     /**
-     * The cache driver to use, if any.
+     * The fallback cache driver to use if one is not found in the method caches.
      * 
      * @var CacheInterface
      */
-    private $cache;
+    private $cacheDriver;
     
     /**
-     * The default cache time.
+     * Caches for specific methods.
      * 
-     * @var int
+     * @var array
      */
-    private $cacheTime;
+    private $cacheDrivers = [];
     
     /**
-     * Automatically decides what to do with the cache.
+     * Automatically decides what to do with the cache. All protected methods are considered methods where caching can
+     * be automated. If a method is private, it is not called.
      * 
      * @param string $name The method name.
      * @param array  $args The method args.
@@ -60,15 +62,15 @@ trait Cacheable
         }
         
         // if it already exists in the cache, just return it
-        if ($this->hasCacheFor($class, $name, $args)) {
-            return $this->getCacheFor($class, $name, $args);
+        if ($this->hasCacheFor($name, $args)) {
+            return $this->getCacheFor($name, $args);
         }
         
         // get the value of the method
         $value = call_user_func_array([$this, $name], $args);
         
         // cache it
-        $this->setCacheFor($class, $name, $args, $value, $this->cacheTime);
+        $this->setCacheFor($name, $args, $value);
         
         // return it
         return $value;
@@ -77,90 +79,44 @@ trait Cacheable
     /**
      * Sets the cache interface to use.
      * 
-     * @param CacheInterface $cache The cache interface to use.
+     * @param string         $method The method to apply the driver to.
+     * @param CacheInterface $driver The cache interface to use.
      * 
      * @return RepositoryAbstract
      */
-    public function setCacheDriver(CacheInterface $cache)
+    public function setCacheDriver($method, CacheInterface $driver)
     {
-        $this->cache = $cache;
+        $this->cacheDrivers[$method] = $driver;
         return $this;
     }
     
     /**
-     * Returns the cache driver.
+     * Applies a cache driver to multiple methods.
      * 
-     * @return CacheInterface
-     */
-    public function getCacheDriver()
-    {
-        return $this->cache;
-    }
-    
-    /**
-     * Sets the cache time for automatic caching.
-     * 
-     * @param int $time The cache time.
+     * @param array          $methods The methods to apply the driver to.
+     * @param CacheInterface $driver  The cache interface to use.
      * 
      * @return Cacheable
      */
-    public function setCacheTime($time)
+    public function setCacheDrivers(array $methods, CacheInterface $driver)
     {
-        $this->cacheTime = $time;
+        foreach ($methods as $method) {
+            $this->cacheDrivers[$method] = $driver;
+        }
         return $this;
     }
     
     /**
-     * Returns the cache time.
+     * Sets the default cache driver.
      * 
-     * @return mixed
+     * @param CacheInterface $driver The cache interface to use.
+     * 
+     * @return Cacheable
      */
-    public function getCacheTime()
+    public function setDefaultCacheDriver(CacheInterface $driver)
     {
-        return $this->cacheTime;
-    }
-    
-    /**
-     * Persists data for the current repository method.
-     * 
-     * @param mixed $item The item to store.
-     * @param mixed $time The time to store the item for.
-     * 
-     * @return RepositoryAbstract
-     */
-    private function setCache($item, $time = null)
-    {
-        return $this->setCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs(), $item, $time);
-    }
-    
-    /**
-     * Retrieves the item for the current repository method.
-     * 
-     * @return mixed
-     */
-    private function getCache()
-    {
-        return $this->getCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
-    }
-    
-    /**
-     * Removes the cache for the current repository method.
-     * 
-     * @return bool
-     */
-    private function hasCache()
-    {
-        return $this->hasCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
-    }
-    
-    /**
-     * Expires the item for the current repository method.
-     * 
-     * @return RepositoryAbstract
-     */
-    private function clearCache()
-    {
-        return $this->clearCacheFor($this->getLastClass(), $this->getLastMethod(), $this->getLastArgs());
+        $this->cacheDriver = $driver;
+        return $this;
     }
     
     /**
@@ -173,10 +129,10 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    private function setCacheFor($class, $method, array $args, $item, $time = null)
+    private function setCacheFor($method, array $args, $item, $time = null)
     {
-        if ($this->cache) {
-            $this->cache->set($this->generateCacheKey($class, $method, $args), $item, $time);
+        if ($driver = $this->resolveCacheDriverFor($method)) {
+            $driver->set($this->generateCacheKey($method, $args), $item, $time);
         }
         return $this;
     }
@@ -189,10 +145,10 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    private function getCacheFor($class, $method, array $args)
+    private function getCacheFor($method, array $args)
     {
-        if ($this->cache) {
-            return $this->cache->get($this->generateCacheKey($class, $method, $args));
+        if ($driver = $this->resolveCacheDriverFor($method)) {
+            return $driver->get($this->generateCacheKey($method, $args));
         }
         return false;
     }
@@ -205,10 +161,10 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    private function hasCacheFor($class, $method, array $args)
+    private function hasCacheFor($method, array $args)
     {
-        if ($this->cache) {
-            return $this->cache->exists($this->generateCacheKey($class, $method, $args));
+        if ($driver = $this->resolveCacheDriverFor($method)) {
+            return $driver->exists($this->generateCacheKey($method, $args));
         }
         return false;
     }
@@ -221,10 +177,10 @@ trait Cacheable
      * 
      * @return RepositoryAbstract
      */
-    private function clearCacheFor($class, $method, array $args)
+    private function clearCacheFor($method, array $args)
     {
-        if ($this->cache) {
-            $this->cache->remove($this->generateCacheKey($class, $method, $args));
+        if ($driver = $this->resolveCacheDriverFor($method)) {
+            $driver->remove($this->generateCacheKey($method, $args));
         }
         return $this;
     }
@@ -237,41 +193,20 @@ trait Cacheable
      * 
      * @return string
      */
-    private function generateCacheKey($class, $method, array $args)
+    private function generateCacheKey($method, array $args)
     {
-        return md5($class . $method . serialize($args));
+        return md5(get_class() . $method . serialize($args));
     }
     
     /**
-     * Returns the last repository class that was called.
+     * Returns the appropriate cache driver.
      * 
-     * @return string
-     */
-    private function getLastClass()
-    {
-        $callstack = debug_backtrace();
-        return get_class($callstack[2]['object']);
-    }
-    
-    /**
-     * Returns the last repository method that was called.
+     * @param string $method The method, if any, to get the cache driver for.
      * 
-     * @return string
+     * @return CacheInterface | null
      */
-    private function getLastMethod()
+    private function resolveCacheDriverFor($method = null)
     {
-        $callstack = debug_backtrace();
-        return $callstack[2]['function'];
-    }
-    
-    /**
-     * Returns the arguments that were passed to the last called repository method.
-     * 
-     * @return array
-     */
-    private function getLastArgs()
-    {
-        $callstack = debug_backtrace();
-        return $callstack[2]['args'];
+        return isset($this->cacheDrivers[$method]) ? $this->cacheDrivers[$method] : $this->cacheDriver;
     }
 }

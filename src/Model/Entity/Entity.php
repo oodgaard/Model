@@ -352,12 +352,7 @@ class Entity implements AccessibleInterface, AssertableInterface
         // let the VOs worry about the value
         if (is_array($data) || is_object($data)) {
             foreach ($data as $k => $v) {
-                $current = $this->__get($k);
-                if ($current instanceof AccessibleInterface) {
-                    $current->fill($v, $mapper);
-                } else {
-                    $this->__set($k, $v);
-                }
+                $this->__set($k, $v);
             }
         }
         
@@ -543,7 +538,12 @@ class Entity implements AccessibleInterface, AssertableInterface
      */
     public function serialize()
     {
-        return serialize($this->toArray());
+        return serialize([
+            'autoloaders' => $this->autoloaders,
+            'data'        => $this->toArray(),
+            'mappers'     => $this->mappers,
+            'validators'  => $this->validators
+        ]);
     }
     
     /**
@@ -555,7 +555,10 @@ class Entity implements AccessibleInterface, AssertableInterface
      */
     public function unserialize($data)
     {
-        $this->fill(unserialize($data));
+        $this->autoloaders = $data['autoloaders'];
+        $this->mappers     = $data['mappers'];
+        $this->validators  = $data['validators'];
+        $this->fill($data['data']);
     }
     
     /**

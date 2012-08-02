@@ -585,7 +585,11 @@ class Set implements AccessibleInterface, ValidatableInterface
      */
     public function serialize()
     {
-        return serialize($this->toArray());
+        return serialize([
+            'class'      => $this->class,
+            'data'       => $this->toArray(),
+            'validators' => $this->validators
+        ]);
     }
     
     /**
@@ -597,7 +601,10 @@ class Set implements AccessibleInterface, ValidatableInterface
      */
     public function unserialize($data)
     {
-        $this->fill(unserialize($data));
+        $data             = unserialize($data);
+        $this->class      = $data['class'];
+        $this->validators = $data['validators'];
+        $this->fill($data['data']);
     }
     
     /**

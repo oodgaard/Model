@@ -102,7 +102,7 @@ class Mongo implements CacheInterface
      */
     public function exists($key)
     {
-        return $this->get($key) !== null;
+        return $this->get($key) !== false;
     }
 
     /**
