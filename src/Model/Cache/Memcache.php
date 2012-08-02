@@ -89,7 +89,7 @@ class Memcache implements CacheInterface
      * 
      * @return bool
      */
-    public function exists($key)
+    public function has($key)
     {
         return $this->memcache->get($key) !== false;
     }

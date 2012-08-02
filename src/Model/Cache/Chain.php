@@ -87,10 +87,10 @@ class Chain implements CacheInterface
      * 
      * @return bool
      */
-    public function exists($key)
+    public function has($key)
     {
         foreach ($this->drivers as $cache) {
-            if ($cache->exists($key)) {
+            if ($cache->has($key)) {
                 return true;
             }
         }

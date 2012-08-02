@@ -56,7 +56,7 @@ class Php implements CacheInterface
      * 
      * @return bool
      */
-    public function exists($key)
+    public function has($key)
     {
         return isset($this->cache[$key]);
     }
