@@ -17,7 +17,7 @@ class Php implements CacheInterface
      * 
      * @var array
      */
-    protected $cache = array();
+    private $cache = array();
     
     /**
      * Sets a cache item.
@@ -26,7 +26,7 @@ class Php implements CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache. Not supported in this driver.
      * 
-     * @return \Model\Cache\Php
+     * @return Php
      */
     public function set($key, $value, $lifetime = null)
     {
@@ -66,13 +66,24 @@ class Php implements CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\Cache\Php
+     * @return Php
      */
     public function remove($key)
     {
         if (isset($this->cache[$key])) {
             unset($this->cache[$key]);
         }
+        return $this;
+    }
+    
+    /**
+     * Clears the whole cache.
+     * 
+     * @return Php
+     */
+    public function clear()
+    {
+        $this->cache = [];
         return $this;
     }
 }

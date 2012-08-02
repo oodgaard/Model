@@ -117,4 +117,15 @@ class Mongo implements CacheInterface
         $this->collection->remove(['_id' => $key]);
         return $this;
     }
+    
+    /**
+     * Clears the whole cache.
+     * 
+     * @return Mongo
+     */
+    public function clear()
+    {
+        $this->collection->remove();
+        return $this;
+    }
 }
