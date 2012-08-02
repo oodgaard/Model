@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Cache;
+use Memcache;
 
 /**
  * The Memcache driver.
@@ -17,7 +18,7 @@ class Memcache implements CacheInterface
      * 
      * @var array
      */
-    protected $config = array(
+    private $config = array(
         'servers' => array(
             array(
                 'host' => 'localhost',
@@ -32,19 +33,20 @@ class Memcache implements CacheInterface
      * 
      * @var Memcache
      */
-    protected $memcache;
+    private $memcache;
     
     /**
      * Constructs a new memcache cache driver and sets its configuration.
      * 
      * @param array $config The Memcache configuration.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Memcache
      */
     public function __construct(array $config = array())
     {    
         $this->config   = array_merge($this->config, $config);
-        $this->memcache = new \Memcache;
+        $this->memcache = new Memcache;
+        
         foreach ($this->config['servers'] as $server) {
             $this->memcache->addServer($server['host'], $server['port']);
         }
@@ -57,12 +59,14 @@ class Memcache implements CacheInterface
      * @param mixed  $value    The cached value.
      * @param mixed  $lifetime The max lifetime of the item in the cache.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Memcache
      */
     public function set($key, $value, $lifetime = null)
     {
         $lifetime = is_null($lifetime) ? $this->config['lifetime'] : $lifetime;
+        
         $this->memcache->add($key, $value, $lifetime);
+        
         return $this;
     }
     
@@ -95,11 +99,22 @@ class Memcache implements CacheInterface
      * 
      * @param string $key The key of the item to remove.
      * 
-     * @return \Model\Cache\Memcache
+     * @return Memcache
      */
     public function remove($key)
     {
         $this->memcache->delete($key);
+        return $this;
+    }
+    
+    /**
+     * Clears the whole cache.
+     * 
+     * @return Memcache
+     */
+    public function clear()
+    {
+        $this->memcache->flush();
         return $this;
     }
 }

@@ -349,9 +349,6 @@ Authoring repositories is fairly straight forward:
     
     class Content implements RepositoryInterface
     {
-        // enables caching methods
-        use Cacheable;
-        
         public function getById($id)
         {
             ...
@@ -367,3 +364,82 @@ Authoring repositories is fairly straight forward:
             ...
         }
     }
+
+### Caching
+
+The `Repository` component ships with a `Cacheable` trait that makes it easy to enable and automate the caching of return values.
+
+    <?php
+    
+    namespace Model\Repository;
+    use Model\Entity;
+    use Model\Cache\Chain;
+    use Model\Cache\Memcache;
+    use Model\Cache\Php;
+    
+    class Content implements RepositoryInterface
+    {
+        use Cacheable;
+        
+        public function __construct()
+        {
+            $memcache   = new Memcache;
+            $phpcache   = new Php;
+            $chaincache = new Chain([
+                $phpcache,
+                $memcache
+            ]);
+            
+            // the result for getById will be stored in memcache
+            $this->setCacheDriver('getById', $memcache);
+            
+            // the result for getByTitle will be stored in the php cache and memcache
+            $this->setCacheDriver('getByTitle', $chaincache);
+            
+            // all other protected methods will use the php cache
+            $this->setDefaultCacheDriver($phpcache);
+        }
+        
+        protected function getById($id)
+        {
+            // return the content entity by id
+            ...
+        }
+        
+        protected function getByTitle($title)
+        {
+            // return the content entity by title
+            ...
+        }
+        
+        protected function getComments($id)
+        {
+            return $this->getById($id)->comments;
+        }
+        
+        public function save(Entity\Content $content)
+        {
+            // do some saving
+            ...
+            
+            // by updating the cache here, it won't have to make a trip to the database to get the updated result
+            $this->setCache('getByTitle', [$content->title], $content);
+        }
+    }
+
+Performance
+-----------
+
+One harsh reality we have to deal with as PHP developers is ORMs, while aplenty, are inherently slow. If you are managing large datasets (1000+ entities), you should be careful how you use them if you are expecting a performant result. People go on about performance between Propel, Doctrine, etcetera. You can be as nitpicky as you want, but the performance between all of the tools out there won't make a difference if you are lazy and don't architect your code properly depending on the tool you are using.
+
+### Caching
+
+In some cases, caching can really be useful. In others, it's just a bandaid for bad design. Either way, it can make a world of difference.
+
+### Background Processes
+
+If you are running CRUD operations on large data sets, it may be a sound idea to run a background process or use a job queue to handle it. This means that you can return a result to the user very quickly while still performing operations on large amounts of data without sacrificing the convenience of an ORM. Let's face it, ORMs are convenient and can really help you manage your code. Why should we sacrifice that if we can help it?
+
+### Dealing with Less Data
+
+In a lot of cases, we are just doing it wrong. We don't need to display 1000 items to the user all at once or update 1000 records while they wait. A lot of times the programmer is the problem, not the tool.
