@@ -100,7 +100,7 @@ class Mongo implements CacheInterface
      * 
      * @return bool
      */
-    public function exists($key)
+    public function has($key)
     {
         return $this->get($key) !== false;
     }

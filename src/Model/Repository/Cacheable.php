@@ -164,7 +164,7 @@ trait Cacheable
     public function hasCache($method, array $args)
     {
         if ($driver = $this->resolveCacheDriver($method)) {
-            return $driver->exists($this->generateCacheKey($method, $args));
+            return $driver->has($this->generateCacheKey($method, $args));
         }
         return false;
     }
