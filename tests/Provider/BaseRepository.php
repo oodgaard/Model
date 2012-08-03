@@ -4,13 +4,10 @@ namespace Provider;
 use Exception;
 use Model\Cache\Php;
 use Model\Entity\Entity;
-use Model\Repository\Cacheable;
-use Model\Repository\RepositoryInterface;
+use Model\Repository\RepositoryAbstract;
 
-abstract class BaseRepository implements RepositoryInterface
+abstract class BaseRepository extends RepositoryAbstract
 {
-    use Cacheable;
-    
     /**
      * Keeps track of the number of times "findById()" was called so we can test
      * if an item was cached or not.
@@ -28,7 +25,7 @@ abstract class BaseRepository implements RepositoryInterface
 
     public function __construct()
     {
-        $this->setCacheDriver(new Php);
+        $this->setCacheDriver('findById', new Php);
     }
     
     public function findById($id)
