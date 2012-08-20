@@ -28,27 +28,7 @@ abstract class BaseRepository implements RepositoryInterface
 
     public function __construct()
     {
-        $this->setCacheDriver(new Php);
-    }
-    
-    public function findById($id)
-    {
-        // if it is found in cache, return it
-        if ($cache = $this->getCache()) {
-            return $cache;
-        }
-        
-        if (isset($this->entities[$id])) {
-            $entity = $this->entities[$id];
-            $this->setCache($entity);
-        } else {
-            $entity = false;
-        }
-        
-        // keep track of the number of times this method was called for testing
-        ++$this->findByIdCallCount;
-        
-        return $entity;
+        $this->setCacheDriver('findById', new Php);
     }
     
     public function save(Entity $entity)
@@ -64,10 +44,24 @@ abstract class BaseRepository implements RepositoryInterface
     public function remove(Entity $entity)
     {
         // expire the cache
-        $this->clearCacheFor(get_class($this), 'findById', array($entity->id));
+        $this->clearCache('findById', array($entity->id));
         
         // then remove the item from the storage property
         unset($this->entities[$entity->id]);
+    }
+    
+    protected function findById($id)
+    {
+        if (isset($this->entities[$id])) {
+            $entity = $this->entities[$id];
+        } else {
+            $entity = false;
+        }
+        
+        // keep track of the number of times this method was called for testing
+        ++$this->findByIdCallCount;
+        
+        return $entity;
     }
     
     private function insert(Entity $entity)
@@ -79,7 +73,7 @@ abstract class BaseRepository implements RepositoryInterface
         $this->entities[$entity->id] = $entity;
         
         // store in cache for the specified method
-        $this->setCacheFor(get_class($this), 'findById', array($entity->id), $entity);
+        $this->setCache('findById', array($entity->id), $entity);
     }
     
     private function update(Entity $entity)
