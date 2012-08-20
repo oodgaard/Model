@@ -1,7 +1,6 @@
 <?php
 
 namespace Model\Repository;
-use InvalidArgumentException;
 use LogicException;
 use Model\Cache\CacheInterface;
 use ReflectionMethod;
@@ -16,13 +15,6 @@ use ReflectionMethod;
  */
 trait Cacheable
 {
-    /**
-     * The fallback cache driver to use if one is not found in the method caches.
-     * 
-     * @var CacheInterface
-     */
-    private $cacheDriver;
-    
     /**
      * Caches for specific methods.
      * 
@@ -41,7 +33,7 @@ trait Cacheable
      */
     public function __call($name, array $args = [])
     {
-        $class = get_class();
+        $class = get_called_class();
         
         // if the method does not exist, then there's nothing we can do
         if (!method_exists($this, $name)) {
@@ -55,7 +47,7 @@ trait Cacheable
         // make sure method is protected
         if (!(new ReflectionMethod($class, $name))->isProtected()) {
             throw new LogicException(sprintf(
-                'In order to automate the caching of "%s::%s()", you must mark it as protected.',
+                'In order to automate the caching of "%s->%s()", you must mark it as protected.',
                 $class,
                 $name
             ));
@@ -91,48 +83,49 @@ trait Cacheable
     }
     
     /**
-     * Applies a cache driver to multiple methods.
+     * Returns the appropriate cache driver.
      * 
-     * @param array          $methods The methods to apply the driver to.
-     * @param CacheInterface $driver  The cache interface to use.
+     * @param string $method The method, if any, to get the cache driver for.
+     * 
+     * @return CacheInterface | null
+     */
+    public function getCacheDriver($method)
+    {
+        if (isset($this->cacheDrivers[$method])) {
+            return $this->cacheDrivers[$method];
+        }
+    }
+    
+    /**
+     * Applies a single cache driver to multiple methods.
+     * 
+     * @param CacheInterface $driver The cache driver.
+     * @param array          $method The methods to cache.
      * 
      * @return Cacheable
      */
-    public function setCacheDrivers(array $methods, CacheInterface $driver)
+    public function setCacheDrivers(CacheInterface $driver, array $methods)
     {
         foreach ($methods as $method) {
-            $this->cacheDrivers[$method] = $driver;
+            $this->setCacheDriver($method, $driver);
         }
         return $this;
     }
     
     /**
-     * Sets the default cache driver.
+     * Caches the specified method.
      * 
-     * @param CacheInterface $driver The cache interface to use.
-     * 
-     * @return Cacheable
-     */
-    public function setDefaultCacheDriver(CacheInterface $driver)
-    {
-        $this->cacheDriver = $driver;
-        return $this;
-    }
-    
-    /**
-     * Provides a way to cache a method other than the one that was called.
-     * 
-     * @param string $method The method to cache for.
-     * @param array  $args   The arguments to cache for.
-     * @param mixed  $item   The item to cache.
-     * @param mixed  $time   The time to cache the item for.
+     * @param string $method    The method to cache for.
+     * @param array  $args      The arguments to cache for.
+     * @param mixed  $value     The value to cache.
+     * @param int    $limfetime The lifetime of the cache.
      * 
      * @return Cacheable
      */
-    public function setCache($method, array $args, $item, $time = null)
+    public function setCache($method, array $args, $value, $lifetime = null)
     {
-        if ($driver = $this->resolveCacheDriver($method)) {
-            $driver->set($this->generateCacheKey($method, $args), $item, $time);
+        if ($driver = $this->getCacheDriver($method)) {
+            return $driver->set($this->generateCacheKey($method, $args), $value, $lifetime);
         }
         return $this;
     }
@@ -143,11 +136,11 @@ trait Cacheable
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return Cacheable
+     * @return mixed
      */
     public function getCache($method, array $args)
     {
-        if ($driver = $this->resolveCacheDriver($method)) {
+        if ($driver = $this->getCacheDriver($method)) {
             return $driver->get($this->generateCacheKey($method, $args));
         }
         return false;
@@ -159,11 +152,11 @@ trait Cacheable
      * @param string $method The method to cache for.
      * @param array  $args   The arguments to cache for.
      * 
-     * @return Cacheable
+     * @return bool
      */
     public function hasCache($method, array $args)
     {
-        if ($driver = $this->resolveCacheDriver($method)) {
+        if ($driver = $this->getCacheDriver($method)) {
             return $driver->has($this->generateCacheKey($method, $args));
         }
         return false;
@@ -179,7 +172,7 @@ trait Cacheable
      */
     public function removeCache($method, array $args)
     {
-        if ($driver = $this->resolveCacheDriver($method)) {
+        if ($driver = $this->getCacheDriver($method)) {
             $driver->remove($this->generateCacheKey($method, $args));
         }
         return $this;
@@ -195,11 +188,6 @@ trait Cacheable
         foreach ($this->cacheDrivers as $driver) {
             $driver->clear();
         }
-        
-        if ($this->cacheDriver) {
-            $this->cacheDriver->clear();
-        }
-        
         return $this;
     }
     
@@ -214,17 +202,5 @@ trait Cacheable
     private function generateCacheKey($method, array $args)
     {
         return md5(get_class() . $method . serialize($args));
-    }
-    
-    /**
-     * Returns the appropriate cache driver.
-     * 
-     * @param string $method The method, if any, to get the cache driver for.
-     * 
-     * @return CacheInterface | null
-     */
-    private function resolveCacheDriver($method = null)
-    {
-        return isset($this->cacheDrivers[$method]) ? $this->cacheDrivers[$method] : $this->cacheDriver;
     }
 }

@@ -347,7 +347,7 @@ Authoring repositories is fairly straight forward:
     namespace Model\Repository;
     use Model\Entity;
     
-    class Content implements RepositoryInterface
+    class Content
     {
         public function getById($id)
         {
@@ -377,7 +377,7 @@ The `Repository` component ships with a `Cacheable` trait that makes it easy to 
     use Model\Cache\Memcache;
     use Model\Cache\Php;
     
-    class Content implements RepositoryInterface
+    class Content
     {
         use Cacheable;
         
