@@ -60,7 +60,7 @@ class Date extends VoAbstract
     {
         if (is_numeric($value)) {
             $value = date($this->config['format'], $value);
-        } elseif ($value == null) {
+        } elseif ($value) {
             $this->date = null;
         } else {
             $this->date->modify($value);
@@ -74,7 +74,7 @@ class Date extends VoAbstract
      */
     public function get()
     {
-        return $this->date != null ? $this->date->format($this->config['format']) : null;
+        return $this->date ? $this->date->format($this->config['format']) : null;
     }
     
     /**
