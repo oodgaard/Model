@@ -108,20 +108,20 @@ trait Cacheable
     /**
      * Caches the specified method.
      * 
-     * @param string $method    The method to cache for.
-     * @param array  $args      The arguments to cache for.
-     * @param mixed  $value     The value to cache.
-     * @param int    $limfetime The lifetime of the cache.
+     * @param string $method The method to cache for.
+     * @param array  $args   The arguments to cache for.
+     * @param mixed  $value  The value to cache.
      * 
      * @return Cacheable
      */
-    public function setCache($method, array $args, $value, $lifetime = null)
+    public function setCache($method, array $args, $value)
     {
         if ($driver = $this->getCacheDriver($method)) {
-            if ($lifetime === null && isset($this->cacheLifetimes[$method])) {
-                $lifetime = $this->cacheLifetimes[$method];
-            }
-            return $driver->set($this->generateCacheKey($method, $args), $value, $lifetime);
+            return $driver->set(
+                $this->generateCacheKey($method, $args),
+                $value,
+                isset($this->cacheLifetimes[$method]) ? $this->cacheLifetimes[$method] : null
+            );
         }
         return $this;
     }
