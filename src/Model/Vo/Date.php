@@ -61,9 +61,9 @@ class Date extends VoAbstract
         if (is_numeric($value)) {
             $value = date($this->config['format'], $value);
         } elseif ($value) {
-            $this->date = null;
-        } else {
             $this->date->modify($value);
+        } else {
+            $this->date = null;
         }
     }
     

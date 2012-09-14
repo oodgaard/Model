@@ -21,6 +21,13 @@ trait Cacheable
      * @var array
      */
     private $cacheDrivers = [];
+
+    /**
+     * Specific lifetimes for each method.
+     * 
+     * @var array
+     */
+    private $cacheLifetimes = [];
     
     /**
      * Automatically decides what to do with the cache. All protected methods are considered methods where caching can
@@ -71,14 +78,16 @@ trait Cacheable
     /**
      * Sets the cache interface to use.
      * 
-     * @param string         $method The method to apply the driver to.
-     * @param CacheInterface $driver The cache interface to use.
+     * @param string         $method   The method to apply the driver to.
+     * @param CacheInterface $driver   The cache interface to use.
+     * @param int | null     $lifetime The default lifetime of this method.
      * 
      * @return Cacheable
      */
-    public function setCacheDriver($method, CacheInterface $driver)
+    public function setCacheDriver($method, CacheInterface $driver, $lifetime = null)
     {
-        $this->cacheDrivers[$method] = $driver;
+        $this->cacheDrivers[$method]   = $driver;
+        $this->cacheLifetimes[$method] = $lifetime;
         return $this;
     }
     
@@ -97,35 +106,22 @@ trait Cacheable
     }
     
     /**
-     * Applies a single cache driver to multiple methods.
-     * 
-     * @param CacheInterface $driver The cache driver.
-     * @param array          $method The methods to cache.
-     * 
-     * @return Cacheable
-     */
-    public function setCacheDrivers(CacheInterface $driver, array $methods)
-    {
-        foreach ($methods as $method) {
-            $this->setCacheDriver($method, $driver);
-        }
-        return $this;
-    }
-    
-    /**
      * Caches the specified method.
      * 
-     * @param string $method    The method to cache for.
-     * @param array  $args      The arguments to cache for.
-     * @param mixed  $value     The value to cache.
-     * @param int    $limfetime The lifetime of the cache.
+     * @param string $method The method to cache for.
+     * @param array  $args   The arguments to cache for.
+     * @param mixed  $value  The value to cache.
      * 
      * @return Cacheable
      */
-    public function setCache($method, array $args, $value, $lifetime = null)
+    public function setCache($method, array $args, $value)
     {
         if ($driver = $this->getCacheDriver($method)) {
-            return $driver->set($this->generateCacheKey($method, $args), $value, $lifetime);
+            return $driver->set(
+                $this->generateCacheKey($method, $args),
+                $value,
+                isset($this->cacheLifetimes[$method]) ? $this->cacheLifetimes[$method] : null
+            );
         }
         return $this;
     }

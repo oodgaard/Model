@@ -66,11 +66,20 @@ class Mongo implements CacheInterface
      */
     public function set($key, $value, $lifetime = null)
     {
+        if (!$lifetime) {
+            $lifetime = $this->config['lifetime'];
+        }
+
+        if ($lifetime) {
+            $lifetime = time() + $lifetime;
+        }
+
         $this->collection->save([
             '_id'     => $key,
             'value'   => serialize($value),
-            'expires' => $this->config['lifetime'] ?: time() + ($lifetime ?: 1000)
+            'expires' => $lifetime
         ]);
+
         return $this;
     }
 
