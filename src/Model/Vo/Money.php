@@ -21,6 +21,6 @@ class Money extends Generic
      */
     public function set($value)
     {
-        parent::set(number_format($value, 2));
+        parent::set((float) number_format($value, 2));
     }
 }
