@@ -25,8 +25,14 @@ To create an entity, all you really have to do is extend the base entity class:
     
     class Content extends Entity
     {
-        
+        public function init()
+        {
+            // initialization code goes here
+            ...
+        }
     }
+
+*An `init()` method isn't required, but can be used to programatically set up your entity.*
 
 ### Value Objects
 
@@ -391,13 +397,10 @@ The `Repository` component ships with a `Cacheable` trait that makes it easy to 
             ]);
             
             // the result for getById will be stored in memcache
-            $this->setCacheDriver('getById', $memcache);
+            $this->setCacheDriver('getById', $memcache, 3600);
             
             // the result for getByTitle will be stored in the php cache and memcache
             $this->setCacheDriver('getByTitle', $chaincache);
-            
-            // all other protected methods will use the php cache
-            $this->setDefaultCacheDriver($phpcache);
         }
         
         protected function getById($id)
