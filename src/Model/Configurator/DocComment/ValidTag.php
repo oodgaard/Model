@@ -43,7 +43,6 @@ class ValidTag implements DocTagInterface
         // parse out the tag parts
         $parts   = explode(' ', $value, 2);
         $class   = $parts[0];
-        $message = isset($parts[1]) ? trim($parts[1]) : ':vo is not valid.';
         
         // caching validator instance
         if (isset($this->cache[$class])) {
@@ -55,9 +54,9 @@ class ValidTag implements DocTagInterface
         
         // add to the entity or vo
         if ($refl instanceof ReflectionProperty) {
-            $this->configureProperty($refl, $entity, $validator, $message);
+            $this->configureProperty($refl, $entity, $validator, 'Vo "' . $refl->getName() . '" is not valid.');
         } else {
-            $this->configureClass($entity, $validator, $message);
+            $this->configureClass($entity, $validator, 'Entity "' . get_class($entity) . '" is not valid.');
         }
     }
     
