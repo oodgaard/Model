@@ -27,7 +27,7 @@ abstract class VoAbstract implements VoInterface
         $value    = $this->get();
         
         foreach ($this->getValidators() as $message => $validator) {
-            if (call_user_func($validator, $this->get()) === false) {
+            if (call_user_func($validator, $this) === false) {
                 $messages[] = $message;
             }
         }
