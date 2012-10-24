@@ -1,7 +1,7 @@
 <?php
 
 namespace Model\Vo;
-use Model\Entity\Set;
+use Model\Entity\Set as EntitySet;
 
 /**
  * One-to-many relationship VO.
@@ -59,7 +59,7 @@ class HasMany extends VoAbstract
     public function get()
     {
         if (!$this->exists()) {
-            $this->value = new Set($this->class);
+            $this->value = new EntitySet($this->class);
         }
         return $this->value;
     }
