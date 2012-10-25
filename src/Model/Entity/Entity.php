@@ -405,7 +405,7 @@ class Entity implements AccessibleInterface, AssertableInterface
         
         // then validate the entity
         foreach ($this->validators as $message => $validator) {
-            if (call_user_func($validator, $this) === false) {
+            if ($validator($this) === false) {
                 $messages[] = $message;
             }
         }

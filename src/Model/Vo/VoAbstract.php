@@ -26,12 +26,14 @@ abstract class VoAbstract implements VoInterface
         $messages = [];
         $value    = $this->get();
         
+        // Validate this value.
         foreach ($this->getValidators() as $message => $validator) {
-            if (call_user_func($validator, $this) === false) {
+            if ($validator($this->get()) === false) {
                 $messages[] = $message;
             }
         }
         
+        // Validate all sub-items.
         if ($value instanceof ValidatableInterface) {
             $messages = array_merge($messages, $value->validate());
         }
