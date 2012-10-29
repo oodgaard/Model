@@ -41,17 +41,9 @@ class ValidTag implements DocTagInterface
     public function configure($value, Reflector $refl, Entity $entity)
     {
         // parse out the tag parts
-        $parts   = explode(' ', $value, 2);
-        $class   = $parts[0];
-        $message = isset($parts[1]) ? $parts[1] : null;
-        
-        // caching validator instance
-        if (isset($this->cache[$class])) {
-            $validator = $this->cache[$class];
-        } else {
-            $validator           = new $class;
-            $this->cache[$class] = $validator;
-        }
+        $parts     = explode(' ', $value, 2);
+        $validator = $this->resolveValidator($parts[0], $entity);
+        $message   = isset($parts[1]) ? $parts[1] : null;
         
         // add to the entity or vo
         if ($refl instanceof ReflectionProperty) {
@@ -72,11 +64,6 @@ class ValidTag implements DocTagInterface
      */
     private function configureClass(Entity $entity, $validator, $message)
     {
-        // only callable validators are allowed on entities
-        if (!is_callable($validator)) {
-            throw new InvalidArgumentException(sprintf('The validator "%s" is not callable.', $class));
-        }
-        
         $entity->addValidator($message, $validator);
     }
     
@@ -104,15 +91,34 @@ class ValidTag implements DocTagInterface
             ));
         }
         
-        // allow Zend validators on VO values
-        // we don't use the error messages Zend gives us because we specify our own
-        if ($validator instanceof Zend_Validate_Interface || $validator instanceof Validator) {
-            $validator = function($vo) use ($validator) {
-                return $validator->isValid($vo->get());
-            };
-        }
-        
         // add the validator to the specified VO
         $entity->getVo($property)->addValidator($message, $validator);
+    }
+
+    private function resolveValidator($validator, $entity)
+    {
+        // if a validator has been cached, we assume we can reuse it
+        if (isset($this->cache[$validator])) {
+            $validator = $this->cache[$validator];
+        } elseif (method_exists($entity, $validator)) {
+            $validator = [$entity, $validator];
+        } elseif (class_exists($validator)) {
+            $validator = new $validator;
+
+            if ($validator instanceof Zend_Validate_Interface || $validator instanceof Validator) {
+                $validator = function($value) use ($validator) {
+                    return $validator->isValid($value);
+                };
+            }
+
+            // only cache class instances
+            $this->cache[get_class($validator)] = $validator;
+        } elseif (function_exists($validator)) {
+            $this->cache[$validator] = $validator;
+        } else {
+            throw new RuntimeException(sprintf('Unknown validator "%s" specified for "%s".', $validator, get_class($entity)));
+        }
+
+        return $validator;
     }
 }
