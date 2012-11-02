@@ -73,6 +73,11 @@ class Mapper implements MapperInterface
         foreach ($this->move as $from => $to) {
             $this->move($from, $to);
         }
+
+        // convert filter names to instance methods
+        foreach ($this->filters as $from => $to) {
+            $this->filter($from, [$this, $to]);
+        }
     }
     
     /**
@@ -142,12 +147,12 @@ class Mapper implements MapperInterface
     /**
      * Filters the specified destination key.
      * 
-     * @param string $to The destination key.
-     * @param string $fn The method name to use for filtering.
+     * @param string   $to The destination key.
+     * @param callable $fn The method name to use for filtering.
      * 
      * @return Mapper
      */
-    public function filter($to, $fn)
+    public function filter($to, callable $fn)
     {
         $this->filters[$to] = $fn;
         return $this;
@@ -171,7 +176,7 @@ class Mapper implements MapperInterface
         foreach ($this->whitelist as $dest) {
             $this->setMappedValue($dest, $this->getMappedValue($dest, $from), $to);
         }
-        
+
         // blacklist
         foreach ($this->blacklist as $dest) {
             $this->unsetMappedValue($dest, $to);
@@ -185,11 +190,27 @@ class Mapper implements MapperInterface
         // apply filters
         foreach ($this->filters as $dest => $filter) {
             $value = $this->getMappedValue($dest, $to);
-            $value = call_user_func(array($this, $filter), $value);
+            $value = $filter($value, $to);
             $this->setMappedValue($dest, $value, $to);
         }
 
         return $to;
+    }
+
+    /**
+     * Maps an array of arrays.
+     * 
+     * @param array $all The array of array's to map.
+     * 
+     * @return array
+     */
+    public function mapAll(array $all)
+    {
+        $out = [];
+        foreach ($all as $arr) {
+            $out = $this->map($arr);
+        }
+        return $out;
     }
 
     /**

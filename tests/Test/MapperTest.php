@@ -158,6 +158,7 @@ class MapperTest extends UnitAbstract
         $mapper->move('key2', '$.key2');
         
         $output = $mapper->map($data);
+
         $this->assert(
             isset($output[0])
             && isset($output[0]['key1'])
@@ -167,5 +168,38 @@ class MapperTest extends UnitAbstract
             && $output[1]['key2'] === 'value2',
             'Numeric keys do not map properly.'
         );
+    }
+
+    /**
+     * Tests filtering.
+     * 
+     * @return void
+     */
+    public function filtering()
+    {
+        $data = [
+            'key1' => 'val1',
+            'key2'  => [
+                'key2key1' => 'val1',
+                'key2key2' => 'val2'
+            ]
+        ];
+
+        $mapper = new Mapper;
+        $mapper->move('key1', 'fields.key1');
+        $mapper->filter('key2', function($key2, &$root) {
+            foreach ($key2 as $k => $v) {
+                $root['fields']['field_' . $k] = $v;
+            }
+
+            unset($root['key2']);
+        });
+
+        $mapped = $mapper->map($data);
+
+        $this->assert(isset($mapped['fields']), 'Fields key should have been created.');
+        $this->assert(isset($mapped['fields']['key1']), 'First key should have been moved.');
+        $this->assert(isset($mapped['fields']['field_key2key1']), 'First sub-array item should have been mapped.');
+        $this->assert(isset($mapped['fields']['field_key2key2']), 'Second sub-array item should have been mapped.');
     }
 }
