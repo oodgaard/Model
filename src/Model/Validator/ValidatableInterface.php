@@ -15,12 +15,12 @@ interface ValidatableInterface
     /**
      * Adds a validator to the entity.
      * 
-     * @param string $message   The message to add.
-     * @param mixed  $validator The callable validator.
+     * @param string   $message   The message to add.
+     * @param callable $validator The callable validator.
      * 
      * @return mixed
      */
-    public function addValidator($message, $validator);
+    public function addValidator($message, callable $validator);
     
     /**
      * Validates the instance against each added validator and returns the error messages.

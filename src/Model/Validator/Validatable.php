@@ -23,21 +23,14 @@ trait Validatable
     /**
      * Adds a validator to the entity.
      * 
-     * @param string             $message   The message to add.
-     * @param ValidatorInterface $validator The entity validator.
+     * @param string   $message   The message to add.
+     * @param callable $validator The entity validator.
      * 
      * @return Entity
      */
-    public function addValidator($message, $validator)
+    public function addValidator($message, callable $validator)
     {
-        if (!is_callable($validator)) {
-            throw new InvalidArgumentException(sprintf(
-                'The validator for the message "%s" is not callable.', $message
-            ));
-        }
-        
         $this->validators[$message] = $validator;
-        
         return $this;
     }
     
