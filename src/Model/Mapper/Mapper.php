@@ -16,6 +16,13 @@ use ReflectionClass;
 class Mapper implements MapperInterface
 {
     /**
+     * The wildcard character.
+     * 
+     * @var string
+     */
+    const WILDCARD = '*';
+
+    /**
      * The items to copy.
      * 
      * @var array
@@ -152,9 +159,15 @@ class Mapper implements MapperInterface
      * 
      * @return Mapper
      */
-    public function filter($to, callable $fn)
+    public function filter($to, callable $fn = null)
     {
+        if (is_callable($to)) {
+            $fn = $to;
+            $to = self::WILDCARD;
+        }
+
         $this->filters[$to] = $fn;
+
         return $this;
     }
 
@@ -189,9 +202,13 @@ class Mapper implements MapperInterface
         
         // apply filters
         foreach ($this->filters as $dest => $filter) {
-            $value = $this->getMappedValue($dest, $to);
-            $value = $filter($value, $to);
-            $this->setMappedValue($dest, $value, $to);
+            if ($dest === self::WILDCARD) {
+                $filter($from, $to);
+            } else {
+                $value = $this->getMappedValue($dest, $to);
+                $value = $filter($value, $from, $to);
+                $this->setMappedValue($dest, $value, $to);
+            }
         }
 
         return $to;

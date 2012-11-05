@@ -186,13 +186,12 @@ class MapperTest extends UnitAbstract
         ];
 
         $mapper = new Mapper;
+        $mapper->blacklist('key2');
         $mapper->move('key1', 'fields.key1');
-        $mapper->filter('key2', function($key2, &$root) {
-            foreach ($key2 as $k => $v) {
-                $root['fields']['field_' . $k] = $v;
+        $mapper->filter(function($from, &$to) {
+            foreach ($from['key2'] as $k => $v) {
+                $to['fields']['field_' . $k] = $v;
             }
-
-            unset($root['key2']);
         });
 
         $mapped = $mapper->map($data);
@@ -201,5 +200,6 @@ class MapperTest extends UnitAbstract
         $this->assert(isset($mapped['fields']['key1']), 'First key should have been moved.');
         $this->assert(isset($mapped['fields']['field_key2key1']), 'First sub-array item should have been mapped.');
         $this->assert(isset($mapped['fields']['field_key2key2']), 'Second sub-array item should have been mapped.');
+        $this->assert(!array_key_exists('key2', $mapped), 'The key should have been removed.');
     }
 }
