@@ -302,6 +302,10 @@ class Mapper implements MapperInterface
      */
     private function unsetMappedValue($map, array &$to)
     {
+        if (sizeof(explode('$', $map)) > 1) {
+            return $this->unsetMappedValueRecursive($map, $to);
+        }
+
         $parts = explode('.', $map);
         $last  = array_pop($parts);
         $value = &$to;
@@ -312,6 +316,56 @@ class Mapper implements MapperInterface
         
         unset($value[$last]);
         
+        return $this;
+    }
+    
+    /**
+     * Removes mapped values recursively.
+     *
+     * @param string $map The value key.
+     * @param array  &$to The array to remove the value from.
+     *
+     * @return Mapper
+     *
+     * @todo should $this be returned recursively ?
+     */
+    private function unsetMappedValueRecursive($map, array &$to)
+    {
+        $parts = explode('.', $map);
+        $last  = $parts[sizeof($parts)-1];
+        $value = &$to;
+
+        if (isset($value[$last])) {
+            unset($value[$last]);
+            return $this;
+        }
+
+        foreach ($parts as $key => $part) {
+
+            if ($part == '$') {
+
+                unset($parts[$key]);
+                $newMap = implode(".", $parts);
+
+                $arrayKeys = array_keys($value);
+
+                if (isset($value[$arrayKeys['0']]) && is_array($value[$arrayKeys['0']])) {
+                    foreach ($value as &$v) {
+                        $this->unsetMappedValueRecursive($newMap, $v);
+                    }
+                } elseif (is_array($value)) {
+                    $this->unsetMappedValueRecursive($newMap, $value);
+                }
+
+                break;
+
+            } else {
+                $value = &$value[$part];
+            }
+
+            unset($parts[$key]);
+        }
+
         return $this;
     }
 

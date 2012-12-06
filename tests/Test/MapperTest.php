@@ -202,4 +202,32 @@ class MapperTest extends UnitAbstract
         $this->assert(isset($mapped['fields']['field_key2key2']), 'Second sub-array item should have been mapped.');
         $this->assert(!array_key_exists('key2', $mapped), 'The key should have been removed.');
     }
+
+    public function childBlacklist()
+    {
+        $data = [
+            'key1' => 'val1',
+            'key2' => [
+                [
+                   'id' => 1,
+                   'name' => 'test1',
+                   'list' => ['id'=> 2, 'key' => 'set']
+                ],
+                [
+                    'id' => 2, 
+                    'name' => 'test2',
+                    'list' => ['id'=> 3, 'key' => 'set']
+                ],
+            ]
+        ];
+
+        $mapper = new Mapper;
+        $mapper->blacklist('key2.$.id');
+        $mapper->blacklist('key2.$.list.$.key');
+
+        $mapped = $mapper->map($data);
+
+        $this->assert(!isset($mapped['key2']['0']['id']), 'Blacklisted key was not removed');
+        $this->assert(!isset($mapped['key2']['0']['list']['key']), 'Blacklisted key was not removed');
+    }
 }
