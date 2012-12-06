@@ -203,6 +203,9 @@ class MapperTest extends UnitAbstract
         $this->assert(!array_key_exists('key2', $mapped), 'The key should have been removed.');
     }
 
+    /**
+     * Test recursive blacklisting.
+     */
     public function recursiveBlacklist()
     {
         $data = [
