@@ -203,7 +203,7 @@ class MapperTest extends UnitAbstract
         $this->assert(!array_key_exists('key2', $mapped), 'The key should have been removed.');
     }
 
-    public function childBlacklist()
+    public function recursiveBlacklist()
     {
         $data = [
             'key1' => 'val1',
