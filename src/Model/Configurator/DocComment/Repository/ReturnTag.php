@@ -69,15 +69,15 @@ class ReturnTag implements DocTagInterface
 
     private function parseAutomatedReturnValueSet($return)
     {
-        if (strpos($return, ' of ') !== false) {
-            return explode(' of ', $return)[0];
+        if (strpos($return, 'Set of ') !== false) {
+            return explode('Set of ', $return)[0];
         }
     }
 
     private function parseAutomatedReturnValueEntity($return)
     {
-        if (strpos($return, ' of ') !== false) {
-            return $return = explode(' of ', $return)[1];
+        if (strpos($return, 'Set of ') !== false) {
+            return $return = explode('Set of ', $return)[1];
         }
 
         if (strpos($return, ' using ') !== false) {
