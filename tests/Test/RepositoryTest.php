@@ -7,95 +7,71 @@ use Provider\UserEntity;
 use Provider\UserRepository;
 use Testes\Test\UnitAbstract;
 
-/**
- * Tests the Repository component.
- * 
- * @category Repositories
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
- */
 class RepositoryTest extends UnitAbstract
 {
-    /**
-     * Ensures that the proper insert method is called.
-     * 
-     * @return void
-     */
-    public function inserting()
+    public function creating()
     {
-        $repo   = new ContentRepository;
-        $entity = new ContentEntity(array(
+        $entity = new ContentEntity([
             'name' => 'Trey Shugart'
-        ));
+        ]);
         
-        // save once and test if it has an id
-        $repo->save($entity);
-        $this->assert($repo->findById($entity->id) instanceof ContentEntity, 'Id was not returned by insert method.');
+        ContentRepository::create($entity);
+
+        $entity = ContentRepository::findById($entity->id);
+        
+        $this->assert($entity instanceof ContentEntity, 'Entity instance not returned.');
     }
     
-    /**
-     * Ensures that the proper update method is called.
-     * 
-     * @return void
-     */
     public function updating()
     {
-        $repo   = new ContentRepository;
-        $entity = new ContentEntity(array(
+        $entity = new ContentEntity([
             'name' => 'my content'
-        ));
+        ]);
         
-        // save it for the first time
-        $repo->save($entity);
+        ContentRepository::create($entity);
         
-        // modify it to see if it saves
         $entity->wasSaved = true;
         
-        // save it again and test to see if the "wasSaved" property was saved
-        $repo->save($entity);
+        ContentRepository::update($entity);
+
+        $entity = ContentRepository::findById($entity->id);
         
-        $this->assert($repo->findById($entity->id)->name === 'my content', 'The entity was not updated.');
+        $this->assert($entity->name === 'my content', 'The entity was not updated.');
     }
     
-    /**
-     * Ensures that the proper remove method is called.
-     * 
-     * @return void
-     */
     public function removing()
     {
-        $repo   = new ContentRepository;
-        $entity = new ContentEntity(array('name' => 'test'));
+        $entity = new ContentEntity([
+            'name' => 'test'
+        ]);
         
-        $repo->save($entity);
-        if (!$repo->findById($entity->id)) {
+        ContentRepository::create($entity);
+
+        if (!ContentRepository::findById($entity->id)) {
             $this->assert(false, 'Cannot remove if item cannot be saved.');
         }
         
-        $repo->remove($entity);
-        if ($repo->findById(1)) {
+        ContentRepository::remove($entity);
+
+        if (ContentRepository::findById(1)) {
             $this->assert(false, 'Item was not removed');
         }
     }
     
-    /**
-     * Ensures that caching can be automatically handled by using cache methods inside of repository methods.
-     * 
-     * @return void
-     */
     public function caching()
     {
-        $repo = new ContentRepository;
         $item = new ContentEntity;
-        $repo->save($item);
+
+        ContentRepository::create($item);
         
-        $item = $repo->findById($item->id);
+        $item = ContentRepository::findById($item->id);
+
         if (!$item) {
             $this->assert(false, 'Item should have been found.');
         }
         
-        $item = $repo->findById($item->id);
+        $item = ContentRepository::findById($item->id);
+
         if ($repo->findByIdCallCount > 1) {
             $this->assert(false, 'Method "ContentRepository->findById()" was called more than once so the cache did not find the item.');
         }

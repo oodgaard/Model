@@ -3,25 +3,47 @@
 namespace Provider;
 use Model\Entity\Entity;
 
+/**
+ * @mapper testMapper Provider\ContentMapper
+ * 
+ * @validator Provider\ContentValidator Test error message.
+ * @validator contentValidator          Test error message.
+ */
 class ContentEntity extends Entity
 {
     /**
-     * @vo Model\Vo\Integer
+     * @var Model\Vo\Integer
      */
     public $id;
     
     /**
-     * @vo Model\Vo\String
+     * @var Model\Vo\String
+     * 
+     * @validator validateNameExists Testing :id.
      */
     public $name;
     
     /**
-     * @vo Model\Vo\HasOne new Provider\UserEntity
+     * @var Model\Vo\HasOne 'Provider\UserEntity'
      */
     public $user;
     
     /**
-     * @vo Model\Vo\HasMany new Model\Entity\Set('Provider\CommentEntity')
+     * @var Model\Vo\HasMany 'Provider\CommentEntity'
      */
     public $comments;
+
+    public $validatedUsingClass = false;
+
+    public $validatedUsingMethod = false;
+
+    public function contentValidator(self $content)
+    {
+        $this->validatedUsingMethod = true;
+    }
+
+    public function validateNameExists($name)
+    {
+        return $name ?: false;
+    }
 }

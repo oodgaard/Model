@@ -3,95 +3,59 @@
 namespace Model\Configurator;
 use Model\Configurator\DocComment;
 use Model\Entity\Entity;
+use Model\Repository\RepositoryAbstract;
 use Reflector;
 use ReflectionClass;
 use ReflectionProperty;
 use RuntimeException;
 
-/**
- * Uses doc comments to configure an entity.
- * 
- * @category Configurators
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  http://europaphp.org/license
- */
 class DocComment implements ConfiguratorInterface
 {
-    /**
-     * The tags and their configurators.
-     * 
-     * @var array
-     */
     private $tags = [];
-    
-    /**
-     * Sets up the doc comment configurator.
-     * 
-     * @return DocComment
-     */
-    public function __construct()
-    {
-        $this->set('auto', new DocComment\AutoTag);
-        $this->set('map', new DocComment\MapTag);
-        $this->set('valid', new DocComment\ValidTag);
-        $this->set('vo', new DocComment\VoTag);
-    }
-    
-    /**
-     * Sets a doc tag implementation to use for the specified tag.
-     * 
-     * @param string                     $name The tag name.
-     * @param DocComment\DocTagInterface $tag  The tag instance to handle the tag.
-     * 
-     * @return DocComment
-     */
+
     public function set($name, DocComment\DocTagInterface $tag)
     {
         $this->tags[$name] = $tag;
         return $this;
     }
-    
-    /**
-     * Configures the specified entity.
-     * 
-     * @param EntityAbstract $entity The entity to configure.
-     * 
-     * @return DocComment
-     */
-    public function configure(Entity $entity)
+
+    public function configure(ConfigurableInterface $configurable)
     {
-        $refl = new ReflectionClass($entity);
-        $this->configureFromDocComment($entity, $refl);
-        foreach ($refl->getProperties() as $prop) {
-            $this->configureFromDocComment($entity, $prop);
+        if ($configurable instanceof Entity) {
+            $this->configureEntity($configurable);
+        } elseif ($configurable instanceof RepositoryAbstract) {
+            $this->configureRepository($configurable);
         }
     }
-    
-    /**
-     * Passes on the configuration to the tags.
-     * 
-     * @param Entity    $entity The entity to configure.
-     * @param Reflector $refl   The reflection object corresponding to the doc comment's element.
-     * 
-     * @return void
-     */
-    private function configureFromDocComment(Entity $entity, Reflector $refl)
+
+    private function configureEntity(ConfigurableInterface $configurable)
+    {
+        $refl = new ReflectionClass($configurable);
+        $this->configureFromDocComment($configurable, $refl);
+
+        foreach ($refl->getProperties() as $prop) {
+            $this->configureFromDocComment($configurable, $prop);
+        }
+    }
+
+    private function configureRepository(ConfigurableInterface $configurable)
+    {
+        $refl = new ReflectionClass($configurable);
+        foreach ($refl->getMethods() as $method) {
+            $this->configureFromDocComment($configurable, $method);
+        }
+    }
+
+    private function configureFromDocComment(ConfigurableInterface $configurable, Reflector $refl)
     {
         $tags = $this->parseDocCommentIntoTags($refl->getDocComment());
+
         foreach ($tags as $def) {
             $tag = new $this->tags[$def['name']];
-            $tag->configure($def['value'], $refl, $entity);
+            $tag->configure($def['value'], $refl, $configurable);
         }
     }
-    
-    /**
-     * Parses the comment into an array of doc tag strings.
-     * 
-     * @param string $comment The comment to parse.
-     * 
-     * @return array
-     */
+
     private function parseDocCommentIntoTags($comment)
     {
         $tags  = [];
@@ -123,14 +87,7 @@ class DocComment implements ConfiguratorInterface
         
         return $tags;
     }
-    
-    /**
-     * Formats the doc comment tag strings into parts that can be passed onto the tag implementations.
-     * 
-     * @param array $parts The parts to pass on.
-     * 
-     * @return void
-     */
+
     private function formatParts(array &$parts)
     {
         // remove the first element

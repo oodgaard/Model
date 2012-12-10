@@ -1,32 +1,15 @@
 <?php
 
 namespace Model\Validator;
+use ArrayAccess;
 use ArrayIterator;
 use Exception;
 use IteratorAggregate;
 
-/**
- * Validator exception.
- * 
- * @category Validators
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
- */
-class ValidatorException extends Exception implements IteratorAggregate
+class ValidatorException extends Exception implements ArrayAccess, IteratorAggregate
 {
-    /**
-     * The exception messages.
-     * 
-     * @var array
-     */
     private $messages = [];
     
-    /**
-     * Converts the validation exception to a string.
-     * 
-     * @return string
-     */
     public function __toString()
     {
         $out = $this->getMessage();
@@ -41,38 +24,49 @@ class ValidatorException extends Exception implements IteratorAggregate
         
         return $out . PHP_EOL . $this->getTraceAsString();
     }
-    
-    /**
-     * Adds a message to the exception.
-     * 
-     * @param string $message The message to add.
-     * 
-     * @return ValidatorException
-     */
+
     public function addMessage($message)
     {
         $this->messages[] = $message;
         return $this;
     }
     
-    /**
-     * Adds multiple messages to the exception.
-     * 
-     * @param array $messages The messages to add.
-     * 
-     * @return ValidatorException
-     */
     public function addMessages(array $messages)
     {
         $this->messages = array_merge($this->messages, $messages);
         return $this;
     }
+
+    public function getMessages()
+    {
+        return $this->messages;
+    }
+
+    public function offsetSet($offset, $message)
+    {
+        $this->messages[$offset] = $message;
+        return $this;
+    }
+
+    public function offsetGet($offset)
+    {
+        if (isset($this->messages[$offset])) {
+            return $this->messages[$offset];
+        }
+    }
+
+    public function offsetExists($offset)
+    {
+        return isset($this->messages[$offset]);
+    }
+
+    public function offsetUnset($offset)
+    {
+        if (isset($this->messages[$offset])) {
+            unset($this->messages[$offset]);
+        }
+    }
     
-    /**
-     * Returns an interator that can be used to iterate over the exceptions.
-     * 
-     * @return ArrayIterator
-     */
     public function getIterator()
     {
         return new ArrayIterator($this->messages);
