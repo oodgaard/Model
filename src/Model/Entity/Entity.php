@@ -63,11 +63,20 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function configure()
     {
+        $autoload  = new AutoloadTag;
+        $mapper    = new MapperTag;
+        $validator = new ValidatorTag;
+        $var       = new VarTag;
+
         $conf = new DocComment;
-        $conf->set('autoload', new AutoloadTag);
-        $conf->set('mapper', new MapperTag);
-        $conf->set('validator', new ValidatorTag);
-        $conf->set('var', new VarTag);
+        $conf->set('auto', $autoload);
+        $conf->set('autoload', $autoload);
+        $conf->set('map', $mapper);
+        $conf->set('mapper', $mapper);
+        $conf->set('valid', $validator);
+        $conf->set('validator', $validator);
+        $conf->set('var', $var);
+        $conf->set('vo', $var);
         $conf->configure($this);
     }
     
