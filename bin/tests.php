@@ -20,7 +20,7 @@ $coverage->start();
 echo PHP_EOL;
 
 $suite = $finder->run(function($test) {
-    echo $test->getAssertions()->isPassed() && !$test->getExceptions() ? '.' : 'F';
+    echo $test->getAssertions()->isPassed() && !$test->getExceptions()->count() ? '.' : 'F';
 });
 
 echo PHP_EOL . PHP_EOL . sprintf('Ran %d test%s.', count($suite), count($suite) === 1 ? '' : 's');

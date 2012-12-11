@@ -12,7 +12,7 @@ use Model\Entity\Entity;
 class ContentEntity extends Entity
 {
     /**
-     * @var Model\Vo\Integer
+     * @var Model\Vo\String
      */
     public $id;
     

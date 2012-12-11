@@ -10,9 +10,9 @@ use InvalidArgumentException;
 
 class VarTag implements DocTagInterface
 {
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable)
+    public function configure($value, Reflector $reflector, $entity)
     {
-        if (!$configurable instanceof Entity) {
+        if (!$entity instanceof Entity) {
             throw new InvalidArgumentException('The @var tag can only be applied to an entity.');
         }
 
@@ -35,22 +35,22 @@ class VarTag implements DocTagInterface
             return $class;
         };
         
-        $class = $class->bindTo($configurable);
+        $class = $class->bindTo($entity);
         $class = $class();
         
-        $configurable->setVo($reflector->getName(), $class);
-        $this->setDefaultValueIfExists($configurable, $reflector);
+        $entity->setVo($reflector->getName(), $class);
+        $this->setDefaultValueIfExists($entity, $reflector);
         
-        unset($configurable->{$reflector->getName()});
+        unset($entity->{$reflector->getName()});
     }
 
-    private function setDefaultValueIfExists(ConfigurableInterface $configurable, Reflector $reflector)
+    private function setDefaultValueIfExists($entity, Reflector $reflector)
     {
         $name = $reflector->getName();
         $prop = $reflector->getDeclaringClass()->getDefaultProperties();
 
         if (isset($prop[$name])) {
-            $configurable->__set($name, $prop[$name]);
+            $entity->__set($name, $prop[$name]);
         }
     }
 }

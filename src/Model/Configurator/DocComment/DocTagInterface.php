@@ -6,5 +6,5 @@ use Reflector;
 
 interface DocTagInterface
 {
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable);
+    public function configure($value, Reflector $reflector, $entityOrRepository);
 }

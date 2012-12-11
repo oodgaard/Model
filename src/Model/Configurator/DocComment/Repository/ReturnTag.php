@@ -11,17 +11,17 @@ class ReturnTag implements DocTagInterface
 {
     private static $cache = [];
 
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable)
+    public function configure($value, Reflector $reflector, $repository)
     {
         $method   = $reflector->getName();
         $cacheKey = $reflector->getDeclaringClass()->getName() . $method;
 
-        if (!isset($this->cache, $cacheKey)) {
-            $this->cache[$cacheKey] = $this->generateFilter($reflector);
+        if (!isset(self::$cache[$cacheKey])) {
+            self::$cache[$cacheKey] = $this->generateFilter($reflector);
         }
 
-        if (is_callable($this->cache[$cacheKey])) {
-            $configurable->setReturnValueFilter($method, $this->cache[$cacheKey]);
+        if (is_callable(self::$cache[$cacheKey])) {
+            $repository->setReturnValueFilter($method, self::$cache[$cacheKey]);
         }
     }
 

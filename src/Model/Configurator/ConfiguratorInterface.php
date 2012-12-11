@@ -4,5 +4,5 @@ namespace Model\Configurator;
 
 interface ConfiguratorInterface
 {
-    public function configure(ConfigurableInterface $entity);
+    public function configure($entityOrRepository);
 }

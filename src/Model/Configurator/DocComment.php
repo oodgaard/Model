@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Configurator;
+use InvalidArgumentException;
 use Model\Configurator\DocComment;
 use Model\Entity\Entity;
 use Model\Repository\RepositoryAbstract;
@@ -19,40 +20,45 @@ class DocComment implements ConfiguratorInterface
         return $this;
     }
 
-    public function configure(ConfigurableInterface $configurable)
+    public function configure($entityOrRepository)
     {
-        if ($configurable instanceof Entity) {
-            $this->configureEntity($configurable);
-        } elseif ($configurable instanceof RepositoryAbstract) {
-            $this->configureRepository($configurable);
+        if ($entityOrRepository instanceof Entity) {
+            $this->configureEntity($entityOrRepository);
+        } elseif ($entityOrRepository instanceof RepositoryAbstract) {
+            $this->configureRepository($entityOrRepository);
+        } else {
+            throw new InvalidArgumentException(sprintf(
+                'Unable to configure instance of "%s" because it is not a valid entity or repository.',
+                get_class($entityOrRepository)
+            ));
         }
     }
 
-    private function configureEntity(ConfigurableInterface $configurable)
+    private function configureEntity($entityOrRepository)
     {
-        $refl = new ReflectionClass($configurable);
-        $this->configureFromDocComment($configurable, $refl);
+        $refl = new ReflectionClass($entityOrRepository);
+        $this->configureFromDocComment($entityOrRepository, $refl);
 
         foreach ($refl->getProperties() as $prop) {
-            $this->configureFromDocComment($configurable, $prop);
+            $this->configureFromDocComment($entityOrRepository, $prop);
         }
     }
 
-    private function configureRepository(ConfigurableInterface $configurable)
+    private function configureRepository($entityOrRepository)
     {
-        $refl = new ReflectionClass($configurable);
+        $refl = new ReflectionClass($entityOrRepository);
         foreach ($refl->getMethods() as $method) {
-            $this->configureFromDocComment($configurable, $method);
+            $this->configureFromDocComment($entityOrRepository, $method);
         }
     }
 
-    private function configureFromDocComment(ConfigurableInterface $configurable, Reflector $refl)
+    private function configureFromDocComment($entityOrRepository, Reflector $refl)
     {
         $tags = $this->parseDocCommentIntoTags($refl->getDocComment());
 
         foreach ($tags as $def) {
             $tag = new $this->tags[$def['name']];
-            $tag->configure($def['value'], $refl, $configurable);
+            $tag->configure($def['value'], $refl, $entityOrRepository);
         }
     }
 

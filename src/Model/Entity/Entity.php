@@ -2,7 +2,6 @@
 
 namespace Model\Entity;
 use Model\Behavior\BehaviorInterface;
-use Model\Configurator\ConfigurableInterface;
 use Model\Configurator\DocComment;
 use Model\Configurator\DocComment\Entity\AutoloadTag;
 use Model\Configurator\DocComment\Entity\MapperTag;
@@ -16,7 +15,7 @@ use Model\Vo\Generic;
 use Model\Vo\VoInterface;
 use RuntimeException;
 
-class Entity implements AccessibleInterface, AssertableInterface, ConfigurableInterface
+class Entity implements AccessibleInterface, AssertableInterface
 {
     use Assertable;
     

@@ -42,15 +42,15 @@ class SetTest extends UnitAbstract
         $found = $this->set->find($query);
         
         $this->assert($found->count() === 2, 'Wrong number of items found.');
-        $this->assert($found[0]->id === 1, 'The first item should have an id of 1.');
-        $this->assert($found[1]->id === 2, 'The first item should have an id of 2.');
+        $this->assert($found[0]->id === '1', 'The first item should have an id of 1.');
+        $this->assert($found[1]->id === '2', 'The first item should have an id of 2.');
         
         $found = $this->set->find($query, 1);
         $this->assert($found->count() === 1, 'The query should have only found one item.');
-        $this->assert($found[0]->id === 1, 'The item found should have had an id of 1.');
+        $this->assert($found[0]->id === '1', 'The item found should have had an id of 1.');
         
         $found = $this->set->find($query, 1, 1);
-        $this->assert($found[0]->id === 2, 'The item found should have an id of 2.');
+        $this->assert($found[0]->id === '2', 'The item found should have an id of 2.');
     }
     
     public function findingOne()
@@ -59,6 +59,6 @@ class SetTest extends UnitAbstract
         $found = $this->set->findOne($query);
         
         $this->assert($found instanceof ContentEntity, 'Item found should be an instance of an entity.');
-        $this->assert($found->id === 1, 'The first item should have been returned.');
+        $this->assert($found->id === '1', 'The first item should have been returned.');
     }
 }

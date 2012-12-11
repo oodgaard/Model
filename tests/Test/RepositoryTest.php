@@ -12,7 +12,7 @@ class RepositoryTest extends UnitAbstract
     public function creating()
     {
         $entity = new ContentEntity([
-            'name' => 'Trey Shugart'
+            'name' => 'Dick Richard'
         ]);
         
         ContentRepository::create($entity);
@@ -25,18 +25,18 @@ class RepositoryTest extends UnitAbstract
     public function updating()
     {
         $entity = new ContentEntity([
-            'name' => 'my content'
+            'name' => 'original content'
         ]);
         
         ContentRepository::create($entity);
         
-        $entity->wasSaved = true;
+        $entity->name = 'updated content';
         
         ContentRepository::update($entity);
 
         $entity = ContentRepository::findById($entity->id);
         
-        $this->assert($entity->name === 'my content', 'The entity was not updated.');
+        $this->assert($entity->name === 'updated content', 'The entity was not updated.');
     }
     
     public function removing()
@@ -62,6 +62,7 @@ class RepositoryTest extends UnitAbstract
     {
         $item = new ContentEntity;
 
+        ContentRepository::refreshInstance();
         ContentRepository::create($item);
         
         $item = ContentRepository::findById($item->id);
@@ -71,16 +72,14 @@ class RepositoryTest extends UnitAbstract
         }
         
         $item = ContentRepository::findById($item->id);
+        $repo = ContentRepository::getInstance();
 
-        if ($repo->findByIdCallCount > 1) {
-            $this->assert(false, 'Method "ContentRepository->findById()" was called more than once so the cache did not find the item.');
-        }
+        $this->assert($repo->findByIdCallCount === 1, 'Method "ContentRepository->findById()" was called more than once so the cache did not find the item.');
     }
 
-    public function repositoryInit()
+    public function settingUp()
     {
-        $argument = 'test';
-        MyTestRepository::init($argument);
-        $this->assert(MyTestRepository::$argument == $argument, 'The argument was not initialised');
+        $repo = ContentRepository::getInstance('test', [true]);
+        $this->assert($repo->setUp, 'The repository was not set up.');
     }
 }

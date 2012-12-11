@@ -7,8 +7,8 @@ use Reflector;
 
 class AutoloadTag implements DocTagInterface
 {
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable)
+    public function configure($value, Reflector $reflector, $entity)
     {
-        $configurable->setAutoloader($reflector->getName(), $value);
+        $entity->setAutoloader($reflector->getName(), $value);
     }
 }

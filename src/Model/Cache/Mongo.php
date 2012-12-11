@@ -1,6 +1,7 @@
 <?php
 
 namespace Model\Cache;
+use Mongo;
 
 /**
  * The Memcache driver.
@@ -21,7 +22,6 @@ class Mongo implements CacheInterface
         'db'         => 'cache',
         'collection' => 'cache',
         'dsn'        => null,
-        'lifetime'   => null,
         'options'    => []
     ];
 
@@ -43,7 +43,7 @@ class Mongo implements CacheInterface
     {
         $this->config = array_merge($this->config, $config);
         
-        $mongo   = new \Mongo($this->config['dsn'], $this->config['options']);
+        $mongo   = new Mongo($this->config['dsn'], $this->config['options']);
         $mongodb = $mongo->selectDB($this->config['db']);
         
         $this->collection = $mongodb->selectCollection($this->config['collection']);
@@ -66,10 +66,6 @@ class Mongo implements CacheInterface
      */
     public function set($key, $value, $lifetime = null)
     {
-        if (!$lifetime) {
-            $lifetime = $this->config['lifetime'];
-        }
-
         if ($lifetime) {
             $lifetime = time() + $lifetime;
         }

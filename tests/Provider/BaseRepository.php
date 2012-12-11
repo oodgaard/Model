@@ -8,9 +8,17 @@ use Model\Repository\RepositoryAbstract;
 
 abstract class BaseRepository extends RepositoryAbstract
 {
+    public $setUp;
+
     public $findByIdCallCount = 0;
 
-    private $entities = array();
+    private $entities = [];
+
+    public function init($setUp = false)
+    {
+        $this->setUp = $setUp;
+        $this->setCacheDriver('PHP', new Php);
+    }
 
     protected function findById($id)
     {
@@ -32,7 +40,7 @@ abstract class BaseRepository extends RepositoryAbstract
     
     protected function create(Entity $entity)
     {
-        $entity->id = md5(microtime());
+        $entity->id = md5(rand() . microtime() . rand());
         
         $this->entities[$entity->id] = $entity->toArray();
     }

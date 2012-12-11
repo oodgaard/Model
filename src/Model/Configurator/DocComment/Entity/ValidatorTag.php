@@ -16,51 +16,51 @@ class ValidatorTag implements DocTagInterface
 {
     private $cache = [];
 
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable)
+    public function configure($value, Reflector $reflector, $entity)
     {
-        if (!$configurable instanceof Entity) {
+        if (!$entity instanceof Entity) {
             throw new InvalidArgumentException('The @validator tag can only be applied to an entity class or entity property.');
         }
 
         $parts     = explode(' ', $value, 2);
-        $validator = $this->resolveValidator($parts[0], $configurable);
+        $validator = $this->resolveValidator($parts[0], $entity);
         $message   = isset($parts[1]) ? $parts[1] : null;
         
         if ($reflector instanceof ReflectionClass) {
-            $this->configureClass($reflector, $configurable, $message, $validator);
+            $this->configureClass($reflector, $entity, $message, $validator);
         } elseif ($reflector instanceof ReflectionProperty) {
-            $this->configureProperty($reflector, $configurable, $message, $validator);
+            $this->configureProperty($reflector, $entity, $message, $validator);
         } else {
             throw new InvalidAgumentException('The @validator tag can only be applied to an entity or entity value object.');
         }
     }
 
-    private function configureClass(ReflectionClass $class, ConfigurableInterface $configurable, $message, $validator)
+    private function configureClass(ReflectionClass $class, $entity, $message, $validator)
     {
-        $configurable->addValidator($message ?: $this->getDefaultClassMessage($class), $validator);
+        $entity->addValidator($message ?: $this->getDefaultClassMessage($class), $validator);
     }
 
-    private function configureProperty(ReflectionProperty $property, ConfigurableInterface $configurable, $message, $validator)
+    private function configureProperty(ReflectionProperty $property, $entity, $message, $validator)
     {
         $property = $property->getName();
         
-        if (!$configurable->hasVo($property)) {
+        if (!$entity->hasVo($property)) {
             throw new RuntimeException(sprintf(
                 'You cannot apply the @valid tag to "%s::$%s" because it has not been given a VO yet.',
-                get_class($configurable),
+                get_class($entity),
                 $property
             ));
         }
         
-        $configurable->getVo($property)->addValidator($message ?: $this->getDefaultPropertyMessage($property), $validator);
+        $entity->getVo($property)->addValidator($message ?: $this->getDefaultPropertyMessage($property), $validator);
     }
 
-    private function resolveValidator($validator, $configurable)
+    private function resolveValidator($validator, $entity)
     {
         if (isset($this->cache[$validator])) {
             $validator = $this->cache[$validator];
-        } elseif (method_exists($configurable, $validator)) {
-            $validator = [$configurable, $validator];
+        } elseif (method_exists($entity, $validator)) {
+            $validator = [$entity, $validator];
         } elseif (class_exists($validator)) {
             $validator = new $validator;
 

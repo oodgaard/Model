@@ -10,14 +10,14 @@ class MapperTag implements DocTagInterface
 {
     private static $cache = [];
 
-    public function configure($value, Reflector $reflector, ConfigurableInterface $configurable)
+    public function configure($value, Reflector $reflector, $entity)
     {
         $parts = explode(' ', $value);
         $name  = array_shift($parts);
         $key   = $reflector->getName() . $name;
         
         if (isset(self::$cache[$key])) {
-            $configurable->setMapper($name, self::$cache[$key]);
+            $entity->setMapper($name, self::$cache[$key]);
             return;
         }
         
@@ -29,7 +29,7 @@ class MapperTag implements DocTagInterface
             }
         }
         
-        $configurable->setMapper($name, $mapArr);
+        $entity->setMapper($name, $mapArr);
         
         self::$cache[$key] = $mapArr;
     }
