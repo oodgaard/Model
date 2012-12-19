@@ -1,7 +1,6 @@
 <?php
 
 namespace Model\Cache;
-use Mongo;
 
 /**
  * The Memcache driver.
@@ -43,7 +42,7 @@ class Mongo implements CacheInterface
     {
         $this->config = array_merge($this->config, $config);
         
-        $mongo   = new Mongo($this->config['dsn'], $this->config['options']);
+        $mongo   = new \Mongo($this->config['dsn'], $this->config['options']);
         $mongodb = $mongo->selectDB($this->config['db']);
         
         $this->collection = $mongodb->selectCollection($this->config['collection']);

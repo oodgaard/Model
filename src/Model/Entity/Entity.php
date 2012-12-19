@@ -1,35 +1,33 @@
 <?php
 
 namespace Model\Entity;
-use Model\Behavior\BehaviorInterface;
-use Model\Configurator\DocComment;
-use Model\Configurator\DocComment\Entity\AutoloadTag;
-use Model\Configurator\DocComment\Entity\MapperTag;
-use Model\Configurator\DocComment\Entity\ValidatorTag;
-use Model\Configurator\DocComment\Entity\VarTag;
+use InvalidArgumentException;
+use Model\Configurator\DocComment\Entity\Configurator as EntityConfigurator;
+use Model\Configurator\DocComment\Vo\Configurator as VoConfigurator;
+use Model\Filter\Filterable;
+use Model\Filter\FilterableInterface;
 use Model\Mapper\MapperInterface;
-use Model\Repository;
 use Model\Validator\Assertable;
 use Model\Validator\AssertableInterface;
-use Model\Vo\Generic;
 use Model\Vo\VoInterface;
-use RuntimeException;
 
 class Entity implements AccessibleInterface, AssertableInterface
 {
     use Assertable;
     
+    use Filterable;
+    
     private $autoloaders = [];
-    
+
     private $data = [];
-    
+
     private $mappers = [];
     
-    public function __construct($data = [], $mapper = null)
+    public function __construct($data = [], $filterToUse = null)
     {
         $this->configure();
         $this->init();
-        $this->fill($data, $mapper);
+        $this->from($data, $filterToUse);
     }
     
     public function __set($name, $value)
@@ -63,21 +61,11 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function configure()
     {
-        $autoload  = new AutoloadTag;
-        $mapper    = new MapperTag;
-        $validator = new ValidatorTag;
-        $var       = new VarTag;
+        $conf = new EntityConfigurator;
+        $conf->__invoke($this);
 
-        $conf = new DocComment;
-        $conf->set('auto', $autoload);
-        $conf->set('autoload', $autoload);
-        $conf->set('map', $mapper);
-        $conf->set('mapper', $mapper);
-        $conf->set('valid', $validator);
-        $conf->set('validator', $validator);
-        $conf->set('var', $var);
-        $conf->set('vo', $var);
-        $conf->configure($this);
+        $conf = new VoConfigurator;
+        $conf->__invoke($this);
     }
     
     public function init()
@@ -102,7 +90,7 @@ class Entity implements AccessibleInterface, AssertableInterface
     public function getVo($name)
     {
         if (!isset($this->data[$name])) {
-            throw new RuntimeException(sprintf('The VO "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The VO "%s" does not exist.', $name));
         }
         return $this->data[$name];
     }
@@ -120,37 +108,50 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $this;
     }
     
+    /**
+     * @deprecated
+     */
     public function setMapper($name, MapperInterface $mapper)
     {
         $this->mappers[$name] = $mapper;
         return $this;
     }
     
+    /**
+     * @deprecated
+     */
     public function getMapper($name)
     {
         if (!isset($this->mappers[$name])) {
-            throw new RuntimeException(sprintf('The mapper "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The mapper "%s" does not exist.', $name));
         }
         return $this->mappers[$name];
     }
     
+    /**
+     * @deprecated
+     */
     public function hasMapper($name)
     {
         return isset($this->mappers[$name]);
     }
     
+    /**
+     * @deprecated
+     */
     public function removeMapper($name)
     {
         if (isset($this->mappers[$name])) {
             unset($this->mappers[$name]);
         }
+
         return $this;
     }
     
     public function setAutoloader($name, $method)
     {
         if (!method_exists($this, $method)) {
-            throw new RuntimeException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'The autoload method "%s" does not exist on "%s".',
                 $method,
                 get_class($this)
@@ -165,8 +166,9 @@ class Entity implements AccessibleInterface, AssertableInterface
     public function getAutoloader($name)
     {
         if (!isset($this->autoloaders[$name])) {
-            throw new RuntimeException(sprintf('The autoloader "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The autoloader "%s" does not exist.', $name));
         }
+
         return $this->autoloaders[$name];
     }
     
@@ -180,23 +182,56 @@ class Entity implements AccessibleInterface, AssertableInterface
         if (isset($this->autoloaders[$name])) {
             unset($this->autoloaders[$name]);
         }
+
         return $this;
     }
+
+    public function from($data, $filterToUse = null)
+    {
+        $data = $this->makeArrayFromAnything($data);
+
+        foreach ($this->getImportFilters()->offsetGet($filterToUse) as $filter) {
+            $data = $filter($data);
+        }
+
+        foreach ($data as $name => $value) {
+            if ($this->hasVo($name)) {
+                $this->getVo($name)->from($value, $filterToUse);
+            }
+        }
+
+        return $this;
+    }
+
+    public function to($filterToUse = null)
+    {
+        $data = [];
+
+        foreach ($this->data as $name => $vo) {
+            $data[$name] = $vo->to($filterToUse);
+        }
+
+        foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
+            $data = $filter($data);
+        }
+
+        return $data;
+    }
     
+    /**
+     * @deprecated
+     */
     public function fill($data, $mapper = null)
     {
-        // if there is no data don't do anything
         if (!$data) {
             return $this;
         }
         
-        // if there is a mapper we must work some magic
         if ($mapper && isset($this->mappers[$mapper])) {
-            $data = $this->makeDataArrayFromAnything($data);
+            $data = $this->makeArrayFromAnything($data);
             $data = $this->mappers[$mapper]->map($data);
         }
         
-        // let the VOs worry about the value
         if (is_array($data) || is_object($data)) {
             foreach ($data as $k => $v) {
                 $this->__set($k, $v);
@@ -206,6 +241,9 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $this;
     }
     
+    /**
+     * @deprecated
+     */
     public function toArray($mapper = null)
     {
         $array = array();
@@ -307,22 +345,27 @@ class Entity implements AccessibleInterface, AssertableInterface
     public function serialize()
     {
         return serialize([
-            'autoloaders' => $this->autoloaders,
-            'data'        => $this->toArray(),
-            'mappers'     => $this->mappers,
-            'validators'  => $this->validators
+            'autoloaders'   => $this->autoloaders,
+            'data'          => $this->to(),
+            'mappers'       => $this->mappers,
+            'exportFilters' => $this->exportFilters,
+            'importFilters' => $this->importFilters,
+            'validators'    => $this->validators
         ]);
     }
     
     public function unserialize($data)
     {
-        $this->autoloaders = $data['autoloaders'];
-        $this->mappers     = $data['mappers'];
-        $this->validators  = $data['validators'];
-        $this->fill($data['data']);
+        $this->autoloaders   = $data['autoloaders'];
+        $this->mappers       = $data['mappers'];
+        $this->exportFilters = $data['exportFilters'];
+        $data->importFilters = $data['importFilters'];
+        $this->validators    = $data['validators'];
+
+        $this->from($data['data']);
     }
     
-    private function makeDataArrayFromAnything($data)
+    private function makeArrayFromAnything($data)
     {
         if (is_array($data)) {
             return $data;
@@ -330,9 +373,11 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         if (is_object($data)) {
             $arr = [];
+
             foreach ($data as $k => $v) {
                 $arr[$k] = $v;
             }
+
             return $arr;
         }
         

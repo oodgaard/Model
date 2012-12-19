@@ -1,24 +1,21 @@
 <?php
 
-namespace Model\Configurator\DocComment\Repository;
+namespace Model\Configurator\DocComment\Repository\Tag;
 use InvalidArgumentException;
 use Model\Configurator\DocComment\DocTagInterface;
-use Model\Configurator\ConfigurableInterface;
-use Model\Entity\Set;
-use Reflector;
+use Model\Repository\RepositoryAbstract;
 use ReflectionMethod;
 
-class CacheTag implements DocTagInterface
+class Cache
 {
     private static $cache = [];
 
-    public function configure($tag, Reflector $reflector, $repository)
+    public function __invoke(DocTagInterface $tag, ReflectionMethod $method, RepositoryAbstract $repository)
     {
-        $method   = $reflector->getName();
-        $cacheKey = $reflector->getDeclaringClass()->getName() . $reflector->getName() . $value;
+        $cacheKey = $method->getDeclaringClass()->getName() . $method->getName() . $value;
 
         if (!isset(self::$cache[$cacheKey])) {
-            self::$cache[$cacheKey] = $this->generateCacheDriverInfo($tag);
+            self::$cache[$cacheKey] = $this->generateCacheDriverInfo($tag->getValue());
         }
 
         if (!self::$cache[$cacheKey]['driver']) {
@@ -29,14 +26,14 @@ class CacheTag implements DocTagInterface
             throw new InvalidArgumentException(sprintf(
                 'Cannot apply cache driver "%s" to method "%s" in repository "%s" using the doc tag "%s" because that cache driver does not exist on the repository.',
                 self::$cache[$cacheKey]['driver'],
-                $method,
+                $method->getName(),
                 get_class($repository),
                 $tag
             ));
         }
         
         $repository->setCacheDriverFor(
-            $method,
+            $method->getName(),
             self::$cache[$cacheKey]['driver'],
             self::$cache[$cacheKey]['lifetime']
         );

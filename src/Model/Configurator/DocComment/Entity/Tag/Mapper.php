@@ -1,20 +1,20 @@
 <?php
 
-namespace Model\Configurator\DocComment\Entity;
-use Model\Configurator\ConfigurableInterface;
+namespace Model\Configurator\DocComment\Entity\Tag;
 use Model\Configurator\DocComment\DocTagInterface;
 use Model\Mapper\MapperArray;
-use Reflector;
+use Model\Entity\Entity;
+use ReflectionClass;
 
-class MapperTag implements DocTagInterface
+class Mapper
 {
     private static $cache = [];
 
-    public function configure($value, Reflector $reflector, $entity)
+    public function __invoke(DocTagInterface $tag, ReflectionClass $class, Entity $entity)
     {
-        $parts = explode(' ', $value);
+        $parts = explode(' ', $tag->getValue());
         $name  = array_shift($parts);
-        $key   = $reflector->getName() . $name;
+        $key   = $class->getName() . $name;
         
         if (isset(self::$cache[$key])) {
             $entity->setMapper($name, self::$cache[$key]);

@@ -4,9 +4,7 @@ namespace Model\Repository;
 use InvalidArgumentException;
 use LogicException;
 use Model\Cache\CacheInterface;
-use Model\Configurator\DocComment;
-use Model\Configurator\DocComment\Repository\CacheTag;
-use Model\Configurator\DocComment\Repository\ReturnTag;
+use Model\Configurator\DocComment\Repository\Configurator;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -56,10 +54,8 @@ abstract class RepositoryAbstract
 
     public function configure()
     {
-        $conf = new DocComment;
-        $conf->set('cache', new CacheTag);
-        $conf->set('return', new ReturnTag);
-        $conf->configure($this);
+        $conf = new Configurator;
+        $conf->__invoke($this);
     }
 
     public function setCacheDriver($name, CacheInterface $driver)
@@ -209,10 +205,27 @@ abstract class RepositoryAbstract
     private function throwIfMethodNotExists($method)
     {
         if (!method_exists($this, $method)) {
+            $class = get_class($this);
+            $trace = debug_backtrace();
+
+            foreach ($trace as $k => $call) {
+                if ($call['class'] === $class && $call['function'] === $method) {
+                    $origin = $trace[$k + 1];
+                    $origin['file'] = $call['file'];
+                    $origin['line'] = $call['line'];
+                    break;
+                }
+            }
+
             throw new LogicException(sprintf(
-                'The method "%s" does not exist in "%s".',
+                'The method "%s" does not exist in "%s" as called from "%s%s%s() in "%s" on line "%s".',
                 $method,
-                get_class($this)
+                $class,
+                $origin['class'],
+                $origin['type'],
+                $origin['function'],
+                $origin['file'],
+                $origin['line']
             ));
         }
     }

@@ -1,11 +1,14 @@
 <?php
 
 namespace Model\Vo;
+use Model\Util\DotNotatedArray;
+use Model\Filter\Filterable;
 use Model\Validator\Validatable;
-use Model\Validator\ValidatableInterface;
 
 abstract class VoAbstract implements VoInterface
 {
+    use Filterable;
+    
     use Validatable;
     
     public function validate()
@@ -24,5 +27,27 @@ abstract class VoAbstract implements VoInterface
         }
         
         return $messages;
+    }
+
+    public function from($value, $filterToUse)
+    {
+        foreach ($this->getImportFilters()->offsetGet($filterToUse) as $filter) {
+            $value = $filter($value);
+        }
+
+        $this->set($value);
+
+        return $this;
+    }
+
+    public function to($filterToUse)
+    {
+        $value = $this->get();
+
+        foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
+            $value = $filter($value);
+        }
+
+        return $value;
     }
 }

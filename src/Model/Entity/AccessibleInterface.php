@@ -4,6 +4,7 @@ namespace Model\Entity;
 use ArrayAccess;
 use Countable;
 use Iterator;
+use Model\Filter\FilterableInterface;
 use Model\Validator\ValidatableInterface;
 use Serializable;
 
@@ -15,7 +16,7 @@ use Serializable;
  * @author   Trey Shugart <treshugart@gmail.com>
  * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
  */
-interface AccessibleInterface extends ArrayAccess, Countable, Iterator, Serializable
+interface AccessibleInterface extends ArrayAccess, Countable, FilterableInterface, Iterator, Serializable
 {
     /**
      * Clears all values on the object.
