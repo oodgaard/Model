@@ -2,9 +2,9 @@
 
 namespace Model\Filter\Generic;
 
-class RemoveMongoId
+class RemovePassword
 {
-    const NAME = '_id';
+    const NAME = 'password';
 
     public function __invoke(array $data)
     {
