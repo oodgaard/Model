@@ -5,45 +5,30 @@ use Model\Entity;
 
 class HasOne extends VoAbstract
 {
-    private $value;
+    private $class;
 
     public function __construct($class)
     {
-        $this->value = new $class;
+        $this->class = $class;
     }
 
-    public function __clone()
+    public function init()
     {
-        $this->value = clone $this->value;
+        return new $this->class;
     }
 
-    public function set($value)
+    public function translate($value)
     {
-        $this->get()->clear()->from($value);
-    }
-
-    public function get()
-    {
-        return $this->value;
-    }
-
-    public function exists()
-    {
-        return isset($this->value);
-    }
-
-    public function remove()
-    {
-        $this->value = null;
+        return new $this->class($value);
     }
 
     public function from($value, $filter = null)
     {
-        return $this->get()->from($value, $filter);
+        return new $this->class($value, $filter);
     }
 
-    public function to($filter = null)
+    public function to($value, $filter = null)
     {
-        return $this->get()->to($filter);
+        return $value->to($filter);
     }
 }

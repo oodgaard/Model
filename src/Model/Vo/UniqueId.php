@@ -2,10 +2,15 @@
 
 namespace Model\Vo;
 
-class UniqueId extends Generic
+class UniqueId extends VoAbstract
 {
-    public function __construct()
+    public function init()
     {
-        $this->set(md5(mt_rand() . microtime() . mt_rand()));
+        return md5(mt_rand() . microtime() . mt_rand());
+    }
+
+    public function translate($value)
+    {
+        return $value;
     }
 }

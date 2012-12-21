@@ -23,6 +23,8 @@ class Entity implements AccessibleInterface, AssertableInterface
 
     private $mappers = [];
 
+    private $vos = [];
+
     private static $cache = [];
 
     private static $cacheProperties = [
@@ -31,7 +33,19 @@ class Entity implements AccessibleInterface, AssertableInterface
         'importFilters',
         'mappers',
         'validatorMessages',
-        'validators'
+        'validators',
+        'vos'
+    ];
+
+    public static $serializeProperties = [
+        'autoloaders',
+        'data',
+        'exportFilters',
+        'importFilters',
+        'mappers',
+        'validatorMessages',
+        'validators',
+        'vos'
     ];
     
     public function __construct($data = [], $filterToUse = null)
@@ -43,30 +57,31 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function __set($name, $value)
     {
-        if (isset($this->data[$name])) {
-            $this->data[$name]->set($value);
+        if (isset($this->vos[$name])) {
+            $this->data[$name] = $this->vos[$name]->translate($value);
         }
     }
     
     public function __get($name)
     {
-        if (isset($this->data[$name])) {
-            if (isset($this->autoloaders[$name]) && !$this->data[$name]->exists()) {
-                $this->data[$name]->set($this->{$this->autoloaders[$name]}());
+        if (isset($this->vos[$name])) {
+            if (isset($this->autoloaders[$name]) && !isset($this->data[$name])) {
+                $this->data[$name] = $this->vos[$name]->translate($this->{$this->autoloaders[$name]}());
             }
-            return $this->data[$name]->get();
+
+            return $this->data[$name];
         }
     }
     
     public function __isset($name)
     {
-        return isset($this->data[$name]) && $this->data[$name]->exists();
+        return isset($this->data[$name]);
     }
     
     public function __unset($name)
     {
         if (isset($this->data[$name])) {
-            $this->data[$name]->remove();
+            unset($this->data[$name]);
         }
     }
     
@@ -74,11 +89,11 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         
     }
-    
+
     public function clear()
     {
-        foreach ($this->data as $vo) {
-            $vo->remove();
+        foreach ($this->vos as $name => $vo) {
+            $vo->remove($this, $name);
         }
 
         return $this;
@@ -86,29 +101,35 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function setVo($name, VoInterface $vo)
     {
-        $this->data[$name] = $vo;
+        $this->vos[$name]  = $vo;
+        $this->data[$name] = $vo->init();
 
         return $this;
     }
     
     public function getVo($name)
     {
-        if (isset($this->data[$name])) {
-            return $this->data[$name];
+        if (isset($this->vos[$name])) {
+            return $this->vos[$name];
         }
 
-        throw new InvalidArgumentException(sprintf('The VO "%s" does not exist.', $name));
+        throw new InvalidArgumentException(sprintf(
+            'The VO "%s" does not exist on the entity "%s".',
+            $name,
+            get_class($this)
+        ));
     }
     
     public function hasVo($name)
     {
-        return isset($this->data[$name]);
+        return isset($this->vos[$name]);
     }
     
     public function removeVo($name)
     {
-        if (isset($this->data[$name])) {
+        if (isset($this->vos[$name])) {
             unset($this->data[$name]);
+            unset($this->vos[$name]);
         }
 
         return $this;
@@ -201,8 +222,8 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
 
         foreach ($data as $name => $value) {
-            if ($this->hasVo($name)) {
-                $this->getVo($name)->from($value, $filterToUse);
+            if (isset($this->vos[$name])) {
+                $this->data[$name] = $this->vos[$name]->translate($this->vos[$name]->from($value, $filterToUse));
             }
         }
 
@@ -213,8 +234,8 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         $data = [];
 
-        foreach ($this->data as $name => $vo) {
-            $data[$name] = $vo->to($filterToUse);
+        foreach ($this->vos as $name => $vo) {
+            $data[$name] = $vo->to($this->data[$name], $filterToUse);
         }
 
         foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
@@ -239,8 +260,8 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
         
         if (is_array($data) || is_object($data)) {
-            foreach ($data as $k => $v) {
-                $this->__set($k, $v);
+            foreach ($data as $name => $value) {
+                $this->__set($name, $value);
             }
         }
         
@@ -254,14 +275,12 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         $array = array();
         
-        foreach ($this->data as $k => $v) {
-            $v = $this->__get($k);
-            
-            if ($v instanceof AccessibleInterface) {
-                $v = $v->toArray($mapper);
+        foreach ($this->data as $name => $value) {
+            if ($value instanceof AccessibleInterface) {
+                $value = $value->toArray($mapper);
             }
             
-            $array[$k] = $v;
+            $array[$name] = $value;
         }
         
         if ($mapper && isset($this->mappers[$mapper])) {
@@ -275,8 +294,8 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         $messages = [];
         
-        foreach ($this->data as $vo) {
-            if ($voMessages = $vo->validate()) {
+        foreach ($this->vos as $name => $vo) {
+            if ($voMessages = $vo->validate($this->data[$name])) {
                 $messages = array_merge($messages, $voMessages);
             }
         }
@@ -288,9 +307,9 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
         
         foreach ($messages as &$message) {
-            foreach ($this->data as $name => $vo) {
-                if (is_scalar($vo = $vo->get())) {
-                    $message = str_replace(':' . $name, $vo, $message);
+            foreach ($this->data as $name => $value) {
+                if (is_scalar($value)) {
+                    $message = str_replace(':' . $name, $value, $message);
                 }
             }
         }
@@ -325,7 +344,7 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function current()
     {
-        return current($this->data)->get();
+        return current($this->data);
     }
     
     public function key()
@@ -350,27 +369,20 @@ class Entity implements AccessibleInterface, AssertableInterface
     
     public function serialize()
     {
-        return serialize([
-            'autoloaders'       => $this->autoloaders,
-            'data'              => $this->to(),
-            'mappers'           => $this->mappers,
-            'exportFilters'     => $this->exportFilters,
-            'importFilters'     => $this->importFilters,
-            'validatorMessages' => $this->validatorMessages,
-            'validators'        => $this->validators
-        ]);
+        $data = [];
+
+        foreach (self::$serializeProperties as $name) {
+            $data[$name] = $this->$name;
+        }
+
+        return $data;
     }
     
     public function unserialize($data)
     {
-        $this->autoloaders       = $data['autoloaders'];
-        $this->mappers           = $data['mappers'];
-        $this->exportFilters     = $data['exportFilters'];
-        $data->importFilters     = $data['importFilters'];
-        $this->validatorMessages = $data['validatorMessages'];
-        $this->validators        = $data['validators'];
-
-        $this->from($data['data']);
+        foreach (self::$serializeProperties as $name) {
+            $this->$name = $data[$name];
+        }
     }
     
     private function makeArrayFromAnything($data)
@@ -434,8 +446,8 @@ class Entity implements AccessibleInterface, AssertableInterface
             $this->$name = self::$cache[$cacheKey][$name];
         }
 
-        foreach (self::$cache[$cacheKey]['data'] as $name => $vo) {
-            $this->data[$name] = clone $vo;
+        foreach ($this->vos as $name => $vo) {
+            $this->data[$name] = $vo->init();
         }
     }
 
@@ -445,12 +457,6 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         foreach (self::$cacheProperties as $name) {
             self::$cache[$cacheKey][$name] = $this->$name;
-        }
-
-        self::$cache[$cacheKey]['data'] = [];
-
-        foreach ($this->data as $name => $vo) {
-            self::$cache[$cacheKey]['data'][$name] = clone $vo;
         }
     }
 

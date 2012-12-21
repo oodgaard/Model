@@ -20,7 +20,10 @@ class SetTest extends UnitAbstract
         $this->set = new Set('Provider\ContentEntity');
 
         for ($i = 1; $i <= 10; $i++) {
-            $this->set[] = new ContentEntity(array('id' => $i, 'name' => 'test ' . $i));
+            $this->set[] = new ContentEntity([
+                'id'   => $i,
+                'name' => 'test ' . $i
+            ]);
         }
     }
     

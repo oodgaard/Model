@@ -1,16 +1,17 @@
 <?php
 
 namespace Model\Vo;
-use Model\Filter\FilterableInterface;
 use Model\Validator\ValidatableInterface;
 
-interface VoInterface extends FilterableInterface, ValidatableInterface
+interface VoInterface
 {
-    public function set($value);
+    public function init();
 
-    public function get();
+    public function translate($value);
 
-    public function exists();
+    public function from($value, $filter = null);
 
-    public function remove();
+    public function to($value, $filter = null);
+
+    public function validate($value);
 }

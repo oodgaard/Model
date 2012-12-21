@@ -1,49 +1,34 @@
 <?php
 
 namespace Model\Vo;
-use Model\Entity\Set as EntitySet;
+use Model\Entity;
 
 class HasMany extends VoAbstract
 {
-    private $value;
+    private $class;
 
     public function __construct($class)
     {
-        $this->value = new EntitySet($class);
+        $this->class = $class;
     }
 
-    public function __clone()
+    public function init()
     {
-        $this->value = clone $this->value;
+        return new Entity\Set($this->class);
     }
 
-    public function set($value)
+    public function translate($value)
     {
-        $this->get()->clear()->from($value);
-    }
-
-    public function get()
-    {
-        return $this->value;
-    }
-
-    public function exists()
-    {
-        return isset($this->value);
-    }
-
-    public function remove()
-    {
-        $this->value->clear();
+        return new Entity\Set($this->class, $value);
     }
 
     public function from($value, $filter = null)
     {
-        return $this->get()->from($value, $filter);
+        return new Entity\Set($this->class, $value, $filter);
     }
 
-    public function to($filter = null)
+    public function to($value, $filter = null)
     {
-        return $this->get()->to($filter);
+        return $value->to($filter);
     }
 }
