@@ -22,6 +22,17 @@ class Entity implements AccessibleInterface, AssertableInterface
     private $data = [];
 
     private $mappers = [];
+
+    private static $cache = [];
+
+    private static $cacheProperties = [
+        'autoloaders',
+        'exportFilters',
+        'importFilters',
+        'mappers',
+        'validatorMessages',
+        'validators'
+    ];
     
     public function __construct($data = [], $filterToUse = null)
     {
@@ -59,15 +70,6 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
     }
     
-    public function configure()
-    {
-        $conf = new EntityConfigurator;
-        $conf->__invoke($this);
-
-        $conf = new VoConfigurator;
-        $conf->__invoke($this);
-    }
-    
     public function init()
     {
         
@@ -78,21 +80,24 @@ class Entity implements AccessibleInterface, AssertableInterface
         foreach ($this->data as $vo) {
             $vo->remove();
         }
+
         return $this;
     }
     
     public function setVo($name, VoInterface $vo)
     {
         $this->data[$name] = $vo;
+
         return $this;
     }
     
     public function getVo($name)
     {
-        if (!isset($this->data[$name])) {
-            throw new InvalidArgumentException(sprintf('The VO "%s" does not exist.', $name));
+        if (isset($this->data[$name])) {
+            return $this->data[$name];
         }
-        return $this->data[$name];
+
+        throw new InvalidArgumentException(sprintf('The VO "%s" does not exist.', $name));
     }
     
     public function hasVo($name)
@@ -105,6 +110,7 @@ class Entity implements AccessibleInterface, AssertableInterface
         if (isset($this->data[$name])) {
             unset($this->data[$name]);
         }
+
         return $this;
     }
     
@@ -345,22 +351,24 @@ class Entity implements AccessibleInterface, AssertableInterface
     public function serialize()
     {
         return serialize([
-            'autoloaders'   => $this->autoloaders,
-            'data'          => $this->to(),
-            'mappers'       => $this->mappers,
-            'exportFilters' => $this->exportFilters,
-            'importFilters' => $this->importFilters,
-            'validators'    => $this->validators
+            'autoloaders'       => $this->autoloaders,
+            'data'              => $this->to(),
+            'mappers'           => $this->mappers,
+            'exportFilters'     => $this->exportFilters,
+            'importFilters'     => $this->importFilters,
+            'validatorMessages' => $this->validatorMessages,
+            'validators'        => $this->validators
         ]);
     }
     
     public function unserialize($data)
     {
-        $this->autoloaders   = $data['autoloaders'];
-        $this->mappers       = $data['mappers'];
-        $this->exportFilters = $data['exportFilters'];
-        $data->importFilters = $data['importFilters'];
-        $this->validators    = $data['validators'];
+        $this->autoloaders       = $data['autoloaders'];
+        $this->mappers           = $data['mappers'];
+        $this->exportFilters     = $data['exportFilters'];
+        $data->importFilters     = $data['importFilters'];
+        $this->validatorMessages = $data['validatorMessages'];
+        $this->validators        = $data['validators'];
 
         $this->from($data['data']);
     }
@@ -382,5 +390,72 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
         
         return [];
+    }
+
+    private function configure()
+    {
+        if ($this->hasCache()) {
+            $this->applyCache();
+        } else {
+            $this->configureUsingAnnotations();
+            $this->generateCache();
+        }
+
+        $this->removePublicProperties();
+    }
+
+    private function configureUsingAnnotations()
+    {
+        $conf = new EntityConfigurator;
+        $conf->__invoke($this);
+
+        $conf = new VoConfigurator;
+        $conf->__invoke($this);
+    }
+
+    private function removePublicProperties()
+    {
+        foreach ($this->data as $name => $vo) {
+            unset($this->$name);
+        }
+    }
+
+    private function hasCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+        return isset(self::$cache[$cacheKey]);
+    }
+
+    private function applyCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+
+        foreach (self::$cacheProperties as $name) {
+            $this->$name = self::$cache[$cacheKey][$name];
+        }
+
+        foreach (self::$cache[$cacheKey]['data'] as $name => $vo) {
+            $this->data[$name] = clone $vo;
+        }
+    }
+
+    private function generateCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+
+        foreach (self::$cacheProperties as $name) {
+            self::$cache[$cacheKey][$name] = $this->$name;
+        }
+
+        self::$cache[$cacheKey]['data'] = [];
+
+        foreach ($this->data as $name => $vo) {
+            self::$cache[$cacheKey]['data'][$name] = clone $vo;
+        }
+    }
+
+    private function generateCacheKey()
+    {
+        return get_class($this);
     }
 }

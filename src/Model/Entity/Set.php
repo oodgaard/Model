@@ -251,35 +251,33 @@ class Set implements AccessibleInterface, ValidatableInterface
     
     public function findKeys($query, $limit = 0, $offset = 0)
     {
-        $items = [];
-
         if (is_array($query) || is_object($query)) {
             $query = function($item) use ($query) {
                 foreach ($query as $name => $value) {
                     if (!preg_match('/' . str_replace('/', '\/', $value) . '/', $item->__get($name))) {
-                        continue;
+                        return false;
                     }
-
-                    $items[] = $key;
                 }
             };
         }
+
+        $keys = [];
 
         foreach ($this as $key => $item) {
             if ($offset && $offset > $key) {
                 continue;
             }
             
-            if ($limit && $limit === count($items)) {
+            if ($limit && $limit === count($keys)) {
                 break;
             }
 
             if ($query($item) !== false) {
-                $keys[] = $k;
+                $keys[] = $key;
             }
         }
 
-        return $items;
+        return $keys;
     }
     
     public function first()

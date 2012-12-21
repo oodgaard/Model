@@ -5,13 +5,20 @@ use Model\Entity\Set as EntitySet;
 
 class HasMany extends VoAbstract
 {
-    private $class;
-
     private $value;
 
     public function __construct($class)
     {
-        $this->class = $class;
+        $this->value = new EntitySet($class);
+    }
+
+    public function __clone()
+    {
+        return [
+            'filters'    => $this->filters,
+            'validators' => $this->validators,
+            'value'      => clone $this->value
+        ];
     }
 
     public function set($value)
@@ -21,10 +28,6 @@ class HasMany extends VoAbstract
 
     public function get()
     {
-        if (!$this->exists()) {
-            $this->value = new EntitySet($this->class);
-        }
-
         return $this->value;
     }
 

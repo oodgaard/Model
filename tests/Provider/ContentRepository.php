@@ -7,7 +7,7 @@ class ContentRepository extends BaseRepository
     /**
      * @cache Using PHP.
      * 
-     * @return Provider\ContentEntity
+     * @ensure Provider\ContentEntity
      */
     protected function findById($id)
     {

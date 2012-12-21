@@ -10,7 +10,7 @@ class UserEntity extends Entity
      * 
      * @autoload autoloadIsLastAdministrator
      * 
-     * @var Model\Vo\Boolean
+     * @vo Model\Vo\Boolean
      */
     public $isLastAdministrator;
     

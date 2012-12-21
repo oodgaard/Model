@@ -15,9 +15,9 @@ class Configurator extends ConfiguratorAbstract
 
     public function __invoke(RepositoryAbstract $repository)
     {
-        $repository = new ReflectionClass($repository);
+        $reflector = new ReflectionClass($repository);
 
-        foreach ($repository->getMethods() as $method) {
+        foreach ($reflector->getMethods() as $method) {
             $this->configure($method, $repository);
         }
     }

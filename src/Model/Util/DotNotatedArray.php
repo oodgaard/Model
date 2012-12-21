@@ -15,6 +15,10 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     public function offsetSet($name, $value)
     {
+        if (!$name) {
+            return;
+        }
+
         extract($this->parseDotNotatedName($name));
 
         if (!isset($this->arrays[$first])) {
@@ -32,6 +36,10 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     public function offsetGet($name)
     {
+        if (!$name) {
+            return [];
+        }
+
         extract($this->parseDotNotatedName($name));
 
         $data = [];
@@ -49,6 +57,10 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     public function offsetExists($name)
     {
+        if (!$name) {
+            return false;
+        }
+        
         extract($this->parseDotNotatedName($name));
 
         return isset($this->data[$first]) || (
@@ -59,6 +71,10 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     public function offsetUnset($name)
     {
+        if (!$name) {
+            return $this;
+        }
+        
         extract($this->parseDotNotatedName($name));
 
         if ($rest && isset($this->arrays[$first])) {
@@ -83,12 +99,16 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     private function parseDotNotatedName($name)
     {
+        if (isset(self::$cache[$name])) {
+            return self::$cache[$name];
+        }
+
         $all   = explode('.', $name);
         $rest  = $all;
         $first = array_shift($rest);
         $rest  = implode('.', $rest);
 
-        return [
+        return self::$cache[$name] = [
             'first' => $first,
             'rest'  => $rest,
             'all'   => $all,

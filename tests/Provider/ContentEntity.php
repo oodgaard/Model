@@ -12,34 +12,34 @@ use Model\Entity\Entity;
 class ContentEntity extends Entity
 {
     /**
-     * @var Model\Vo\String
+     * @vo Model\Vo\String
      */
     public $id;
     
     /**
-     * @var Model\Vo\String
+     * @vo Model\Vo\String
      * 
      * @validator validateNameExists Testing :id.
      */
     public $name;
     
     /**
-     * @var Model\Vo\HasOne 'Provider\UserEntity'
+     * @vo Model\Vo\HasOne 'Provider\UserEntity'
      */
     public $user;
     
     /**
-     * @var Model\Vo\HasMany 'Provider\CommentEntity'
+     * @vo Model\Vo\HasMany 'Provider\CommentEntity'
      */
     public $comments;
 
-    public $validatedUsingClass = false;
+    public static $validatedUsingClass = false;
 
-    public $validatedUsingMethod = false;
+    public static $validatedUsingMethod = false;
 
     public function contentValidator(self $content)
     {
-        $this->validatedUsingMethod = true;
+        self::$validatedUsingMethod = true;
     }
 
     public function validateNameExists($name)

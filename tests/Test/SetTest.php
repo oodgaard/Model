@@ -17,7 +17,8 @@ class SetTest extends UnitAbstract
 {
     public function setUp()
     {
-        $this->set = new Set('\Provider\ContentEntity');
+        $this->set = new Set('Provider\ContentEntity');
+
         for ($i = 1; $i <= 10; $i++) {
             $this->set[] = new ContentEntity(array('id' => $i, 'name' => 'test ' . $i));
         }
@@ -38,7 +39,7 @@ class SetTest extends UnitAbstract
     
     public function findingMany()
     {
-        $query = array('name' => '^test [1-2]$');
+        $query = ['name' => '^test [1-2]$'];
         $found = $this->set->find($query);
         
         $this->assert($found->count() === 2, 'Wrong number of items found.');

@@ -16,6 +16,7 @@ class Vo
             } else {
                 $class = new $parts[0];
             }
+            
             return $class;
         };
         
@@ -24,8 +25,6 @@ class Vo
         
         $entity->setVo($property->getName(), $class);
         $this->setDefaultValueIfExists($entity, $property);
-        
-        unset($entity->{$property->getName()});
     }
 
     private function setDefaultValueIfExists($entity, ReflectionProperty $property)
