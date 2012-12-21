@@ -12,7 +12,7 @@ class Cache
 
     public function __invoke(DocTagInterface $tag, ReflectionMethod $method, RepositoryAbstract $repository)
     {
-        $cacheKey = $method->getDeclaringClass()->getName() . $method->getName() . $value;
+        $cacheKey = $method->getDeclaringClass()->getName() . $method->getName() . $tag->getValue();
 
         if (!isset(self::$cache[$cacheKey])) {
             self::$cache[$cacheKey] = $this->generateCacheDriverInfo($tag->getValue());

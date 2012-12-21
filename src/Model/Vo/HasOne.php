@@ -14,11 +14,7 @@ class HasOne extends VoAbstract
 
     public function __clone()
     {
-        return [
-            'filters'    => $this->filters,
-            'validators' => $this->validators,
-            'value'      => clone $this->value
-        ];
+        $this->value = clone $this->value;
     }
 
     public function set($value)
