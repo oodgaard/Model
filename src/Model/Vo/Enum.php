@@ -2,7 +2,7 @@
 
 namespace Model\Vo;
 
-class Enum extends Generic
+class Enum extends VoAbstract
 {
     private $values;
 

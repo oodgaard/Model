@@ -2,7 +2,7 @@
 
 namespace Model\Vo;
 
-class Float extends Generic
+class Float extends VoAbstract
 {
     public function translate($value)
     {

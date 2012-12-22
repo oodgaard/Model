@@ -2,7 +2,7 @@
 
 namespace Model\Vo;
 
-class Money extends Generic
+class Money extends VoAbstract
 {
     public function translate($value)
     {

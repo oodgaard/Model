@@ -13,6 +13,8 @@ class DotNotatedArray implements ArrayAccess, Countable, IteratorAggregate
 
     private $data = [];
 
+    private static $cache = [];
+
     public function offsetSet($name, $value)
     {
         if (!$name) {

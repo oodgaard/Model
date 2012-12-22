@@ -2,7 +2,7 @@
 
 namespace Model\Vo;
 
-class Filter extends Generic
+class Filter extends VoAbstract
 {
     private $cb;
 

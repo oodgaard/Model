@@ -2,7 +2,7 @@
 
 namespace Model\Vo;
 
-class Integer extends Generic
+class Integer extends VoAbstract
 {
     public function translate($value)
     {
