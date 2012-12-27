@@ -7,9 +7,19 @@ abstract class ConfiguratorAbstract
 {
     private $handlers = [];
 
+    private static $cache = [];
+
     public function configure(Reflector $reflector, $object)
     {
-        $comment = new DocComment($reflector->getDocComment());
+        $cacheKey = get_class($object) . $reflector->getName();
+
+        if (isset(self::$cache[$cacheKey])) {
+            $comment = self::$cache[$cacheKey];
+        } elseif ($comment = $reflector->getDocComment()) {
+            $comment = self::$cache[$cacheKey] = new DocComment($comment);
+        } else {
+            return;
+        }
 
         foreach ($comment as $tag) {
             if (isset($this->handlers[$tag->getName()])) {

@@ -6,12 +6,17 @@ class DocComment implements DocCommentInterface
 {
     private $tags;
 
+    private static $cache = [];
+
     public function __construct($comment)
     {
         $this->tags = new DocTagCollection;
 
-        $definitions = preg_split('/\* @/', $comment);
-        $this->formatDefinitions($definitions);
+        if (isset(self::$cache[$comment])) {
+            $definitions = self::$cache[$comment];
+        } else {
+            $definitions = self::$cache[$comment] = $this->parseDefinitions($comment);
+        }
         
         foreach ($definitions as $definition) {
             $this->tags->add(new DocTag($definition));
@@ -26,6 +31,13 @@ class DocComment implements DocCommentInterface
     public function getIterator()
     {
         return $this->tags;
+    }
+
+    private function parseDefinitions($comment)
+    {
+        $definitions = preg_split('/\* @/', $comment);
+        $this->formatDefinitions($definitions);
+        return $definitions;
     }
 
     private function formatDefinitions(array &$definitions)

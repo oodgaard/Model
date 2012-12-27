@@ -1,9 +1,8 @@
 <?php
 
 namespace Model\Vo;
-use InvalidArgumentException;
 
-class Filter extends Generic
+class Filter extends VoAbstract
 {
     private $cb;
 
@@ -12,9 +11,9 @@ class Filter extends Generic
         $this->cb = $cb;
     }
 
-    public function set($value)
+    public function translate($value)
     {
         $cb = $this->cb;
-        parent::set($cb($value));
+        return $cb($value);
     }
 }

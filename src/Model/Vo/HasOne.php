@@ -7,44 +7,28 @@ class HasOne extends VoAbstract
 {
     private $class;
 
-    private $value;
-
     public function __construct($class)
     {
         $this->class = $class;
     }
 
-    public function set($value)
+    public function init()
     {
-        $this->get()->clear()->from($value);
+        return new $this->class;
     }
 
-    public function get()
+    public function translate($value)
     {
-        if (!$this->exists()) {
-            $this->value = new $this->class;
-        }
-
-        return $this->value;
-    }
-
-    public function exists()
-    {
-        return isset($this->value);
-    }
-
-    public function remove()
-    {
-        $this->value = null;
+        return new $this->class($value);
     }
 
     public function from($value, $filter = null)
     {
-        return $this->get()->from($value, $filter);
+        return new $this->class($value, $filter);
     }
 
-    public function to($filter = null)
+    public function to($value, $filter = null)
     {
-        return $this->get()->to($filter);
+        return $value->to($filter);
     }
 }

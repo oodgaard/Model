@@ -20,14 +20,12 @@ class Configurator extends ConfiguratorAbstract
 
     public function __invoke(Entity $entity)
     {
-        $reflector = new ReflectionClass($entity);
+        $class = new ReflectionClass($entity);
 
-        foreach ($reflector->getProperties() as $property) {
-            if (!$property->isPublic()) {
-                continue;
+        foreach ($class->getProperties() as $property) {
+            if ($property->isPublic()) {
+                $this->configure($property, $entity);
             }
-
-            $this->configure($property, $entity);
         }
     }
 }

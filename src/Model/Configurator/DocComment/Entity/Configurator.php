@@ -19,7 +19,6 @@ class Configurator extends ConfiguratorAbstract
 
     public function __invoke(Entity $entity)
     {
-        $reflector = new ReflectionClass($entity);
-        $this->configure($reflector, $entity);
+        $this->configure(new ReflectionClass($entity), $entity);
     }
 }

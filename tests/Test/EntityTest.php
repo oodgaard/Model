@@ -64,7 +64,7 @@ class EntityTest extends UnitAbstract
             $this->assert($e[0] === 'Testing 1.', 'Correct error message was not returned.');
         }
 
-        $this->assert($content->validatedUsingClass, 'The class validator was not invoked.');
-        $this->assert($content->validatedUsingMethod, 'The method validator was not invoked.');
+        $this->assert(ContentEntity::$validatedUsingClass, 'The class validator was not invoked.');
+        $this->assert(ContentEntity::$validatedUsingMethod, 'The method validator was not invoked.');
     }
 }
