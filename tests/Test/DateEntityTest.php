@@ -42,7 +42,7 @@ class DateEntityTest extends UnitAbstract
     }
 
     /**
-     * Check the date is set from an date string.
+     * Check the date is set from a date string.
      *
      * @return void
      */
