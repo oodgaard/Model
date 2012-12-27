@@ -21,6 +21,6 @@ class Date extends VoAbstract
 
     public function translate($value)
     {
-        return $this->date->modify($value)->format($this->config['format']);
+        return $this->datetime->modify($value)->format($this->config['format']);
     }
 }
