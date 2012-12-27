@@ -61,7 +61,6 @@ class Date extends VoAbstract
         if (is_numeric($value)) {
             $this->date = new DateTime(date($this->config['format'], $value));
         } elseif ($value) {
-
             if ($value instanceof DateTime) {
                 $this->date = $value;
             } elseif ($this->date instanceof DateTime) {
@@ -69,7 +68,6 @@ class Date extends VoAbstract
             } else {
                 $this->date = new DateTime($value);
             }
-
         } else {
             $this->date = null;
         }
