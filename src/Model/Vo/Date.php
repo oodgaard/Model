@@ -21,6 +21,14 @@ class Date extends VoAbstract
 
     public function translate($value)
     {
-        return $this->datetime->modify($value)->format($this->config['format']);
+        if ($value instanceof DateTime) {
+            $this->datetime = $value;
+        } elseif (is_numeric($value)) {
+            $this->datetime->setTimestamp($value);
+        } else {
+            $this->datetime->modify($value);
+        }
+
+        return $this->datetime->format($this->config['format']);
     }
 }
