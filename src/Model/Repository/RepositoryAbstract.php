@@ -256,17 +256,27 @@ abstract class RepositoryAbstract
 
     static public function getInstance($name = self::DEFAULT_NAME, array $args = [])
     {
+        if (is_array($name)) {
+            $args = $name;
+            $name = self::DEFAULT_NAME;
+        }
+        
         $self = get_called_class() . $name;
 
         if (isset(self::$instances[$self]) && !$args) {
             return self::$instances[$self];
         }
         
-        return self::refreshInstance($name, $args);
+        return self::initInstance($name, $args);
     }
 
-    static public function refreshInstance($name = self::DEFAULT_NAME, array $args = [])
+    static public function initInstance($name = self::DEFAULT_NAME, array $args = [])
     {
+        if (is_array($name)) {
+            $args = $name;
+            $name = self::DEFAULT_NAME;
+        }
+
         $class = get_called_class();
         $self  = $class . $name;
 

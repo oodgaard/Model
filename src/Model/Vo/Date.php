@@ -19,6 +19,11 @@ class Date extends VoAbstract
         $this->datetime = new DateTime('now', new DateTimeZone($this->config['timezone'])); 
     }
 
+    public function init()
+    {
+        return $this->datetime->format($this->config['format']);
+    }
+
     public function translate($value)
     {
         if ($value instanceof DateTime) {
@@ -29,6 +34,6 @@ class Date extends VoAbstract
             $this->datetime->modify($value);
         }
 
-        return $this->datetime->format($this->config['format']);
+        return $this->init();
     }
 }
