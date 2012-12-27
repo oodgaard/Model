@@ -59,15 +59,15 @@ class Date extends VoAbstract
     public function set($value)
     {
         if (is_numeric($value)) {
-            $this->date = new \DateTime(date($this->config['format'], $value));
+            $this->date = new DateTime(date($this->config['format'], $value));
         } elseif ($value) {
 
-            if ($value instanceof \DateTime) {
+            if ($value instanceof DateTime) {
                 $this->date = $value;
-            } elseif ($this->date instanceof \DateTime) {
+            } elseif ($this->date instanceof DateTime) {
                 $this->date->modify($value);
             } else {
-                $this->date = new \DateTime($value);
+                $this->date = new DateTime($value);
             }
 
         } else {
