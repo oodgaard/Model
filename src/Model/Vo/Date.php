@@ -26,6 +26,8 @@ class Date extends VoAbstract
 
     public function translate($value)
     {
+        $value = $value ?: 'now';
+
         if ($value instanceof DateTime) {
             $this->datetime = $value;
         } elseif (is_numeric($value)) {
