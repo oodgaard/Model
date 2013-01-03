@@ -1,49 +1,19 @@
 <?php
 
 namespace Model\Vo;
-use InvalidArgumentException;
 
-/**
- * Filter VO.
- * 
- * @category ValueObjects
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
- */
-class Filter extends Generic
+class Filter extends VoAbstract
 {
-    /**
-     * The callback filter.
-     * 
-     * @var Closure
-     */
     private $cb;
-    
-    /**
-     * Sets up the filter.
-     * 
-     * @param Closure $cb The filter callback.
-     * 
-     * @return Filter
-     */
-    public function __construct($cb)
+
+    public function __construct(callable $cb)
     {
-        if (!is_callable($cb)) {
-            throw new InvalidArgumentException('The filter callback must be callable.');
-        }
         $this->cb = $cb;
     }
 
-    /**
-     * Sets the value.
-     * 
-     * @param mixed $value The value to set.
-     * 
-     * @return void
-     */
-    public function set($value)
+    public function translate($value)
     {
-        parent::set(call_user_func($this->cb, $value));
+        $cb = $this->cb;
+        return $cb($value);
     }
 }

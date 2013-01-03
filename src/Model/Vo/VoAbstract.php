@@ -1,41 +1,51 @@
 <?php
 
 namespace Model\Vo;
+use Model\Util\DotNotatedArray;
+use Model\Filter\Filterable;
 use Model\Validator\Validatable;
-use Model\Validator\ValidatableInterface;
 
-/**
- * The base value object interface.
- * 
- * @category ValueObjects
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
- */
 abstract class VoAbstract implements VoInterface
 {
-    use Validatable;
+    use Filterable;
     
-    /**
-     * Validates the entity and returns the error messages.
-     * 
-     * @return array
-     */
-    public function validate()
+    use Validatable;
+
+    public function init()
+    {
+        
+    }
+
+    public function from($value, $filterToUse = null)
+    {
+        foreach ($this->getImportFilters()->offsetGet($filterToUse) as $filter) {
+            $value = $filter($value);
+        }
+
+        return $value;
+    }
+
+    public function to($value, $filterToUse = null)
+    {
+        foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
+            $value = $filter($value);
+        }
+
+        return $value;
+    }
+
+    public function validate($value)
     {
         $messages = [];
-        $value    = $this->get();
-        
-        // Validate this value.
+
         foreach ($this->getValidators() as $message => $validator) {
-            if ($validator($this->get()) === false) {
-                $messages[] = $message;
+            if ($validator($value) === false) {
+                $messages[] = $this->validatorMessages[$message];
             }
         }
         
-        // Validate all sub-items.
         if ($value instanceof ValidatableInterface) {
-            $messages = array_merge($messages, $value->validate());
+            $messages = array_merge($messages, $value->validate($value));
         }
         
         return $messages;

@@ -21,7 +21,6 @@ class Mongo implements CacheInterface
         'db'         => 'cache',
         'collection' => 'cache',
         'dsn'        => null,
-        'lifetime'   => null,
         'options'    => []
     ];
 
@@ -66,10 +65,6 @@ class Mongo implements CacheInterface
      */
     public function set($key, $value, $lifetime = null)
     {
-        if (!$lifetime) {
-            $lifetime = $this->config['lifetime'];
-        }
-
         if ($lifetime) {
             $lifetime = time() + $lifetime;
         }

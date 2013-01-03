@@ -13,26 +13,13 @@ use Memcache;
  */
 class Memcache implements CacheInterface
 {
-    /**
-     * The default Memcache configuration.
-     * 
-     * @var array
-     */
-    private $config = array(
-        'servers' => array(
-            array(
-                'host' => 'localhost',
-                'port' => 11211
-            )
-        ),
-        'lifetime' => 0
-    );
-    
-    /**
-     * The memcache instance to use.
-     * 
-     * @var Memcache
-     */
+    private $config = [
+        'servers' => [[
+            'host' => 'localhost',
+            'port' => 11211
+        ]]
+    ];
+
     private $memcache;
     
     /**
@@ -63,10 +50,7 @@ class Memcache implements CacheInterface
      */
     public function set($key, $value, $lifetime = null)
     {
-        $lifetime = is_null($lifetime) ? $this->config['lifetime'] : $lifetime;
-        
         $this->memcache->add($key, $value, $lifetime);
-        
         return $this;
     }
     

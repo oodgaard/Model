@@ -8,7 +8,7 @@ class UserEntity extends Entity
     /**
      * Returns whether or not this is the last administrator.
      * 
-     * @auto autoloadIsLastAdministrator
+     * @autoload autoloadIsLastAdministrator
      * 
      * @vo Model\Vo\Boolean
      */

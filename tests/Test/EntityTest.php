@@ -3,37 +3,24 @@
 namespace Test;
 use Exception;
 use Model\Entity\Set;
+use Model\Validator\ValidatorException;
 use Provider\CommentEntity;
 use Provider\ContentEntity;
 use Provider\UserEntity;
 use Testes\Test\UnitAbstract;
 
-/**
- * Tests the Entity component.
- * 
- * @category Entities
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
- */
 class EntityTest extends UnitAbstract
 {
-    /**
-     * Ensures that data is properly imported when passing through the constructor.
-     * 
-     * @return void
-     */
     public function constructorImporting()
     {
-        $entity = new ContentEntity(array('id' => 1, 'name' => 'test'));
+        $entity = new ContentEntity([
+            'id'   => 1,
+            'name' => 'test'
+        ]);
+        
         $this->assert($entity->id && $entity->name, 'The id or name was not set.');
     }
-    
-    /**
-     * Ensures that relationships are properly handled when getting/setting.
-     * 
-     * @return void
-     */
+
     public function relationships()
     {
         $entity = new ContentEntity;
@@ -46,12 +33,7 @@ class EntityTest extends UnitAbstract
             $this->assert(false, 'Entity could not be added to set.');
         }
     }
-    
-    /**
-     * Tests proxy functionality.
-     * 
-     * @return void
-     */
+
     public function testMappedGetters()
     {
         $user    = new UserEntity;
@@ -60,5 +42,29 @@ class EntityTest extends UnitAbstract
         $this->assert(count($content) === 2, 'There must be 2 content items returned.');
         $this->assert($content instanceof Set, 'The content items must be an entity set.');
         $this->assert($user->isLastAdministrator === true, 'The user must be the last administrator.');
+    }
+
+    public function mapping()
+    {
+        $content = new ContentEntity;
+        $mapped  = $content->toArray('testMapper');
+
+        $this->assert(array_key_exists('testName', $mapped), 'The mapper was not invoked.');
+    }
+
+    public function validation()
+    {
+        $content     = new ContentEntity;
+        $content->id = 1;
+
+        try {
+            $content->assert();
+            $this->assert(false, 'Name validator should return false.');
+        } catch (ValidatorException $e) {
+            $this->assert($e[0] === 'Testing 1.', 'Correct error message was not returned.');
+        }
+
+        $this->assert(ContentEntity::$validatedUsingClass, 'The class validator was not invoked.');
+        $this->assert(ContentEntity::$validatedUsingMethod, 'The method validator was not invoked.');
     }
 }

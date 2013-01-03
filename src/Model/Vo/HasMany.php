@@ -1,86 +1,34 @@
 <?php
 
 namespace Model\Vo;
-use Model\Entity\Set as EntitySet;
+use Model\Entity;
 
-/**
- * One-to-many relationship VO.
- * 
- * @category ValueObjects
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
- */
 class HasMany extends VoAbstract
 {
-    /**
-     * The class name.
-     * 
-     * @var string
-     */
     private $class;
 
-    /**
-     * The value.
-     * 
-     * @var mixed
-     */
-    private $value;
-
-    /**
-     * Sets up the entity.
-     * 
-     * @param string $class The entity class name to use.
-     * 
-     * @return HasMany
-     */
     public function __construct($class)
     {
         $this->class = $class;
     }
 
-    /**
-     * Fills the set with the value.
-     * 
-     * @param mixed $value The value to fill the set with.
-     * 
-     * @return void
-     */
-    public function set($value)
+    public function init()
     {
-        $this->get()->clear()->fill($value);
+        return new Entity\Set($this->class);
     }
 
-    /**
-     * Returns the value.
-     * 
-     * @return mixed
-     */
-    public function get()
+    public function translate($value)
     {
-        if (!$this->exists()) {
-            $this->value = new EntitySet($this->class);
-        }
-        return $this->value;
+        return new Entity\Set($this->class, $value);
     }
 
-    /**
-     * Returns whether or not the VO has a value.
-     * 
-     * @return bool
-     */
-    public function exists()
+    public function from($value, $filter = null)
     {
-        return isset($this->value);
+        return new Entity\Set($this->class, $value, $filter);
     }
 
-    /**
-     * Hook for initializing the VO.
-     * 
-     * @return void
-     */
-    public function remove()
+    public function to($value, $filter = null)
     {
-        $this->value->clear();
+        return $value->to($filter);
     }
 }

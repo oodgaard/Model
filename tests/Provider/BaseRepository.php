@@ -8,45 +8,18 @@ use Model\Repository\RepositoryAbstract;
 
 abstract class BaseRepository extends RepositoryAbstract
 {
-    /**
-     * Keeps track of the number of times "findById()" was called so we can test
-     * if an item was cached or not.
-     * 
-     * @var int
-     */
-    public $findByIdCallCount = 0;
-    
-    /**
-     * Mimics data storage for the entities.
-     * 
-     * @var array
-     */
-    private $entities = array();
+    public $setUp;
 
-    public function __construct()
+    public $findByIdCallCount = 0;
+
+    private $entities = [];
+
+    public function init($setUp = false)
     {
-        $this->setCacheDriver('findById', new Php);
+        $this->setUp = $setUp;
+        $this->setCacheDriver('PHP', new Php);
     }
-    
-    public function save(Entity $entity)
-    {
-        if ($entity->id) {
-            $this->update($entity);
-        } else {
-            $this->insert($entity);
-        }
-        return $this;
-    }
-    
-    public function remove(Entity $entity)
-    {
-        // expire the cache
-        $this->clearCache('findById', array($entity->id));
-        
-        // then remove the item from the storage property
-        unset($this->entities[$entity->id]);
-    }
-    
+
     protected function findById($id)
     {
         if (isset($this->entities[$id])) {
@@ -55,36 +28,29 @@ abstract class BaseRepository extends RepositoryAbstract
             $entity = false;
         }
         
-        // keep track of the number of times this method was called for testing
         ++$this->findByIdCallCount;
         
         return $entity;
     }
     
-    private function insert(Entity $entity)
+    protected function remove(Entity $entity)
     {
-        // generate an id
-        $entity->id = md5(microtime());
-        
-        // store in entity storage based on id
-        $this->entities[$entity->id] = $entity;
-        
-        // store in cache for the specified method
-        $this->setCache('findById', array($entity->id), $entity);
+        unset($this->entities[$entity->id]);
     }
     
-    private function update(Entity $entity)
+    protected function create(Entity $entity)
     {
-        // make sure that it exists first as it can only be updated if it already exists
-        // mimics database behavior
+        $entity->id = md5(rand() . microtime() . rand());
+        
+        $this->entities[$entity->id] = $entity->toArray();
+    }
+    
+    protected function update(Entity $entity)
+    {
         if (!isset($this->entities[$entity->id])) {
             throw new Exception(get_class($entity) . ' does not exists, therefore it was not updated.');
         }
         
-        // update the stored entity
-        $this->entities[$entity->id] = $entity;
-        
-        // update the cache
-        $this->setCacheFor(get_class($this), 'findById', array($entity->id), $entity);
+        $this->entities[$entity->id] = $entity->toArray();
     }
 }

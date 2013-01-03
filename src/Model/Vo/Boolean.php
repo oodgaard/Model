@@ -2,25 +2,10 @@
 
 namespace Model\Vo;
 
-/**
- * Boolean VO.
- * 
- * @category ValueObjects
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2010 Trey Shugart http://europaphp.org/license
- */
-class Boolean extends Generic
+class Boolean extends VoAbstract
 {
-    /**
-     * Sets the value.
-     * 
-     * @param mixed $value The value to set.
-     * 
-     * @return void
-     */
-    public function set($value)
+    public function translate($value)
     {
-        parent::set((bool) $value);
+        return (bool) $value;
     }
 }

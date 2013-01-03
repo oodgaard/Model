@@ -1,219 +1,142 @@
 <?php
 
 namespace Model\Entity;
-use Model\Behavior\BehaviorInterface;
-use Model\Configurator;
+use InvalidArgumentException;
+use Model\Configurator\DocComment\Entity\Configurator as EntityConfigurator;
+use Model\Configurator\DocComment\Vo\Configurator as VoConfigurator;
+use Model\Filter\Filterable;
+use Model\Filter\FilterableInterface;
 use Model\Mapper\MapperInterface;
-use Model\Repository;
 use Model\Validator\Assertable;
 use Model\Validator\AssertableInterface;
-use Model\Vo\Generic;
 use Model\Vo\VoInterface;
-use RuntimeException;
 
-/**
- * The main entity class. All model entities should derive from this class.
- * 
- * @category Entities
- * @package  Model
- * @author   Trey Shugart <treshugart@gmail.com>
- * @license  Copyright (c) 2011 Trey Shugart http://europaphp.org/license
- */
 class Entity implements AccessibleInterface, AssertableInterface
 {
     use Assertable;
     
-    /**
-     * Autoloaders to use for autoloading data onto VOs.
-     * 
-     * @var array
-     */
+    use Filterable;
+    
     private $autoloaders = [];
-    
-    /**
-     * The data in the entity.
-     * 
-     * @var array
-     */
+
     private $data = [];
-    
-    /**
-     * Mappers assigned to the entity.
-     * 
-     * @var array
-     */
+
     private $mappers = [];
+
+    private $vos = [];
+
+    private static $cache = [];
+
+    private static $cacheProperties = [
+        'autoloaders',
+        'exportFilters',
+        'importFilters',
+        'mappers',
+        'validatorMessages',
+        'validators',
+        'vos'
+    ];
+
+    public static $serializeProperties = [
+        'autoloaders',
+        'data',
+        'exportFilters',
+        'importFilters',
+        'mappers',
+        'validatorMessages',
+        'validators',
+        'vos'
+    ];
     
-    /**
-     * Constructs, configures and fills the entity with data, if any is passed.
-     * 
-     * @param mixed  $data   The data to fill the entity with.
-     * @param string $mapper The mapper to use to import the data.
-     * 
-     * @return Entity
-     */
-    public function __construct($data = [], $mapper = null)
+    public function __construct($data = [], $filterToUse = null)
     {
         $this->configure();
         $this->init();
-        $this->fill($data, $mapper);
+        $this->from($data, $filterToUse);
     }
     
-    /**
-     * Applies the specified value to the VO with the specified name.
-     * 
-     * @param string $name  The VO name.
-     * @param mixed  $value The value to set.
-     * 
-     * @return void
-     */
     public function __set($name, $value)
     {
-        if (isset($this->data[$name])) {
-            $this->data[$name]->set($value);
+        if (isset($this->vos[$name])) {
+            $this->data[$name] = $this->vos[$name]->translate($value);
         }
     }
     
-    /**
-     * Returns the value of the specified VO.
-     * 
-     * @param string $name The VO name.
-     * 
-     * @return mixed
-     */
     public function __get($name)
     {
-        if (isset($this->data[$name])) {
-            if (isset($this->autoloaders[$name]) && !$this->data[$name]->exists()) {
-                $this->data[$name]->set($this->{$this->autoloaders[$name]}());
+        if (isset($this->vos[$name])) {
+            if (isset($this->autoloaders[$name]) && !isset($this->data[$name])) {
+                $this->data[$name] = $this->vos[$name]->translate($this->{$this->autoloaders[$name]}());
             }
-            return $this->data[$name]->get();
+
+            return $this->data[$name];
         }
     }
     
-    /**
-     * Returns whether or not the VO exists.
-     * 
-     * @param string $name The name of the VO.
-     * 
-     * @return bool
-     */
     public function __isset($name)
-    {
-        return isset($this->data[$name]) && $this->data[$name]->exists();
-    }
-    
-    /**
-     * Removes the VO from the object.
-     * 
-     * @param string $name The name of the VO.
-     * 
-     * @return void
-     */
-    public function __unset($name)
-    {
-        if (isset($this->data[$name])) {
-            $this->data[$name]->remove();
-        }
-    }
-    
-    /**
-     * Configuration hook for setting up the entity. Gets called before `init()`.
-     * 
-     * @return void
-     */
-    public function configure()
-    {
-        $conf = new Configurator\DocComment;
-        $conf->configure($this);
-    }
-    
-    /**
-     * Initialization hook. Gets called after `configure()`.
-     * 
-     * @return void
-     */
-    public function init()
-    {
-        
-    }
-    
-    /**
-     * Clears all data on the entity.
-     * 
-     * @return Entity
-     */
-    public function clear()
-    {
-        foreach ($this->data as $vo) {
-            $vo->remove();
-        }
-        return $this;
-    }
-    
-    /**
-     * Applies value objects to the entity.
-     * 
-     * @param string      $name The property name.
-     * @param VoInterface $vo   The Vo to use.
-     * 
-     * @return Entity
-     */
-    public function setVo($name, VoInterface $vo)
-    {
-        $this->data[$name] = $vo;
-        return $this;
-    }
-    
-    /**
-     * Returns the specified VO.
-     * 
-     * @param string $name The VO name.
-     * 
-     * @return VoInterface
-     */
-    public function getVo($name)
-    {
-        if (!isset($this->data[$name])) {
-            throw new RuntimeException(sprintf('The VO "%s" does not exist.', $name));
-        }
-        return $this->data[$name];
-    }
-    
-    /**
-     * Returns whether or not the specified VO exists.
-     * 
-     * @param string $name The VO name.
-     * 
-     * @return bool
-     */
-    public function hasVo($name)
     {
         return isset($this->data[$name]);
     }
     
-    /**
-     * Removes the specified VO if it exists.
-     * 
-     * @param string $name The VO name.
-     * 
-     * @return Entity
-     */
-    public function removeVo($name)
+    public function __unset($name)
     {
         if (isset($this->data[$name])) {
             unset($this->data[$name]);
         }
+    }
+    
+    public function init()
+    {
+        
+    }
+
+    public function clear()
+    {
+        foreach ($this->vos as $name => $vo) {
+            $vo->remove($this, $name);
+        }
+
+        return $this;
+    }
+    
+    public function setVo($name, VoInterface $vo)
+    {
+        $this->vos[$name]  = $vo;
+        $this->data[$name] = $vo->init();
+
+        return $this;
+    }
+    
+    public function getVo($name)
+    {
+        if (isset($this->vos[$name])) {
+            return $this->vos[$name];
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'The VO "%s" does not exist on the entity "%s".',
+            $name,
+            get_class($this)
+        ));
+    }
+    
+    public function hasVo($name)
+    {
+        return isset($this->vos[$name]);
+    }
+    
+    public function removeVo($name)
+    {
+        if (isset($this->vos[$name])) {
+            unset($this->data[$name]);
+            unset($this->vos[$name]);
+        }
+
         return $this;
     }
     
     /**
-     * Sets the entity to use for exporting data.
-     * 
-     * @param string          $name   The exporter name.
-     * @param MapperInterface $mapper The mapper class name.
-     * 
-     * @return Entity
+     * @deprecated
      */
     public function setMapper($name, MapperInterface $mapper)
     {
@@ -222,26 +145,18 @@ class Entity implements AccessibleInterface, AssertableInterface
     }
     
     /**
-     * Returns the specified mapper.
-     * 
-     * @param string $name The mapper name.
-     * 
-     * @return MapperInterface
+     * @deprecated
      */
     public function getMapper($name)
     {
         if (!isset($this->mappers[$name])) {
-            throw new RuntimeException(sprintf('The mapper "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The mapper "%s" does not exist.', $name));
         }
         return $this->mappers[$name];
     }
     
     /**
-     * Returns whether or not the specified mapper exists.
-     * 
-     * @param string $name The mapper name.
-     * 
-     * @return bool
+     * @deprecated
      */
     public function hasMapper($name)
     {
@@ -249,32 +164,21 @@ class Entity implements AccessibleInterface, AssertableInterface
     }
     
     /**
-     * Removes the specified mapper if it exists.
-     * 
-     * @param string $name The mapper name.
-     * 
-     * @return Entity
+     * @deprecated
      */
     public function removeMapper($name)
     {
         if (isset($this->mappers[$name])) {
             unset($this->mappers[$name]);
         }
+
         return $this;
     }
     
-    /**
-     * Applies the autoloader to the specified VO.
-     * 
-     * @param string $name   The VO name.
-     * @param string $method The method to use.
-     * 
-     * @return Entity
-     */
     public function setAutoloader($name, $method)
     {
         if (!method_exists($this, $method)) {
-            throw new RuntimeException(sprintf(
+            throw new InvalidArgumentException(sprintf(
                 'The autoload method "%s" does not exist on "%s".',
                 $method,
                 get_class($this)
@@ -286,73 +190,112 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $this;
     }
     
-    /**
-     * Returns the specified autoloader.
-     * 
-     * @param string $name The autoloader name.
-     * 
-     * @return string
-     */
     public function getAutoloader($name)
     {
         if (!isset($this->autoloaders[$name])) {
-            throw new RuntimeException(sprintf('The autoloader "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The autoloader "%s" does not exist.', $name));
         }
+
         return $this->autoloaders[$name];
     }
     
-    /**
-     * Returns whether or not the specified autoloader exists.
-     * 
-     * @param string $name The autoloader name.
-     * 
-     * @return bool
-     */
     public function hasAutoloader($name)
     {
         return isset($this->autoloaders[$name]);
     }
     
-    /**
-     * Removes the specified autoloader if it exists.
-     * 
-     * @param string $name The autoloader name.
-     * 
-     * @return Entity
-     */
     public function removeAutoloader($name)
     {
         if (isset($this->autoloaders[$name])) {
             unset($this->autoloaders[$name]);
         }
+
         return $this;
+    }
+
+    public function autoload($name)
+    {
+        if (!$this->hasAutoloader($name)) {
+            throw new InvalidArgumentException(sprintf(
+                'Cannot autoload "%s" for entity "%s" because it does not exist.',
+                $name,
+                get_class()
+            ));
+        }
+
+        $this->__set($name, $this->{$this->getAutoloader($name)}());
+
+        return $this;
+    }
+
+    public function autoloadAll()
+    {
+        foreach ($this->vos as $name => $vo) {
+            if ($this->hasAutoloader($name)) {
+                $this->autoload($name);
+            }
+        }
+
+        return $this;
+    }
+
+    public function from($data, $filterToUse = null)
+    {
+        $data = $this->makeArrayFromAnything($data);
+
+        foreach ($this->getImportFilters()->offsetGet($filterToUse) as $filter) {
+            $data = $filter($data);
+        }
+
+        // @deprected and can be removed once the mapper functionality is removed.
+        if ($filterToUse && isset($this->mappers[$filterToUse])) {
+            $data = $this->makeArrayFromAnything($data);
+            $data = $this->mappers[$filterToUse]->map($data);
+        }
+
+        foreach ($data as $name => $value) {
+            if (isset($this->vos[$name])) {
+                $this->data[$name] = $this->vos[$name]->translate($this->vos[$name]->from($value, $filterToUse));
+            }
+        }
+
+        return $this;
+    }
+
+    public function to($filterToUse = null)
+    {
+        $data = [];
+
+        $this->autoloadAll();
+
+        foreach ($this->vos as $name => $vo) {
+            $data[$name] = $vo->to($this->data[$name], $filterToUse);
+        }
+
+        foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
+            $data = $filter($data);
+        }
+
+        return $data;
     }
     
     /**
-     * Fills the entity with the specified data.
-     * 
-     * @param mixed  $data   The data to fill the entity with.
-     * @param string $mapper The mapper to use to import the data.
-     * 
-     * @return Entity
+     * @deprecated
      */
     public function fill($data, $mapper = null)
     {
-        // if there is no data don't do anything
         if (!$data) {
             return $this;
         }
         
-        // if there is a mapper we must work some magic
         if ($mapper && isset($this->mappers[$mapper])) {
-            $data = $this->makeDataArrayFromAnything($data);
+            $data = $this->makeArrayFromAnything($data);
             $data = $this->mappers[$mapper]->map($data);
         }
         
-        // let the VOs worry about the value
         if (is_array($data) || is_object($data)) {
-            foreach ($data as $k => $v) {
-                $this->__set($k, $v);
+            foreach ($data as $name => $value) {
+                $this->__set($name, $value);
             }
         }
         
@@ -360,24 +303,18 @@ class Entity implements AccessibleInterface, AssertableInterface
     }
     
     /**
-     * Converts the entity to an array.
-     * 
-     * @param string $mapper The mapper to use to export the data.
-     * 
-     * @return array
+     * @deprecated
      */
     public function toArray($mapper = null)
     {
         $array = array();
         
-        foreach ($this->data as $k => $v) {
-            $v = $this->__get($k);
-            
-            if ($v instanceof AccessibleInterface) {
-                $v = $v->toArray($mapper);
+        foreach ($this->data as $name => $value) {
+            if ($value instanceof AccessibleInterface) {
+                $value = $value->toArray($mapper);
             }
             
-            $array[$k] = $v;
+            $array[$name] = $value;
         }
         
         if ($mapper && isset($this->mappers[$mapper])) {
@@ -387,34 +324,26 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $array;
     }
     
-    /**
-     * Validates the entity and returns the error messages.
-     * 
-     * @return array
-     */
     public function validate()
     {
         $messages = [];
         
-        // validate each VO
-        foreach ($this->data as $vo) {
-            if ($voMessages = $vo->validate()) {
+        foreach ($this->vos as $name => $vo) {
+            if ($voMessages = $vo->validate($this->data[$name])) {
                 $messages = array_merge($messages, $voMessages);
             }
         }
         
-        // then validate the entity
         foreach ($this->validators as $message => $validator) {
             if ($validator($this) === false) {
-                $messages[] = $message;
+                $messages[] = $this->validatorMessages[$message];
             }
         }
         
-        // format error messages
         foreach ($messages as &$message) {
-            foreach ($this->data as $name => $vo) {
-                if (is_scalar($vo = $vo->get())) {
-                    $message = str_replace(':' . $name, $vo, $message);
+            foreach ($this->data as $name => $value) {
+                if (is_scalar($value)) {
+                    $message = str_replace(':' . $name, $value, $message);
                 }
             }
         }
@@ -422,170 +351,151 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $messages;
     }
     
-    /**
-     * Sets the VO value.
-     * 
-     * @param string $name  The name of the VO.
-     * @param mixed  $value The value of the VO.
-     * 
-     * @return void
-     */
     public function offsetSet($name, $value)
     {
         $this->__set($name, $value);
     }
     
-    /**
-     * Returns the value of the VO.
-     * 
-     * @param string $name The name of the VO.
-     * 
-     * @return mixed
-     */
     public function offsetGet($name)
     {
         return $this->__get($name);
     }
     
-    /**
-     * Returns whether or not the VO exists.
-     * 
-     * @param string $name The name of the VO.
-     * 
-     * @return bool
-     */
     public function offsetExists($name)
     {
         return $this->__isset($name);
     }
     
-    /**
-     * Removes the VO from the object.
-     * 
-     * @param string $name The name of the VO.
-     * 
-     * @return void
-     */
     public function offsetUnset($name)
     {
         $this->__unset($name);
     }
     
-    /**
-     * Returns the number of VOs on the object.
-     * 
-     * @return int
-     */
     public function count()
     {
        return count($this->data); 
     }
     
-    /**
-     * Returns the current item in the iteration.
-     * 
-     * @return mixed
-     */
     public function current()
     {
-        return current($this->data)->get();
+        return current($this->data);
     }
     
-    /**
-     * Returns the current key of the current item in the iteration.
-     * 
-     * @return string
-     */
     public function key()
     {
         return key($this->data);
     }
     
-    /**
-     * Moves to the next item in the iteration.
-     * 
-     * @return void
-     */
     public function next()
     {
         next($this->data);
     }
     
-    /**
-     * Resets iteration.
-     * 
-     * @return void
-     */
     public function rewind()
     {
         reset($this->data);
     }
     
-    /**
-     * Returns whether or not the iteration is still valid.
-     * 
-     * @return bool
-     */
     public function valid()
     {
         return $this->key() !== null;
     }
     
-    /**
-     * Serializes the data and returns it.
-     * 
-     * @return string
-     */
     public function serialize()
     {
-        return serialize([
-            'autoloaders' => $this->autoloaders,
-            'data'        => $this->toArray(),
-            'mappers'     => $this->mappers,
-            'validators'  => $this->validators
-        ]);
+        $data = [];
+
+        foreach (self::$serializeProperties as $name) {
+            $data[$name] = $this->$name;
+        }
+
+        return $data;
     }
     
-    /**
-     * Unserializes and sets the specified data.
-     * 
-     * @param string The serialized string to unserialize and set.
-     * 
-     * @return void
-     */
     public function unserialize($data)
     {
-        $this->autoloaders = $data['autoloaders'];
-        $this->mappers     = $data['mappers'];
-        $this->validators  = $data['validators'];
-        $this->fill($data['data']);
+        foreach (self::$serializeProperties as $name) {
+            $this->$name = $data[$name];
+        }
     }
     
-    /**
-     * Makes an array from an array or object.
-     * 
-     * @param mixed $data The data to turn into an array.
-     * 
-     * @return array
-     */
-    private function makeDataArrayFromAnything($data)
+    private function makeArrayFromAnything($data)
     {
-        // arrays get passed through
         if (is_array($data)) {
             return $data;
         }
-        
-        // objects get a shallow conversion because we do
-        // not need a deep conversion and it is faster
+
         if (is_object($data)) {
             $arr = [];
+
             foreach ($data as $k => $v) {
                 $arr[$k] = $v;
             }
+
             return $arr;
         }
         
-        // if it is anything else, just return an empty array
         return [];
+    }
+
+    private function configure()
+    {
+        if ($this->hasCache()) {
+            $this->applyCache();
+        } else {
+            $this->configureUsingAnnotations();
+            $this->generateCache();
+        }
+
+        $this->removePublicProperties();
+    }
+
+    private function configureUsingAnnotations()
+    {
+        $conf = new EntityConfigurator;
+        $conf->__invoke($this);
+
+        $conf = new VoConfigurator;
+        $conf->__invoke($this);
+    }
+
+    private function removePublicProperties()
+    {
+        foreach ($this->data as $name => $vo) {
+            unset($this->$name);
+        }
+    }
+
+    private function hasCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+        return isset(self::$cache[$cacheKey]);
+    }
+
+    private function applyCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+
+        foreach (self::$cacheProperties as $name) {
+            $this->$name = self::$cache[$cacheKey][$name];
+        }
+
+        foreach ($this->vos as $name => $vo) {
+            $this->data[$name] = $vo->init();
+        }
+    }
+
+    private function generateCache()
+    {
+        $cacheKey = $this->generateCacheKey();
+
+        foreach (self::$cacheProperties as $name) {
+            self::$cache[$cacheKey][$name] = $this->$name;
+        }
+    }
+
+    private function generateCacheKey()
+    {
+        return get_class($this);
     }
 }
