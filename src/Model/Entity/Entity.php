@@ -213,6 +213,32 @@ class Entity implements AccessibleInterface, AssertableInterface
         return $this;
     }
 
+    public function autoload($name)
+    {
+        if (!$this->hasAutoloader($name)) {
+            throw new InvalidArgumentException(sprintf(
+                'Cannot autoload "%s" for entity "%s" because it does not exist.',
+                $name,
+                get_class()
+            ));
+        }
+
+        $this->__set($name, $this->{$this->getAutoloader($name)}());
+
+        return $this;
+    }
+
+    public function autoloadAll()
+    {
+        foreach ($this->vos as $name => $vo) {
+            if ($this->hasAutoloader($name)) {
+                $this->autoload($name);
+            }
+        }
+
+        return $this;
+    }
+
     public function from($data, $filterToUse = null)
     {
         $data = $this->makeArrayFromAnything($data);
@@ -239,6 +265,8 @@ class Entity implements AccessibleInterface, AssertableInterface
     public function to($filterToUse = null)
     {
         $data = [];
+
+        $this->autoloadAll();
 
         foreach ($this->vos as $name => $vo) {
             $data[$name] = $vo->to($this->data[$name], $filterToUse);
