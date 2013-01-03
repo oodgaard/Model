@@ -62,7 +62,7 @@ class RepositoryTest extends UnitAbstract
     {
         $item = new ContentEntity;
 
-        ContentRepository::refreshInstance();
+        ContentRepository::initInstance();
         ContentRepository::create($item);
         
         $item = ContentRepository::findById($item->id);

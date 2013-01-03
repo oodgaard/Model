@@ -26,7 +26,7 @@ class Vo
         
         $entity->setVo($name, $class);
 
-        if ($value) {
+        if ($value !== null) {
             $entity->__set($name, $value);
         }
     }
