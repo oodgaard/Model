@@ -15,6 +15,8 @@ use Testes\Test\UnitAbstract;
  */
 class SetTest extends UnitAbstract
 {
+    private $set;
+
     public function setUp()
     {
         $this->set = new Set('Provider\ContentEntity');
