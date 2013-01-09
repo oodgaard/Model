@@ -6,9 +6,11 @@ class RemoveMongoId
 {
     const NAME = '_id';
 
-    public function __invoke(\Model\Entity\Entity $data)
+    public function __invoke(array $data)
     {
-        $data->removeVo(self::NAME);
+        if (isset($data[self::NAME])) {
+            unset($data[self::NAME]);
+        }
 
         return $data;
     }
