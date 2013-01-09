@@ -263,16 +263,18 @@ class Entity implements AccessibleInterface, AssertableInterface
 
     public function to($filterToUse = null)
     {
-        $data = [];
-
         $this->autoloadAll();
 
-        foreach ($this->vos as $name => $vo) {
-            $data[$name] = $vo->to($this->data[$name], $filterToUse);
-        }
+        $object = $this;
 
         foreach ($this->getExportFilters()->offsetGet($filterToUse) as $filter) {
-            $data = $filter($data);
+            $object = $filter($object);
+        }
+
+        $data = [];
+
+        foreach ($object->vos as $name => $vo) {
+            $data[$name] = $vo->to($object->data[$name], $filterToUse);
         }
 
         return $data;
