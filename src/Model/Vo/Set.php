@@ -6,14 +6,22 @@ class Set extends VoAbstract
 {
     public function translate($value)
     {
-        $value = [];
+        if (is_array($value)) {
+            return $value;
+        }
 
-        if (is_array($value) || is_object($value)) {
+        if ($value instanceof Traversable) {
+            return iterator_to_array($value);
+        }
+
+        $temp = [];
+
+        if (is_object($value)) {
             foreach ($value as $k => $v) {
-                $value[$k] = $v;
+                $temp[$k] = $v;
             }
         }
 
-        return $value;
+        return $temp;
     }
 }
