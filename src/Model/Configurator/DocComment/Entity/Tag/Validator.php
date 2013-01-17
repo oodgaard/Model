@@ -41,7 +41,7 @@ class Validator
         } elseif (function_exists($validator)) {
             $this->cache[$validator] = $validator;
         } else {
-            throw new InvalidArgumentException(sprintf('Unknown validator "%s" specified for "%s".', $validator, get_class($configurable)));
+            throw new InvalidArgumentException(sprintf('Unknown validator "%s" specified for "%s".', $validator, get_class($entity)));
         }
 
         return $validator;
