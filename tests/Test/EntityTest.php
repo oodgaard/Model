@@ -9,7 +9,9 @@ use Provider\ContentEntity;
 use Provider\MongoEntity;
 use Provider\PasswordEntity;
 use Provider\UserEntity;
+use Provider\DeepSet;
 use Testes\Test\UnitAbstract;
+
 
 class EntityTest extends UnitAbstract
 {
@@ -91,5 +93,24 @@ class EntityTest extends UnitAbstract
 
         $this->assert(ContentEntity::$validatedUsingClass, 'The class validator was not invoked.');
         $this->assert(ContentEntity::$validatedUsingMethod, 'The method validator was not invoked.');
+    }
+
+    public function find()
+    {
+        $pipe = new DeepSet\Pipe();
+        $pipe->to();
+
+        $deepSet = new Set('Provider\DeepSet\Pipe');
+        $deepSet->from([$pipe]);
+
+        $found = $deepSet->find([
+            'rules' => [
+                'ipAddresses' => [
+                    'ipAddress' => '10.0.0.1'
+                ]
+            ]
+        ]);
+
+        $this->assert($found instanceof DeepSet\IpAddress, 'Could not find the entity');
     }
 }
