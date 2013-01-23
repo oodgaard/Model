@@ -85,7 +85,11 @@ class Ensure
     private function parseAutomatedReturnValueFilter($ensure)
     {
         if (strpos($ensure, ' using ') !== false) {
-            return trim(explode(' using ', $ensure)[1]);
+            $filter = explode(' using ', $ensure)[1];
+            $filter = trim($filter, '.');
+            $filter = trim($filter);
+
+            return $filter;
         }
     }
 }

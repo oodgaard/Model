@@ -3,34 +3,34 @@
 namespace Provider\Filter;
 
 /**
- * @filter from test.ns using Provider\Filter\TestEntityFromFilter.
- * @filter to test.ns using Provider\Filter\TestEntityToFilter.
+ * @filter from ns1 using Provider\Filter\TestEntityFromFilter.
+ * @filter to ns1 using Provider\Filter\TestEntityToFilter.
  */
 class TestEntity extends \Model\Entity\Entity
 {
     /**
      * @vo Model\Vo\Boolean
      */
-    public $testEntityFrom;
+    public $testOneNamespaceFrom;
 
     /**
      * @vo Model\Vo\Boolean
      */
-    public $testEntityTo;
-
-    /**
-     * @vo Model\Vo\Boolean
-     * 
-     * @filter from test.ns using Provider\Filter\TestVoFromFilter.
-     * @filter to test.ns using Provider\Filter\TestVoToFilter.
-     */
-    public $testVoFrom;
+    public $testManyNamespaceTo;
 
     /**
      * @vo Model\Vo\Boolean
      * 
-     * @filter from test.ns using Provider\Filter\TestVoFromFilter.
-     * @filter to test.ns using Provider\Filter\TestVoToFilter.
+     * @filter from ns1.ns2 using Provider\Filter\TestVoFromFilter.
+     * @filter to ns1.ns2 using Provider\Filter\TestVoToFilter.
      */
-    public $testVoTo;
+    public $testManyNamespacesFrom;
+
+    /**
+     * @vo Model\Vo\Boolean
+     * 
+     * @filter from ns1.ns2 using Provider\Filter\TestVoFromFilter.
+     * @filter to ns1.ns2 using Provider\Filter\TestVoToFilter.
+     */
+    public $testManyNamespacesTo;
 }

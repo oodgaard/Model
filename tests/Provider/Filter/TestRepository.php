@@ -5,24 +5,46 @@ namespace Provider\Filter;
 class TestRepository extends \Model\Repository\RepositoryAbstract
 {
     /**
-     * @ensure Provider\Filter\TestEntity using test.
+     * @ensure Provider\Filter\TestEntity using ns1.
      */
-    protected function getTestEntity()
+    protected function getTestEntityUsingOneNamespace()
     {
         return [
-            'testVoFrom' => false
+            'testOneNamespaceFrom' => false
         ];
     }
 
     /**
-     * @ensure Set of Provider\Filter\TestEntity using test.ns.
+     * @ensure Set of Provider\Filter\TestEntity using ns1.
      */
-    protected function getTestSet()
+    protected function getTestSetUsingOneNamespace()
     {
         return [[
-            'testVoFrom' => false
+            'testOneNamespaceFrom' => false
         ], [
-            'testVoFrom' => false
+            'testOneNamespaceFrom' => false
+        ]];
+    }
+
+    /**
+     * @ensure Provider\Filter\TestEntity using ns1.ns2.
+     */
+    protected function getTestEntityUsingManyNamespaces()
+    {
+        return [
+            'testManyNamespacesFrom' => false
+        ];
+    }
+
+    /**
+     * @ensure Set of Provider\Filter\TestEntity using ns1.ns2.
+     */
+    protected function getTestSetUsingManyNamespaces()
+    {
+        return [[
+            'testManyNamespacesFrom' => false
+        ], [
+            'testManyNamespacesFrom' => false
         ]];
     }
 }

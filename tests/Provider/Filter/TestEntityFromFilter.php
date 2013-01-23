@@ -6,6 +6,7 @@ class TestEntityFromFilter
 {
     public function __invoke($entity)
     {
-        $entity['testEntityFrom'] = true;
+        $entity['testOneNamespaceFrom'] = true;
+        return $entity;
     }
 }
