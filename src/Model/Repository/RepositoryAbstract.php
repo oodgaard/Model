@@ -10,8 +10,6 @@ use ReflectionMethod;
 
 abstract class RepositoryAbstract
 {
-    const DEFAULT_NAME = 'default';
-
     private $cacheDrivers = [];
 
     private $cacheLifetimes = [];
@@ -20,10 +18,10 @@ abstract class RepositoryAbstract
 
     private $returnValueFilters = [];
 
-    private static $instances = [];
-
     public function __construct()
     {
+        $this->configure();
+
         if (method_exists($this, 'init')) {
             if (func_num_args()) {
                 call_user_func_array([$this, 'init'], func_get_args());
@@ -31,8 +29,6 @@ abstract class RepositoryAbstract
                 $this->init();
             }
         }
-
-        $this->configure();
     }
 
     public function __call($name, array $args = [])
@@ -50,6 +46,15 @@ abstract class RepositoryAbstract
         $this->setCache($name, $args, $value);
 
         return $value;
+    }
+
+    public function get($service)
+    {
+        if (isset($this->services[$service])) {
+            return $this->services[$service];
+        }
+
+        throw new InvalidArgumentException(sprintf('The service "%s" was not injected into "%s".', $service, get_class($this)));
     }
 
     public function configure()
@@ -236,65 +241,10 @@ abstract class RepositoryAbstract
 
         if (!$reflector->isProtected()) {
             throw new LogicException(sprintf(
-                'In order to automate the caching of "%s->%s()", you must mark it as protected.',
+                'You must define "%s::%s()" as protected.',
                 get_class($this),
                 $method
             ));
-        }
-    }
-
-    static public function __callStatic($name, array $args = [])
-    {
-        $self = self::getInstance();
-
-        if (method_exists($self, '__call')) {
-            return $self->__call($name, $args);
-        }
-
-        return call_user_func_array([$self, $name], $args);
-    }
-
-    static public function getInstance($name = self::DEFAULT_NAME, array $args = [])
-    {
-        if (is_array($name)) {
-            $args = $name;
-            $name = self::DEFAULT_NAME;
-        }
-        
-        $self = get_called_class() . $name;
-
-        if (isset(self::$instances[$self]) && !$args) {
-            return self::$instances[$self];
-        }
-        
-        return self::initInstance($name, $args);
-    }
-
-    static public function initInstance($name = self::DEFAULT_NAME, array $args = [])
-    {
-        if (is_array($name)) {
-            $args = $name;
-            $name = self::DEFAULT_NAME;
-        }
-
-        $class = get_called_class();
-        $self  = $class . $name;
-
-        if ($args) {
-            self::$instances[$self] = (new ReflectionClass($class))->newInstanceArgs($args);
-        } else {
-            self::$instances[$self] = new static;
-        }
-
-        return self::$instances[$self];
-    }
-
-    static public function removeInstance($name = self::DEFAULT_NAME)
-    {
-        $self = get_called_class() . $name;
-
-        if (isset(self::$instances[$self])) {
-            unset(self::$instances[$self]);
         }
     }
 }
