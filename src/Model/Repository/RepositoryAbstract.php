@@ -5,6 +5,8 @@ use InvalidArgumentException;
 use LogicException;
 use Model\Cache\CacheInterface;
 use Model\Configurator\DocComment\Repository\Configurator;
+use Model\Entity\Entity;
+use Model\Entity\Set;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -16,12 +18,12 @@ abstract class RepositoryAbstract
 
     private $cacheLinks = [];
 
+    private $joins = [];
+
     private $returnValueFilters = [];
 
     public function __construct()
     {
-        $this->configure();
-
         if (method_exists($this, 'init')) {
             if (func_num_args()) {
                 call_user_func_array([$this, 'init'], func_get_args());
@@ -29,9 +31,23 @@ abstract class RepositoryAbstract
                 $this->init();
             }
         }
+
+        $this->configure();
     }
 
     public function __call($name, array $args = [])
+    {
+        return $this->callArgs($name, $args);
+    }
+
+    public function call($name)
+    {
+        $args = func_get_args();
+        array_shift($args);
+        return $this->callArgs($name, $args);
+    }
+
+    public function callArgs($name, array $args)
     {
         $this->throwIfMethodNotExists($name);
         $this->throwIfMethodNotProtected($name);
@@ -43,24 +59,30 @@ abstract class RepositoryAbstract
         $value = call_user_func_array([$this, $name], $args);
         $value = $this->filterReturnValue($name, $value);
 
+        $this->processJoins($name, $value);
         $this->setCache($name, $args, $value);
 
         return $value;
-    }
-
-    public function get($service)
-    {
-        if (isset($this->services[$service])) {
-            return $this->services[$service];
-        }
-
-        throw new InvalidArgumentException(sprintf('The service "%s" was not injected into "%s".', $service, get_class($this)));
     }
 
     public function configure()
     {
         $conf = new Configurator;
         $conf->__invoke($this);
+    }
+
+    public function addJoin($method, $call, $field)
+    {
+        if (!isset($this->joins[$method])) {
+            $this->joins[$method] = [];
+        }
+
+        $this->joins = [
+            'call'  => $call,
+            'field' => $field
+        ];
+
+        return $this;
     }
 
     public function setCacheDriver($name, CacheInterface $driver)
@@ -205,6 +227,23 @@ abstract class RepositoryAbstract
         }
 
         return $value;
+    }
+
+    private function processJoins($method, $entityOrSet)
+    {
+        if (!isset($this->joins[$method])) {
+            return;
+        }
+
+        if ($entityOrSet instanceof Set) {
+            foreach ($entityOrSet as $entity) {
+                $this->processJoins($method, $entity);
+            }
+        } elseif ($entityOrSet instanceof Entity) {
+            foreach ($this->joins[$method] as $join) {
+                $entityOrSet->__set($join['field'], $this->call($join['call'], $entityOrSet));
+            }
+        }
     }
 
     private function throwIfMethodNotExists($method)
