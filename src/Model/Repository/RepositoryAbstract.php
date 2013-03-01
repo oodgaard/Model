@@ -12,6 +12,8 @@ use ReflectionMethod;
 
 abstract class RepositoryAbstract
 {
+    const DEFAULT_NAME = 'default';
+
     private $cacheDrivers = [];
 
     private $cacheLifetimes = [];
@@ -21,6 +23,8 @@ abstract class RepositoryAbstract
     private $joins = [];
 
     private $returnValueFilters = [];
+
+    private static $instances = [];
 
     public function __construct()
     {
@@ -284,6 +288,61 @@ abstract class RepositoryAbstract
                 get_class($this),
                 $method
             ));
+        }
+    }
+
+    static public function __callStatic($name, array $args = [])
+    {
+        $self = self::getInstance();
+
+        if (method_exists($self, '__call')) {
+            return $self->__call($name, $args);
+        }
+
+        return call_user_func_array([$self, $name], $args);
+    }
+
+    static public function getInstance($name = self::DEFAULT_NAME, array $args = [])
+    {
+        if (is_array($name)) {
+            $args = $name;
+            $name = self::DEFAULT_NAME;
+        }
+        
+        $self = get_called_class() . $name;
+
+        if (isset(self::$instances[$self]) && !$args) {
+            return self::$instances[$self];
+        }
+        
+        return self::initInstance($name, $args);
+    }
+
+    static public function initInstance($name = self::DEFAULT_NAME, array $args = [])
+    {
+        if (is_array($name)) {
+            $args = $name;
+            $name = self::DEFAULT_NAME;
+        }
+
+        $class = get_called_class();
+        $self  = $class . $name;
+
+        if ($args) {
+            self::$instances[$self] = (new ReflectionClass($class))->newInstanceArgs($args);
+        } else {
+            self::$instances[$self] = new static;
+        }
+
+        return self::$instances[$self];
+    }
+
+    static public function removeInstance($name = self::DEFAULT_NAME)
+    {
+        $self = get_called_class() . $name;
+
+        if (isset(self::$instances[$self])) {
+            unset(self::$instances[$self]);
         }
     }
 }
