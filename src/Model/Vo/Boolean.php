@@ -17,11 +17,7 @@ class Boolean extends VoAbstract
             return true;
         }
 
-        if ($lower === 'false') {
-            return false;
-        }
-
-        if ($lower === 'null') {
+        if ($lower === 'false' || $lower === 'null') {
             return false;
         }
 
