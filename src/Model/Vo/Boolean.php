@@ -11,6 +11,14 @@ class Boolean extends VoAbstract
 
     public function translate($value)
     {
+        if ($value === 'true') {
+            return true;
+        }
+
+        if ($value === 'false') {
+            return false;
+        }
+
         return (bool) $value;
     }
 }
