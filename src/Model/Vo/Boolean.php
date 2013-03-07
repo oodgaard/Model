@@ -11,11 +11,17 @@ class Boolean extends VoAbstract
 
     public function translate($value)
     {
-        if ($value === 'true') {
+        $lower = strtolower($value);
+
+        if ($lower === 'true') {
             return true;
         }
 
-        if ($value === 'false') {
+        if ($lower === 'false') {
+            return false;
+        }
+
+        if ($lower === 'null') {
             return false;
         }
 
