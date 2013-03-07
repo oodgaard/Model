@@ -254,7 +254,7 @@ class Set implements AccessibleInterface, ValidatableInterface
         if (!is_callable($query) && (is_array($query) || is_object($query))) {
             $query = function($item) use ($query) {
                 foreach ($query as $name => $value) {
-                    if (!preg_match('/' . str_replace('/', '\/', $value) . '/', $item->__get($name))) {
+                    if ($value !== $item->__get($name)) {
                         return false;
                     }
                 }
