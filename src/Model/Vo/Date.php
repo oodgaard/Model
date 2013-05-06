@@ -32,7 +32,6 @@ class Date extends VoAbstract
         } elseif (is_numeric($value)) {
             $datetime->setTimestamp($value);
         } else {
-            $datetime->modify('now');
             $datetime->modify($value ?: 'now');
         }
 
