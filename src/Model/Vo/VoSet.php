@@ -20,7 +20,7 @@ class VoSet extends VoAbstract
 
         if (is_array($value) || is_object($value)) {
             foreach ($value as $k => $v) {
-                $arr[$k] = $this->class->translate($v);
+                $arr[$k] = $this->instantiate()->translate($v);
             }
         }
 
