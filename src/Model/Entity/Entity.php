@@ -14,9 +14,11 @@ use Model\Vo\VoInterface;
 class Entity implements AccessibleInterface, AssertableInterface
 {
     use Assertable;
-    
+
     use Filterable;
-    
+
+    private $autoloaded = [];
+
     private $autoloaders = [];
 
     private $data = [];
@@ -47,47 +49,48 @@ class Entity implements AccessibleInterface, AssertableInterface
         'validators',
         'vos'
     ];
-    
+
     public function __construct($data = [], $filterToUse = null)
     {
         $this->configure();
         $this->init();
         $this->from($data, $filterToUse);
     }
-    
+
     public function __set($name, $value)
     {
         if (isset($this->vos[$name])) {
             $this->data[$name] = $this->vos[$name]->translate($value);
         }
     }
-    
+
     public function __get($name)
     {
         if (isset($this->vos[$name])) {
-            if (isset($this->autoloaders[$name]) && !isset($this->data[$name])) {
+            if (isset($this->autoloaders[$name]) && !isset($this->autoloaded[$name])) {
                 $this->data[$name] = $this->vos[$name]->translate($this->{$this->autoloaders[$name]}());
+                $this->autoloaded[$name] = true;
             }
 
             return $this->data[$name];
         }
     }
-    
+
     public function __isset($name)
     {
         return isset($this->data[$name]);
     }
-    
+
     public function __unset($name)
     {
         if (isset($this->data[$name])) {
             unset($this->data[$name]);
         }
     }
-    
+
     public function init()
     {
-        
+
     }
 
     public function clear()
@@ -98,7 +101,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $this;
     }
-    
+
     public function setVo($name, VoInterface $vo)
     {
         $this->vos[$name]  = $vo;
@@ -106,7 +109,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $this;
     }
-    
+
     public function getVo($name)
     {
         if (isset($this->vos[$name])) {
@@ -119,12 +122,12 @@ class Entity implements AccessibleInterface, AssertableInterface
             get_class($this)
         ));
     }
-    
+
     public function hasVo($name)
     {
         return isset($this->vos[$name]);
     }
-    
+
     public function removeVo($name)
     {
         if (isset($this->vos[$name])) {
@@ -134,7 +137,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $this;
     }
-    
+
     /**
      * @deprecated
      */
@@ -143,7 +146,7 @@ class Entity implements AccessibleInterface, AssertableInterface
         $this->mappers[$name] = $mapper;
         return $this;
     }
-    
+
     /**
      * @deprecated
      */
@@ -154,7 +157,7 @@ class Entity implements AccessibleInterface, AssertableInterface
         }
         return $this->mappers[$name];
     }
-    
+
     /**
      * @deprecated
      */
@@ -162,7 +165,7 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         return isset($this->mappers[$name]);
     }
-    
+
     /**
      * @deprecated
      */
@@ -174,7 +177,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $this;
     }
-    
+
     public function setAutoloader($name, $method)
     {
         if (!method_exists($this, $method)) {
@@ -184,12 +187,12 @@ class Entity implements AccessibleInterface, AssertableInterface
                 get_class($this)
             ));
         }
-        
+
         $this->autoloaders[$name] = $method;
-        
+
         return $this;
     }
-    
+
     public function getAutoloader($name)
     {
         if (!isset($this->autoloaders[$name])) {
@@ -198,12 +201,12 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $this->autoloaders[$name];
     }
-    
+
     public function hasAutoloader($name)
     {
         return isset($this->autoloaders[$name]);
     }
-    
+
     public function removeAutoloader($name)
     {
         if (isset($this->autoloaders[$name])) {
@@ -241,6 +244,10 @@ class Entity implements AccessibleInterface, AssertableInterface
 
     public function from($data, $filterToUse = null)
     {
+        if (!$data) {
+            return $this;
+        }
+
         foreach ($this->getImportFilters()->offsetGet($filterToUse) as $filter) {
             $data = $filter($data);
         }
@@ -277,7 +284,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $data;
     }
-    
+
     /**
      * @deprecated
      */
@@ -286,59 +293,59 @@ class Entity implements AccessibleInterface, AssertableInterface
         if (!$data) {
             return $this;
         }
-        
+
         if ($mapper && isset($this->mappers[$mapper])) {
             $data = $this->makeArrayFromAnything($data);
             $data = $this->mappers[$mapper]->map($data);
         }
-        
+
         if (is_array($data) || is_object($data)) {
             foreach ($data as $name => $value) {
                 $this->__set($name, $value);
             }
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @deprecated
      */
     public function toArray($mapper = null)
     {
         $array = array();
-        
+
         foreach ($this->data as $name => $value) {
             if ($value instanceof AccessibleInterface) {
                 $value = $value->toArray($mapper);
             }
-            
+
             $array[$name] = $value;
         }
-        
+
         if ($mapper && isset($this->mappers[$mapper])) {
             $array = $this->mappers[$mapper]->map($array);
         }
-        
+
         return $array;
     }
-    
+
     public function validate()
     {
         $messages = [];
-        
+
         foreach ($this->vos as $name => $vo) {
             if ($voMessages = $vo->validate($this->data[$name])) {
                 $messages = array_merge($messages, $voMessages);
             }
         }
-        
+
         foreach ($this->validators as $message => $validator) {
             if ($validator($this) === false) {
                 $messages[] = $this->validatorMessages[$message];
             }
         }
-        
+
         foreach ($messages as &$message) {
             foreach ($this->data as $name => $value) {
                 if (is_scalar($value)) {
@@ -346,60 +353,60 @@ class Entity implements AccessibleInterface, AssertableInterface
                 }
             }
         }
-        
+
         return $messages;
     }
-    
+
     public function offsetSet($name, $value)
     {
         $this->__set($name, $value);
     }
-    
+
     public function offsetGet($name)
     {
         return $this->__get($name);
     }
-    
+
     public function offsetExists($name)
     {
         return $this->__isset($name);
     }
-    
+
     public function offsetUnset($name)
     {
         $this->__unset($name);
     }
-    
+
     public function count()
     {
-       return count($this->data); 
+       return count($this->data);
     }
-    
+
     public function current()
     {
         return current($this->data);
     }
-    
+
     public function key()
     {
         return key($this->data);
     }
-    
+
     public function next()
     {
         next($this->data);
     }
-    
+
     public function rewind()
     {
         reset($this->data);
     }
-    
+
     public function valid()
     {
         return $this->key() !== null;
     }
-    
+
     public function serialize()
     {
         $data = [];
@@ -410,14 +417,14 @@ class Entity implements AccessibleInterface, AssertableInterface
 
         return $data;
     }
-    
+
     public function unserialize($data)
     {
         foreach (self::$serializeProperties as $name) {
             $this->$name = $data[$name];
         }
     }
-    
+
     private function makeArrayFromAnything($data)
     {
         if (is_array($data)) {
@@ -433,7 +440,7 @@ class Entity implements AccessibleInterface, AssertableInterface
 
             return $arr;
         }
-        
+
         return [];
     }
 
