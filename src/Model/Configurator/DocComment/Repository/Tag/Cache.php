@@ -24,11 +24,11 @@ class Cache
 
         if (!$repository->hasCacheDriver(self::$cache[$cacheKey]['driver'])) {
             throw new InvalidArgumentException(sprintf(
-                'Cannot apply cache driver "%s" to method "%s" in repository "%s" using the doc tag "%s" because that cache driver does not exist on the repository.',
+                'Cannot apply cache driver "%s" to method "%s" in repository "%s" using the doc tag "%s" because that cache driver was not set.',
                 self::$cache[$cacheKey]['driver'],
                 $method->getName(),
                 get_class($repository),
-                $tag
+                $tag->getName()
             ));
         }
         
