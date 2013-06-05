@@ -272,7 +272,7 @@ class Set implements AccessibleInterface, ValidatableInterface
                 break;
             }
 
-            if ($query($item) === false) {
+            if ($query($item) !== false) {
                 $keys[] = $key;
             }
         }
