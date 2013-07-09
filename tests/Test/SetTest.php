@@ -45,7 +45,7 @@ class SetTest extends UnitAbstract
     public function findingMany()
     {
         $query = function($item) {
-            return preg_match('/^test [1-2]$/', $item->name);
+            return preg_match('/^test [1-2]$/', $item->name) > 0;
         };
 
         $found = $this->set->find($query);
