@@ -527,4 +527,40 @@ class Entity implements AccessibleInterface, AssertableInterface
     {
         return get_class($this);
     }
+
+    public static function create($data = [], $mapper = null)
+    {
+        $class = get_called_class();
+        return new $class($data, $mapper);
+    }
+
+    public static function collection($data = [], $mapper = null)
+    {
+        return new Set(get_called_class(), $data, $mapper);
+    }
+
+    public static function fix(callable $gen)
+    {
+        $class = get_called_class();
+
+        return function ($min = 0, $max = 0) use ($gen, $class) {
+            if (!$min) {
+                return $class::create($gen());
+            }
+
+            if (!$max) {
+                $max = $min;
+            } else {
+                $max = rand($min, $max);
+            }
+
+            $collection = $class::collection();
+
+            for ($i = 0; $i < $max; $i++) {
+                $collection->append($class::create($gen()));
+            }
+
+            return $collection;
+        };
+    }
 }
