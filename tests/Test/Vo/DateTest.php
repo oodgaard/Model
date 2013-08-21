@@ -43,7 +43,7 @@ class DateTest extends UnitAbstract
 
     public function nullDate()
     {
-	$expectedDate = '2009-12-31T14:00:00';
+        $expectedDate = '2009-12-31T14:00:00';
 
         $date = $this->generateDate('Y-m-d\TH:i:s');
         $date = $date->translate(null);
@@ -64,7 +64,7 @@ class DateTest extends UnitAbstract
         return new Date([
             'format'   => $format ?: $this->format,
             'timezone' => $timezone ?: $this->timezone,
-	    'allowNull' => $allowNull,
+            'allowNull' => $allowNull,
         ]);
     }
 }
