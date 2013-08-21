@@ -10,7 +10,7 @@ class Date extends VoAbstract
 
     public static $defaultConfig = [
         'format'   => DATE_RFC822,
-	'timezone' => null,
+        'timezone' => null,
         'allowNull' => false,
     ];
 
