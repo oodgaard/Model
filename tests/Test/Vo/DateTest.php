@@ -45,14 +45,14 @@ class DateTest extends UnitAbstract
 
     public function nullDate()
     {
-        $expectedDate = '2009-12-31T14:00:00';
-        $date = $this->generateDate('Y-m-d\TH:i:s');
-        $resultantDate = $date->translate(null);
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s');
+        $translateResult = $dateTime->translate(null);
         $dateNow = new \DateTime();
         $dateOverTolerance = clone $dateNow;
 
         $dateOverTolerance->modify('+' . self::SECONDS_TOLERANCE + 1 . ' seconds');
 
+        // Determine how many seconds we need to be over tolerance
         $secondsDifference = $dateNow->diff($dateOverTolerance)->format('%s');
 
         // Ensure our logic for testing tolerance is correct
@@ -64,9 +64,10 @@ class DateTest extends UnitAbstract
             )
         );
 
-        $secondsDifference = $dateNow->diff(new \DateTime($resultantDate))->format('%s');
+        // Determine how many seconds elapsed between the creation of the two dates
+        $secondsDifference = $dateNow->diff(new \DateTime($translateResult))->format('%s');
 
-        // Ensure generated dates are within the acceptable tolerance
+        // Ensure generated the dates difference is within the acceptable tolerance
         $this->assert(
             $secondsDifference <= self::SECONDS_TOLERANCE,
             sprintf(
@@ -75,13 +76,14 @@ class DateTest extends UnitAbstract
             )
         );
 
-        $date = $this->generateDate('Y-m-d\TH:i:s', null, true);
-        $resultantDate = $date->translate(null);
+        // Enable allowNull option
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s', null, true);
+        $translateResult = $dateTime->translate(null);
 
         // Ensure nulls are allowed
         $this->assert(
-            $resultantDate === null,
-            sprintf('Unexpected return value, expected null got %s', gettype($resultantDate))
+            $translateResult === null,
+            sprintf('Unexpected return value, expected null got %s', gettype($translateResult))
         );
     }
 
