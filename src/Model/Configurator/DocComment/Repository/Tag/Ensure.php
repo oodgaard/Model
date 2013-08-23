@@ -16,7 +16,7 @@ class Ensure
         $cacheKey = $method->getDeclaringClass()->getName() . $method->getName();
 
         if (!isset(self::$cache[$cacheKey])) {
-            self::$cache[$cacheKey] = $this->generateFilter($tag->getValue());
+            self::$cache[$cacheKey] = $this->generateFilter($tag->getValue(), $repository);
         }
 
         if (is_callable(self::$cache[$cacheKey])) {
@@ -24,15 +24,16 @@ class Ensure
         }
     }
 
-    private function generateFilter($tag)
+    private function generateFilter($tag, RepositoryAbstract $repository)
     {
         $info = $this->parseAutomatedReturnValue($tag);
 
         if (!class_exists($info['entity'])) {
             throw new InvalidArgumentException(sprintf(
-                'The entity "%s" could not be found while applying the @ensure annotation for "%s".',
+                'The entity "%s" could not be found while applying the @ensure annotation "%s" for "%s".',
                 $info['entity'],
-                $tag
+                $tag,
+                get_class($repository)
             ));
         }
         

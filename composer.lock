@@ -1,21 +1,25 @@
 {
-    "hash": "f11315c8f6fb3cd5997e8ed419851e58",
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+    ],
+    "hash": "9cff14cde128039ef13ce88670bfb48a",
     "packages": [
 
     ],
     "packages-dev": [
         {
             "name": "treshugart/testes",
-            "version": "dev-master",
+            "version": "1.0.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/treshugart/Testes.git",
-                "reference": "e2c10e7bf8b25ec08b99daf4681b2253893a8467"
+                "reference": "8f9d90d773cf19ec61fd497795f80f817ab1f002"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/treshugart/Testes/archive/e2c10e7bf8b25ec08b99daf4681b2253893a8467.zip",
-                "reference": "e2c10e7bf8b25ec08b99daf4681b2253893a8467",
+                "url": "https://api.github.com/repos/treshugart/Testes/zipball/8f9d90d773cf19ec61fd497795f80f817ab1f002",
+                "reference": "8f9d90d773cf19ec61fd497795f80f817ab1f002",
                 "shasum": ""
             },
             "require": {
@@ -24,9 +28,7 @@
             "require-dev": {
                 "ext-xdebug": "*"
             },
-            "time": "2013-01-08 02:04:32",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Testes": "src"
@@ -47,15 +49,16 @@
             "description": "Dead simple unit and story test framework.",
             "homepage": "http://github.com/treshugart/Testes",
             "keywords": [
-                "testing",
                 "BDD",
-                "test",
                 "Behavior",
                 "development",
-                "unit",
+                "driven",
                 "story",
-                "driven"
-            ]
+                "test",
+                "testing",
+                "unit"
+            ],
+            "time": "2013-07-09 19:30:13"
         }
     ],
     "aliases": [
@@ -64,5 +67,11 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "treshugart/testes": 20
-    }
+    },
+    "platform": {
+        "php": ">=5.4.0"
+    },
+    "platform-dev": [
+
+    ]
 }

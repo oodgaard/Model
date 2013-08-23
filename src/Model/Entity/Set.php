@@ -12,23 +12,23 @@ use RuntimeException;
 class Set implements AccessibleInterface, ValidatableInterface
 {
     use Validatable;
-    
+
     private $class;
-    
+
     private $data = [];
-    
+
     public function __construct($class, $data = [], $filterToUse = null)
     {
         $this->class = $class;
         $this->from($data, $filterToUse);
     }
-    
+
     public function clear()
     {
         $this->data = [];
         return $this;
     }
-    
+
     public function isRepresenting($class)
     {
         if (is_object($class)) {
@@ -37,7 +37,7 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $this->class === $class;
     }
-    
+
     public function mustRepresent($class)
     {
         if (!$this->isRepresenting($class)) {
@@ -53,18 +53,18 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $this;
     }
-    
+
     public function validate()
     {
         $messages   = [];
         $validators = $this->getValidators();
-        
+
         $this->walk(function($entity) use (&$messages, $validators) {
             foreach ($validators as $message => $validator) {
                 $messages = array_merge($messages, $entity->validate());
             }
         });
-        
+
         return $messages;
     }
 
@@ -82,14 +82,14 @@ class Set implements AccessibleInterface, ValidatableInterface
     public function to($filterToUse = null)
     {
         $array = [];
-        
+
         foreach ($this as $k => $v) {
             $array[$k] = $v->to($filterToUse);
         }
-        
+
         return $array;
     }
-    
+
     /**
      * @deprecated
      */
@@ -110,27 +110,27 @@ class Set implements AccessibleInterface, ValidatableInterface
     public function toArray($mapper = null)
     {
         $array = [];
-        
+
         foreach ($this as $k => $v) {
             $array[$k] = $v->toArray($mapper);
         }
-        
+
         return $array;
     }
-    
+
     public function walk($callback)
     {
         if (!is_callable($callback)) {
             throw new InvalidArgumentException('The passed argument is not callable.');
         }
-        
+
         foreach ($this as $entity) {
             call_user_func($callback, $entity);
         }
-        
+
         return $this;
     }
-    
+
     public function aggregate($field)
     {
         $values = [];
@@ -141,7 +141,7 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $values;
     }
-    
+
     public function moveTo($currentIndex, $newIndex)
     {
         if ($item = $this->offsetGet($currentIndex)) {
@@ -151,18 +151,18 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $this;
     }
-    
+
     public function push($index, $item = [])
     {
         $start = array_slice($this->data, 0, $index);
         $end   = array_slice($this->data, $index);
         $item  = $this->ensureEntity($item);
-        
+
         $this->data = array_merge($start, [$index => $item], $end);
-        
+
         return $this;
     }
-    
+
     public function pull($index)
     {
         if ($item = $this->offsetGet($index)) {
@@ -170,22 +170,22 @@ class Set implements AccessibleInterface, ValidatableInterface
             return $item;
         }
     }
-    
+
     public function prepend($item = [])
     {
         return $this->push(0, $item);
     }
-    
+
     public function append($item = [])
     {
         return $this->push($this->count(), $item);
     }
-    
+
     public function filter($query)
     {
         return $this->reduce($this->findKeys($query));
     }
-    
+
     public function reduce($keys)
     {
         $found = [];
@@ -210,18 +210,18 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $this;
     }
-    
+
     public function remove($query)
     {
         foreach ($this->findKeys($query) as $key) {
             unset($this->data[$key]);
         }
-        
+
         $this->data = array_values($this->data);
-        
+
         return $this;
     }
-    
+
     public function findOne($query)
     {
         $clone = clone $this;
@@ -233,13 +233,13 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return false;
     }
-    
+
     public function find($query, $limit = 0, $offset = 0)
     {
         $clone = clone $this;
         return $clone->reduce($clone->findKeys($query, $limit, $offset));
     }
-    
+
     public function findKey($query)
     {
         if ($found = $this->findKeys($query, 1)) {
@@ -248,13 +248,13 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return false;
     }
-    
+
     public function findKeys($query, $limit = 0, $offset = 0)
     {
         if (!is_callable($query) && (is_array($query) || is_object($query))) {
             $query = function($item) use ($query) {
                 foreach ($query as $name => $value) {
-                    if (!preg_match('/' . str_replace('/', '\/', $value) . '/', $item->__get($name))) {
+                    if ($value !== $item->__get($name)) {
                         return false;
                     }
                 }
@@ -267,7 +267,7 @@ class Set implements AccessibleInterface, ValidatableInterface
             if ($offset && $offset > $key) {
                 continue;
             }
-            
+
             if ($limit && $limit === count($keys)) {
                 break;
             }
@@ -279,14 +279,14 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $keys;
     }
-    
+
     public function first()
     {
         if ($this->offsetExists(0)) {
             return $this->offsetGet(0);
         }
     }
-    
+
     public function last()
     {
         $lastIndex = $this->count() - 1;
@@ -295,32 +295,32 @@ class Set implements AccessibleInterface, ValidatableInterface
             return $this->offsetGet($lastIndex);
         }
     }
-    
+
     public function offsetSet($offset, $value)
     {
         if (!$value instanceof Entity) {
             $value = $this->ensureEntity($value);
         }
-        
+
         $offset = is_numeric($offset) ? (int) $offset : count($this->data);
-        
+
         $this->data[$offset] = $value;
-        
+
         return $this;
     }
-    
+
     public function offsetGet($offset)
     {
         if ($this->offsetExists($offset)) {
             return $this->data[$offset];
         }
     }
-    
+
     public function offsetExists($offset)
     {
         return isset($this->data[$offset]);
     }
-    
+
     public function offsetUnset($offset)
     {
         if ($this->offsetExists($offset)) {
@@ -330,39 +330,39 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $this;
     }
-    
+
     public function count()
     {
         return count($this->data);
     }
-    
+
     public function current()
     {
         return $this->offsetGet($this->key());
     }
-    
+
     public function key()
     {
         return key($this->data);
     }
-    
+
     public function next()
     {
         next($this->data);
         return $this;
     }
-    
+
     public function rewind()
     {
         reset($this->data);
         return $this;
     }
-    
+
     public function valid()
     {
         return !is_null($this->key());
     }
-    
+
     public function serialize()
     {
         return serialize([
@@ -371,7 +371,7 @@ class Set implements AccessibleInterface, ValidatableInterface
             'validators' => $this->validators
         ]);
     }
-    
+
     public function unserialize($data)
     {
         $data             = unserialize($data);
@@ -379,7 +379,7 @@ class Set implements AccessibleInterface, ValidatableInterface
         $this->validators = $data['validators'];
         $this->from($data['data']);
     }
-    
+
     private function ensureEntity($item, $filterToUse = null)
     {
         if (!$item instanceof $this->class) {
