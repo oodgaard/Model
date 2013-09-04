@@ -1,9 +1,7 @@
 <?php
 
 namespace Model\Vo;
-use InvalidArgumentException;
 use ReflectionClass;
-use RuntimeException;
 
 class VoSet extends VoAbstract
 {
@@ -14,16 +12,45 @@ class VoSet extends VoAbstract
         $this->class = (new ReflectionClass($class))->newInstanceArgs($args);
     }
 
+    public function init()
+    {
+        return new \ArrayObject();
+    }
+
     public function translate($value)
     {
-        $arr = [];
+        $data = new \ArrayObject;
 
         if (is_array($value) || is_object($value)) {
             foreach ($value as $k => $v) {
-                $arr[$k] = $this->class->translate($v);
+                $data->offsetSet($k, $this->class->translate($v));
             }
         }
 
-        return $arr;
+        return $data;
+    }
+
+    public function from($value, $filter = null)
+    {
+        $data = new \ArrayObject;
+
+        if (is_array($value) || is_object($value)) {
+            foreach ($value as $k => $v) {
+                $data->offsetSet($k, $this->class->to($v, $filter));
+            }
+        }
+
+        return $data;
+    }
+
+    public function to($value, $filter = null)
+    {
+        $data = [];
+
+        foreach ($value as $k => $v) {
+            $data[$k] = $this->class->to($v, $filter);
+        }
+
+        return $data;
     }
 }
