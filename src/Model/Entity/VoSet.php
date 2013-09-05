@@ -208,7 +208,11 @@ class VoSet implements AccessibleInterface, ValidatableInterface
 
     public function findKeys($query, $limit = 0, $offset = 0)
     {
-        if (!is_callable($query) && (is_array($query) || is_object($query))) {
+        if (!is_callable($query)) {
+            if (!(is_array($query) || is_object($query))) {
+                $query = [$query];
+            }
+            
             $query = function($item) use ($query) {
                 foreach ($query as $el) {
                     if ($el === $item) {
