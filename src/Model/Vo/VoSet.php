@@ -2,55 +2,38 @@
 
 namespace Model\Vo;
 use ReflectionClass;
+use Model\Entity;
 
 class VoSet extends VoAbstract
 {
+    private $args;
+
     private $class;
 
     public function __construct($class, array $args = [])
     {
-        $this->class = (new ReflectionClass($class))->newInstanceArgs($args);
+        $this->args  = $args;
+        $this->class = $class;
     }
 
     public function init()
     {
-        return new \ArrayObject();
+        return new Entity\VoSet($this->class, $this->args);
     }
 
     public function translate($value)
     {
-        $data = new \ArrayObject;
-
-        if (is_array($value) || is_object($value)) {
-            foreach ($value as $k => $v) {
-                $data->offsetSet($k, $this->class->translate($v));
-            }
-        }
-
-        return $data;
+        return new Entity\VoSet($this->class, $this->args, $value);
     }
 
     public function from($value, $filter = null)
     {
-        $data = new \ArrayObject;
 
-        if (is_array($value) || is_object($value)) {
-            foreach ($value as $k => $v) {
-                $data->offsetSet($k, $this->class->to($v, $filter));
-            }
-        }
-
-        return $data;
+        return (new Entity\VoSet($this->class, $this->args))->from($value, $filter);
     }
 
     public function to($value, $filter = null)
     {
-        $data = [];
-
-        foreach ($value as $k => $v) {
-            $data[$k] = $this->class->to($v, $filter);
-        }
-
-        return $data;
+        return $value->to($filter);
     }
 }
