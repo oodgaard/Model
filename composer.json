@@ -16,7 +16,7 @@
     "homepage": "http://github.com/treshugart/Model",
     "keywords": ["model", "domain", "driven", "design", "ddd", "entity", "entities", "repository", "repositories", "value", "object"],
     "license": "MIT",
-    "name": "treshugart/model",
+    "name": "devco/model",
     "require": {
         "php": ">=5.4.0"
     },
