@@ -46,7 +46,7 @@ You can apply a value object to an entity 2 different ways. First, you can simpl
 Secondly, and probably more commonly, you can apply a value object by annotating the property you want it to act as.
 
     /**
-     * @var Model\Vo\Generic
+     * @vo Model\Vo\Generic
      */
     public $name = 'Default Value';
 
@@ -55,7 +55,7 @@ If doing it this way, you must make the property public. This way, it can be uns
 Some Value objects require arguments passed to them. If this does not need to be dynamic, you can specify them in the annotation. Specify them just as you would an argument list to a method.
 
     /**
-     * @var Model\Vo\VoSet 'Model\Vo\Date', ['format' => 'Y-m-d H:i:s']
+     * @vo Model\Vo\VoSet 'Model\Vo\Date', ['format' => 'Y-m-d H:i:s']
      */
     public $updated = 'now';
 
