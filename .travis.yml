@@ -6,7 +6,7 @@ php:
 before_script: 
     - sudo apt-get install memcached
     - sudo apt-get install php5-memcache
-    - sudo $(echo "extension=\"memcache.so\"" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`)
+    - sudo sh -c "echo "extension=\"memcache.so\"" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`"
     - env php --ini | grep "Loaded Configuration"
     - env php -m
     - find /etc/php5
