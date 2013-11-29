@@ -1,7 +1,6 @@
 <?php
 
 namespace Model\Cache;
-use Memcache;
 
 /**
  * The Memcache driver.
@@ -32,7 +31,7 @@ class Memcache implements CacheInterface
     public function __construct(array $config = array())
     {    
         $this->config   = array_merge($this->config, $config);
-        $this->memcache = new Memcache;
+        $this->memcache = new \Memcache;
         
         foreach ($this->config['servers'] as $server) {
             $this->memcache->addServer($server['host'], $server['port']);
