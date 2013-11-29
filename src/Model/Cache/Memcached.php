@@ -50,7 +50,7 @@ class Memcache implements CacheInterface
      */
     public function set($key, $value, $lifetime = null)
     {
-        $this->memcache->add($key, $value, $lifetime);
+        $this->memcache->add($key, $value, false, $lifetime);
         return $this;
     }
     
