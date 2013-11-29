@@ -6,25 +6,23 @@ use DateTimeZone;
 
 class Date extends VoAbstract
 {
-    public $config = [];
-
-    public static $defaultConfig = [
+    protected static $defaultConfig = [
         'format'   => DATE_RFC822,
-        'timezone' => null
+        'timezone' => null,
+        'allowNull' => false,
     ];
-
-    public function __construct(array $config = [])
-    {
-        $this->config = array_merge(self::$defaultConfig, $config);
-    }
 
     public function init()
     {
-        return $this->datetime()->format($this->config['format']);
+        return $this->config['allowNull'] ? null : $this->datetime()->format($this->config['format']);
     }
 
     public function translate($value)
     {
+        if (is_null($value) && $this->config['allowNull']) {
+            return $value;
+        }
+
         $datetime = $this->datetime();
 
         if ($value instanceof DateTime) {

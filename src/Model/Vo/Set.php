@@ -4,6 +4,11 @@ namespace Model\Vo;
 
 class Set extends VoAbstract
 {
+    public function init()
+    {
+        return [];
+    }
+
     public function translate($value)
     {
         if (is_array($value)) {
