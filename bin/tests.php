@@ -45,7 +45,13 @@ if (count($exceptions = $suite->getExceptions())) {
     echo '----------' . PHP_EOL;
 
     foreach ($exceptions as $exc) {
-        echo '  ' . $exc->getTestFile() . ':' . $exc->getTestLine() . ' ' . $exc->getMessage() . PHP_EOL;
+        echo '  ' . $exc->getTestClass() . '::' . $exc->getTestMethod() . '():' . $exc->getTestLine() . ' ' . $exc->getMessage() . PHP_EOL;
+
+        foreach (explode(PHP_EOL, $exc->getException()->getTraceAsString()) as $trace) {
+            echo '    ' . $trace . PHP_EOL;
+        }
+
+        echo PHP_EOL;
     }
 
     echo PHP_EOL;
