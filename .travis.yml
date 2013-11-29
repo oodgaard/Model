@@ -3,12 +3,12 @@ language: php
 php:
   - 5.4
 
+services:
+  - memcached
+
 before_script: 
-    - sudo apt-get install memcached
-    - sudo apt-get install php5-memcache
-    - sudo iptables -A INPUT -p tcp --destination-port 11211 -j ACCEPT
-    - sudo iptables -L
-    - sudo sh -c "echo "extension=\"memcache.so\"" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`"
-    - composer install --dev
+  - sudo apt-get install php5-memcache
+  - sudo sh -c "echo "extension=\"memcache.so\"" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`"
+  - composer install --dev
 
 script: php bin/tests.php
