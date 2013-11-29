@@ -5,7 +5,8 @@ php:
 
 before_script: 
     - sudo apt-get install memcached
-    - pecl install --force memcache
+    - echo "yes" | sudo pecl install --force memcache
+    - sudo sh -c "echo "extension=memcache.so" >/etc/php5/conf.d/memcache.ini"
     - composer install --dev
 
 script: php bin/tests.php
