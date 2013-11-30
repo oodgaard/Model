@@ -20,4 +20,17 @@ class RepositoryCacheTest extends UnitAbstract
 
         $this->assert($second < $first, 'Expected cached content to be retrieved faster');
     }
+
+    public function entity()
+    {
+        $repository = new Repository;
+
+        // add to cache
+        $repository->getById(1);
+
+        // retrieve from cache
+        $entity = $repository->getById(1);
+
+        $this->assert(isset($entity->id) && $entity->id == 1, 'Invalid cached content returned');
+    }
 }
