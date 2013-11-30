@@ -32,7 +32,21 @@ class Repository extends BaseRepository
      * @ensure Provider\ReferenceEntity
      * @cache Using MemCache for 10
      */
-    protected function getById($id)
+    protected function getByIdMemCache($id)
+    {
+        return [
+            'id'          => 1,
+            'contentId'   => $id,
+            'description' => 'Wikipedia reference 1',
+            'link'        => 'http://en.wikipedia.org/wiki/Domain-driven_design'
+        ];
+    }
+
+    /**
+     * @ensure Provider\ReferenceEntity
+     * @cache Using PHP for 10
+     */
+    protected function getByIdPhpCache($id)
     {
         return [
             'id'          => 1,

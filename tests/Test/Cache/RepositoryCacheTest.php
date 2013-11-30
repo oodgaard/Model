@@ -21,16 +21,37 @@ class RepositoryCacheTest extends UnitAbstract
         $this->assert($second < $first, 'Expected cached content to be retrieved faster');
     }
 
-    public function entity()
+    public function entityMemCache()
     {
         $repository = new Repository;
 
         // add to cache
-        $repository->getById(1);
+        $first = $repository->getByIdMemCache(1);
 
         // retrieve from cache
-        $entity = $repository->getById(1);
+        $second = $repository->getByIdMemCache(1);
 
-        $this->assert(isset($entity->id) && $entity->id == 1, 'Invalid cached content returned');
+        $this->assert(isset($second->contentId) && $second->contentId == 1, 'Invalid cached content returned');
+
+        $diff = array_diff($first->to(), $second->to());
+
+        $this->assert(count($diff) == 0, 'Invalid cached content returned');
+    }
+
+    public function entityPhpCache()
+    {
+        $repository = new Repository;
+
+        // add to cache
+        $first = $repository->getByIdPhpCache(2);
+
+        // retrieve from cache
+        $second = $repository->getByIdPhpCache(2);
+
+        $this->assert(isset($second->id), 'Invalid cached content returned');
+
+        $diff = array_diff($first->to(), $second->to());
+
+        $this->assert(count($diff) == 0, 'Invalid cached content returned');
     }
 }
