@@ -8,14 +8,12 @@ class RepositoryCacheTest extends UnitAbstract
 {
     public function caching()
     {
-        $repository = new Repository;
-
         $start = microtime(true);
-        $content = $repository->getByContentId(1);
+        $content = Repository::getByContentId(1);
         $first = microtime(true) - $start;
 
         $start = microtime(true);
-        $content = $repository->getByContentId(1);
+        $content = Repository::getByContentId(1);
         $second = microtime(true) - $start;
 
         $this->assert($second < $first, 'Expected cached content to be retrieved faster');
@@ -23,13 +21,11 @@ class RepositoryCacheTest extends UnitAbstract
 
     public function entityMemCache()
     {
-        $repository = new Repository;
-
         // add to cache
-        $first = $repository->getByIdMemCache(1);
+        $first = Repository::getByIdMemCache(1);
 
         // retrieve from cache
-        $second = $repository->getByIdMemCache(1);
+        $second = Repository::getByIdMemCache(1);
 
         $this->assert(isset($second->contentId) && $second->contentId == 1, 'Invalid cached content returned');
 
@@ -40,13 +36,11 @@ class RepositoryCacheTest extends UnitAbstract
 
     public function entityPhpCache()
     {
-        $repository = new Repository;
-
         // add to cache
-        $first = $repository->getByIdPhpCache(2);
+        $first = Repository::getByIdPhpCache(2);
 
         // retrieve from cache
-        $second = $repository->getByIdPhpCache(2);
+        $second = Repository::getByIdPhpCache(2);
 
         $this->assert(isset($second->id), 'Invalid cached content returned');
 
