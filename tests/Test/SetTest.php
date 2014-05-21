@@ -71,4 +71,11 @@ class SetTest extends UnitAbstract
         $this->assert($found instanceof ContentEntity, 'Item found should be an instance of an entity.');
         $this->assert($found->id === '1', 'The first item should have been returned.');
     }
+
+    public function limit()
+    {
+        $result = $this->set->limit(5, 0);
+
+        $this->assert($result->count() == 5);
+    }
 }
