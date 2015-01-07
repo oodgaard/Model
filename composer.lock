@@ -1,12 +1,11 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "This file is @generated automatically"
     ],
-    "hash": "bb77c45a3f22bf4fee37cfa00f071d98",
-    "packages": [
-
-    ],
+    "hash": "4159671be721ca6af14cc62071c1c83d",
+    "packages": [],
     "packages-dev": [
         {
             "name": "devco/event-emitter",
@@ -104,19 +103,18 @@
             "time": "2013-09-27 05:00:15"
         }
     ],
-    "aliases": [
-
-    ],
+    "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
         "devco/testes": 20,
         "devco/event-emitter": 20
     },
+    "prefer-stable": false,
+    "prefer-lowest": false,
     "platform": {
-        "php": ">=5.4.0",
-        "ext-memcache": "*"
+        "php": ">=5.4.0"
     },
-    "platform-dev": [
-
-    ]
+    "platform-dev": {
+        "ext-memcache": ">=3.0.0"
+    }
 }
