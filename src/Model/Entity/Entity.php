@@ -433,13 +433,21 @@ class Entity implements AccessibleInterface, AssertableInterface
             $data[$name] = $this->$name;
         }
 
-        return $data;
+        return serialize($data);
     }
 
     public function unserialize($data)
     {
+        $data = unserialize($data);
+
         foreach (self::$serializeProperties as $name) {
             $this->$name = $data[$name];
+        }
+
+        foreach ($this->vos as $field => $vo) {
+            if (isset($data['data'][$field])) {
+                $this->$field = $data['data'][$field];
+            }
         }
     }
 

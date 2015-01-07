@@ -3,6 +3,7 @@
 namespace Provider;
 use Exception;
 use Model\Cache\Php;
+use Model\Cache\Memcache;
 use Model\Entity\Entity;
 use Model\Repository\RepositoryAbstract;
 
@@ -18,6 +19,7 @@ abstract class BaseRepository extends RepositoryAbstract
     {
         $this->setUp = $setUp;
         $this->setCacheDriver('PHP', new Php);
+        $this->setCacheDriver('MemCache', new Memcache);
     }
 
     protected function findById($id)
@@ -42,7 +44,7 @@ abstract class BaseRepository extends RepositoryAbstract
     {
         $entity->id = md5(rand() . microtime() . rand());
         
-        $this->entities[$entity->id] = $entity->toArray();
+        $this->entities[$entity->id] = $entity->to();
     }
     
     protected function update(Entity $entity)
@@ -51,6 +53,6 @@ abstract class BaseRepository extends RepositoryAbstract
             throw new Exception(get_class($entity) . ' does not exists, therefore it was not updated.');
         }
         
-        $this->entities[$entity->id] = $entity->toArray();
+        $this->entities[$entity->id] = $entity->to();
     }
 }

@@ -2,6 +2,7 @@
 
 use Testes\Coverage\Coverage;
 use Testes\Finder\Finder;
+use Lib\TestEvent;
 use Testes\Autoloader;
 
 $base = __DIR__ . '/..';
@@ -12,6 +13,7 @@ Autoloader::register();
 Autoloader::addPath($base . '/tests');
 Autoloader::addPath($base . '/src');
 
+$event    = new TestEvent();
 $coverage = new Coverage;
 $finder   = new Finder($base . '/tests', 'Test');
 
@@ -19,9 +21,7 @@ $coverage->start();
 
 echo PHP_EOL;
 
-$suite = $finder->run(function($test) {
-    echo $test->getAssertions()->isPassed() && !$test->getExceptions()->count() ? '.' : 'F';
-});
+$suite = $finder->run($event->get());
 
 echo PHP_EOL . PHP_EOL . sprintf('Ran %d test%s.', count($suite), count($suite) === 1 ? '' : 's');
 
@@ -45,7 +45,13 @@ if (count($exceptions = $suite->getExceptions())) {
     echo '----------' . PHP_EOL;
 
     foreach ($exceptions as $exc) {
-        echo '  ' . $exc->getTestFile() . ':' . $exc->getTestLine() . ' ' . $exc->getMessage() . PHP_EOL;
+        echo '  ' . $exc->getTestClass() . '::' . $exc->getTestMethod() . '():' . $exc->getTestLine() . ' ' . $exc->getMessage() . PHP_EOL;
+
+        foreach (explode(PHP_EOL, $exc->getException()->getTraceAsString()) as $trace) {
+            echo '    ' . $trace . PHP_EOL;
+        }
+
+        echo PHP_EOL;
     }
 
     echo PHP_EOL;
