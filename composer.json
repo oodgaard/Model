@@ -18,11 +18,11 @@
     "license": "MIT",
     "name": "devco/model",
     "require": {
-        "php": ">=5.4.0",
-        "ext-memcache": ">=3.0.0"
+        "php": ">=5.4.0"
     },
     "require-dev": {
         "devco/testes": "1.1.*-dev",
-        "devco/event-emitter": "1.0.*-dev"
+        "devco/event-emitter": "1.0.*-dev",
+        "ext-memcache": ">=3.0.0"
     }
 }
