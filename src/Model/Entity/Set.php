@@ -382,7 +382,8 @@ class Set implements AccessibleInterface, ValidatableInterface
 
     public function limit($limit, $offset)
     {
-        $limit = intval($limit);
+        $limit  = intval($limit);
+        $offset = intval($offset);
 
         $keys = [];
 
@@ -408,5 +409,14 @@ class Set implements AccessibleInterface, ValidatableInterface
         }
 
         return $item;
+    }
+
+    public function usort($callback)
+    {
+        if (!is_callable($callback)) {
+            return false;
+        }
+
+        return usort($this->data, $callback);
     }
 }

@@ -87,4 +87,29 @@ class SetTest extends UnitAbstract
 
         $this->assert($set->count() == 5);
     }
+
+    public function usort()
+    {
+        $set = new Set('Provider\ContentEntity', [
+            ['id' => 1, 'name' => 'Orange'],
+            ['id' => 2, 'name' => 'Apple'],
+            ['id' => 3, 'name' => 'Banana'],
+        ]);
+
+        $set->usort(function ($a, $b) {
+            if ($a->name == $b->name) {
+                return 0;
+            }
+
+            return $a->name < $b->name ? -1 : 1;
+        });
+
+        $this->assert($set->first()->name == 'Apple');
+        $this->assert($set->last()->name == 'Orange');
+    }
+
+    public function usortFail()
+    {
+        $this->assert($this->set->usort(null) === false, 'usort should return false if a callable function is not the first parameter');
+    }
 }
