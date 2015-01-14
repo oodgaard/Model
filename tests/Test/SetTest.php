@@ -72,6 +72,22 @@ class SetTest extends UnitAbstract
         $this->assert($found->id === '1', 'The first item should have been returned.');
     }
 
+    public function limitNoOffset()
+    {
+        $set = clone $this->set;
+        $set->limit(5, 0);
+
+        $this->assert($set->count() == 5);
+    }
+
+    public function limitOffset()
+    {
+        $set = clone $this->set;
+        $set->limit(5, 5);
+
+        $this->assert($set->count() == 5);
+    }
+
     public function usort()
     {
         $set = new Set('Provider\ContentEntity', [

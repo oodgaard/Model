@@ -380,6 +380,28 @@ class Set implements AccessibleInterface, ValidatableInterface
         $this->from($data['data']);
     }
 
+    public function limit($limit, $offset)
+    {
+        $limit  = intval($limit);
+        $offset = intval($offset);
+
+        $keys = [];
+
+        foreach ($this as $key => $item) {
+            if ($offset && $offset > $key) {
+                continue;
+            }
+
+            if ($limit && $limit === count($keys)) {
+                break;
+            }
+
+            $keys[] = $key;
+        }
+
+        return $this->reduce($keys);
+    }
+
     private function ensureEntity($item, $filterToUse = null)
     {
         if (!$item instanceof $this->class) {
