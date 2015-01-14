@@ -388,4 +388,13 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return $item;
     }
+
+    public function usort($callback)
+    {
+        if (!is_callable($callback)) {
+            return false;
+        }
+
+        return usort($this->data, $callback);
+    }
 }
