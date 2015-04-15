@@ -18,8 +18,8 @@ class DateTest extends UnitAbstract
 
     public function setUp()
     {
-        date_default_timezone_set($this->timezone);
         $this->currentTimezone = date_default_timezone_get();
+        date_default_timezone_set($this->timezone);
     }
 
     public function setDateByInteger()
@@ -114,10 +114,16 @@ class DateTest extends UnitAbstract
 
     public function timeZoneOnInput()
     {
-        $dateTime = $this->generateDate('Y-m-d\TH:i:s', 'Australia/Brisbane', true);
-        $translasteResult = $dateTime->translate('2014-04-16 20:00:00');
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', 'Australia/Brisbane', true);
+        $translasteResult = $dateTime->translate('2014-04-16 20:00:00 +0000');
 
-        $this->assert($translasteResult == '2014-04-17T06:00:00', 'Timezone was not applied');
+        $this->assert($translasteResult == '2014-04-17T06:00:00 +1000', 'Timezone was not applied');
+
+
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', null, true);
+        $translasteResult = $dateTime->translate('2014-04-17 6:00:00 +1000');
+
+        $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date was not correct');
     }
 
     public function tearDown()
