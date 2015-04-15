@@ -126,17 +126,39 @@ class DateTest extends UnitAbstract
         $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date was not translated to the correct timezone');
     }
 
+    public function tranlateToDefaultTimezone()
+    {
+        date_default_timezone_set('Australia/Brisbane');
+
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', null, true, true);
+        $translasteResult = $dateTime->translate('2014-04-16 20:00:00 +0000');
+
+        $this->assert($translasteResult == '2014-04-17T06:00:00 +1000', 'Date was not translated to the default timezone');
+    }
+
+    public function dontTranlateToDefaultTimezone()
+    {
+        date_default_timezone_set('Australia/Brisbane');
+
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', null, true);
+        $translasteResult = $dateTime->translate('2014-04-16 20:00:00 +0000');
+
+        $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date was not translated to the default timezone');
+    }
+
+
     public function tearDown()
     {
         date_default_timezone_set($this->currentTimezone);
     }
 
-    private function generateDate($format = null, $timezone = null, $allowNull = false)
+    private function generateDate($format = null, $timezone = null, $allowNull = false, $convertToDefaultTimezone = false)
     {
         return new Date([
             'format'   => $format ?: $this->format,
             'timezone' => $timezone ?: $this->timezone,
             'allowNull' => $allowNull,
+            'convertToDefaultTimezone' => $convertToDefaultTimezone
         ]);
     }
 }
