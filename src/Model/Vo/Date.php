@@ -10,6 +10,7 @@ class Date extends VoAbstract
         'format'   => DATE_RFC822,
         'timezone' => null,
         'allowNull' => false,
+        'convertToDefaultTimezone' => false
     ];
 
     public function init()
@@ -34,6 +35,13 @@ class Date extends VoAbstract
         } else {
             $datetime = new DateTime($value);
             $this->setTimezone($datetime);
+        }
+
+        // Convert to default timezone.
+        if ($this->config['convertToDefaultTimezone']) {
+            $datetime->setTimeZone(
+                new DateTimeZone(date_default_timezone_get())
+            );
         }
 
         return $datetime->format($this->config['format']);
