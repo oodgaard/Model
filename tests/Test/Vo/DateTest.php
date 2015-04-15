@@ -143,7 +143,7 @@ class DateTest extends UnitAbstract
         $dateTime = $this->generateDate('Y-m-d\TH:i:s O', null, true);
         $translasteResult = $dateTime->translate('2014-04-16 20:00:00 +0000');
 
-        $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date was not translated to the default timezone');
+        $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date should not be translated to the default timezone');
     }
 
 
