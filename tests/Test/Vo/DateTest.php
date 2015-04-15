@@ -101,6 +101,25 @@ class DateTest extends UnitAbstract
         $this->assert($date->init() !== null, 'Date is null, expected a date string');
     }
 
+    public function timezoneOnNow()
+    {
+        $dateTimeDefault = $this->generateDate('Y-m-d\TH:i:s', null, true);
+        $dateTimeLocal   = $this->generateDate('Y-m-d\TH:i:s', 'Australia/Brisbane', true);
+
+        $translasteResult1 = $dateTimeDefault->translate('now');
+        $translasteResult2 = $dateTimeLocal->translate('now');
+
+        $this->assert($translasteResult1 != $translasteResult2, 'Dates should not match');
+    }
+
+    public function timeZoneOnInput()
+    {
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s', 'Australia/Brisbane', true);
+        $translasteResult = $dateTime->translate('2014-04-16 20:00:00');
+
+        $this->assert($translasteResult == '2014-04-17T06:00:00', 'Timezone was not applied');
+    }
+
     public function tearDown()
     {
         date_default_timezone_set($this->currentTimezone);
