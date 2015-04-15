@@ -18,8 +18,8 @@ class DateTest extends UnitAbstract
 
     public function setUp()
     {
-        date_default_timezone_set($this->timezone);
         $this->currentTimezone = date_default_timezone_get();
+        date_default_timezone_set($this->timezone);
     }
 
     public function setDateByInteger()
@@ -99,6 +99,31 @@ class DateTest extends UnitAbstract
         $date = $this->generateDate(null, null, false);
 
         $this->assert($date->init() !== null, 'Date is null, expected a date string');
+    }
+
+    public function timezoneOnNow()
+    {
+        $dateTimeDefault = $this->generateDate('Y-m-d\TH:i:s', null, true);
+        $dateTimeLocal   = $this->generateDate('Y-m-d\TH:i:s', 'Australia/Brisbane', true);
+
+        $translasteResult1 = $dateTimeDefault->translate('now');
+        $translasteResult2 = $dateTimeLocal->translate('now');
+
+        $this->assert($translasteResult1 != $translasteResult2, 'Dates should not match');
+    }
+
+    public function timeZoneOnInput()
+    {
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', 'Australia/Brisbane', true);
+        $translasteResult = $dateTime->translate('2014-04-16 20:00:00 +0000');
+
+        $this->assert($translasteResult == '2014-04-17T06:00:00 +1000', 'Date was not translated to the correct timezone');
+
+
+        $dateTime = $this->generateDate('Y-m-d\TH:i:s O', null, true);
+        $translasteResult = $dateTime->translate('2014-04-17 6:00:00 +1000');
+
+        $this->assert($translasteResult == '2014-04-16T20:00:00 +0000', 'Date was not translated to the correct timezone');
     }
 
     public function tearDown()

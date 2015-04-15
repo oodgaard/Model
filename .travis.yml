@@ -7,7 +7,6 @@ services:
   - memcached
 
 before_script: 
-  - sudo apt-get install php5-memcache
   - sudo sh -c "echo "extension=\"memcache.so\"" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`"
   - composer install --dev
 

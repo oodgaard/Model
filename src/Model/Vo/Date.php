@@ -29,8 +29,11 @@ class Date extends VoAbstract
             $datetime = $value;
         } elseif (is_numeric($value)) {
             $datetime->setTimestamp($value);
+        } elseif (preg_match('/^(\+|-)/', $value)) {
+            $datetime->modify($value);
         } else {
-            $datetime->modify($value ?: 'now');
+            $datetime = new DateTime($value);
+            $this->setTimezone($datetime);
         }
 
         return $datetime->format($this->config['format']);
@@ -39,11 +42,15 @@ class Date extends VoAbstract
     private function datetime()
     {
         $datetime = new DateTime('now');
-
-        if ($this->config['timezone']) {
-            $datetime = $datetime->setTimezone(new DateTimeZone($this->config['timezone']));
-        }
+        $this->setTimezone($datetime);
 
         return $datetime;
+    }
+
+    private function setTimezone(DateTime $dateTime)
+    {
+        if ($this->config['timezone']) {
+            return $dateTime->setTimezone(new DateTimeZone($this->config['timezone']));
+        }
     }
 }
