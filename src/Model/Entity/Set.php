@@ -419,4 +419,13 @@ class Set implements AccessibleInterface, ValidatableInterface
 
         return usort($this->data, $callback);
     }
+
+    public function ufilter($callback)
+    {
+        if (!is_callable($callback)) {
+            return false;
+        }
+
+        $this->data = array_filter($this->data, $callback);
+    }
 }
