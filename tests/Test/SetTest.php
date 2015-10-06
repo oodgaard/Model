@@ -128,6 +128,6 @@ class SetTest extends UnitAbstract
             return $record->name == $nameFilter;
         });
 
-        $this->assert($set->count() == 2, 'ufilter did not filter set');
+        $this->assert($set->count() == 2, 'ufilter did not filter the set');
     }
 }
