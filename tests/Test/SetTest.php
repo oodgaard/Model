@@ -88,7 +88,7 @@ class SetTest extends UnitAbstract
         $this->assert($set->count() == 5);
     }
 
-    public function usort()
+    public function uSort()
     {
         $set = new Set('Provider\ContentEntity', [
             ['id' => 1, 'name' => 'Orange'],
@@ -108,8 +108,26 @@ class SetTest extends UnitAbstract
         $this->assert($set->last()->name == 'Orange');
     }
 
-    public function usortFail()
+    public function uSortFail()
     {
         $this->assert($this->set->usort(null) === false, 'usort should return false if a callable function is not the first parameter');
+    }
+
+    public function uFilter()
+    {
+        $set = new Set('Provider\ContentEntity', [
+            ['id' => 1, 'name' => 'Orange'],
+            ['id' => 2, 'name' => 'Apple'],
+            ['id' => 3, 'name' => 'Banana'],
+            ['id' => 4, 'name' => 'Banana'],
+        ]);
+
+        $nameFilter = 'Banana';
+
+        $set->ufilter(function($record) use($nameFilter) {
+            return $record->name == $nameFilter;
+        });
+
+        $this->assert($set->count() == 2, 'ufilter did not filter set');
     }
 }
