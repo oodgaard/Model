@@ -426,6 +426,6 @@ class Set implements AccessibleInterface, ValidatableInterface
             return false;
         }
 
-        $this->data = array_filter($this->data, $callback);
+        $this->data = array_values(array_filter($this->data, $callback));
     }
 }
