@@ -12,7 +12,6 @@ use Provider\PasswordEntity;
 use Provider\ReferenceEntity;
 use Provider\UserEntity;
 use Testes\Test\UnitAbstract;
-use Test\RepositoryTest;
 
 class EntityTest extends UnitAbstract
 {
